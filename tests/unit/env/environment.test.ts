@@ -12,9 +12,7 @@ describe('environment schema', () => {
   });
 
   it('rejects an invalid public application URL', () => {
-    expect(() =>
-      createClientEnv({ ...publicValues, NEXT_PUBLIC_APP_URL: 'not-a-url' }),
-    ).toThrow();
+    expect(() => createClientEnv({ ...publicValues, NEXT_PUBLIC_APP_URL: 'not-a-url' })).toThrow();
   });
 
   it('parses shared server configuration', () => {
