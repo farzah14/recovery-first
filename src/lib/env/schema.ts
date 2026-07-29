@@ -55,9 +55,7 @@ export type ClientEnv = z.infer<typeof clientSchema>;
 export type ServerEnv = z.infer<typeof serverSchema>;
 
 function removeUndefinedValues<T extends Record<string, unknown>>(obj: T): T {
-  return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined),
-  ) as T;
+  return Object.fromEntries(Object.entries(obj).filter(([, value]) => value !== undefined)) as T;
 }
 
 export function createClientEnv(source: Record<string, string | undefined>): ClientEnv {
@@ -67,4 +65,3 @@ export function createClientEnv(source: Record<string, string | undefined>): Cli
 export function createServerEnv(source: Record<string, string | undefined>): ServerEnv {
   return removeUndefinedValues(serverSchema.parse(source));
 }
-
