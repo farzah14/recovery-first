@@ -21,3 +21,11 @@ test('unknown route displays the missing-page surface', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Return home' })).toBeVisible();
 });
+
+test('liveness endpoint returns only the public health contract', async ({ request }) => {
+  const response = await request.get('/api/health/live');
+
+  expect(response.status()).toBe(200);
+  expect(response.headers()['cache-control']).toBe('no-store');
+  expect(await response.json()).toEqual({ status: 'ok' });
+});
