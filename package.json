@@ -18,17 +18,24 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
     "fast-glob": "^3.3.3",
+    "jsdom": "^30.0.0",
     "postcss": "^8.5.24",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"
   },
   "scripts": {
@@ -40,6 +47,12 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:architecture": "vitest run tests/unit/architecture"
+    "test:architecture": "vitest run tests/unit/architecture",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:component": "vitest run tests/component",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage"
   }
 }
