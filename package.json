@@ -63,6 +63,10 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "check:env-example": "node tool/check-environment-example.mjs",
+    "check:repository": "node tool/check-repository.mjs",
+    "verify": "node tool/verify.mjs",
+    "verify:full": "pnpm verify && pnpm db:start && pnpm db:reset && pnpm db:test && pnpm db:stop && pnpm test:e2e"
   }
 }
