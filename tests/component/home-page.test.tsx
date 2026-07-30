@@ -6,11 +6,10 @@ describe('HomePage', () => {
     renderWithProviders(<HomePage />);
 
     expect(
-      screen.getByRole('heading', { name: 'Build habits that can recover when life changes.' }),
+      screen.getByRole('heading', { name: /Build habits that actually stick/i }),
     ).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Start Free' })).toHaveAttribute(
-      'href',
-      '/app/today',
-    );
+    expect(
+      screen.getByRole('link', { name: /Start Free - No Account Required/i }),
+    ).toHaveAttribute('href', '/app/today');
   });
 });
