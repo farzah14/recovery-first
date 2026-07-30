@@ -1,15 +1,25 @@
 import { expect, test } from '@playwright/test';
 
-test('public route links to the application shell', async ({ page }) => {
+test('public route presents landing page hero and start free link', async ({ page }) => {
   await page.goto('/');
 
   await expect(page).toHaveTitle(/Recovery First/);
-  await expect(page.getByRole('heading', { name: 'Recovery First' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Build habits that actually stick/i }),
+  ).toBeVisible();
 
-  await page.getByRole('link', { name: 'Open application shell' }).click();
+  await page.getByRole('link', { name: 'Start Free' }).first().click();
 
-  await expect(page).toHaveURL('/app');
-  await expect(page.getByRole('heading', { name: 'Application foundation' })).toBeVisible();
+  await expect(page).toHaveURL('/app/today');
+});
+
+test('pricing route presents bento cards and feature comparison', async ({ page }) => {
+  await page.goto('/pricing');
+
+  await expect(page.getByRole('heading', { name: 'Simple, transparent pricing.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Guest' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Free' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Premium' })).toBeVisible();
 });
 
 test('unknown route displays the missing-page surface', async ({ page }) => {
