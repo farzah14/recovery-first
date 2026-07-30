@@ -12,7 +12,7 @@ export default function AboutPage(): React.JSX.Element {
           About Us
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-relaxed text-[var(--color-text-secondary)] sm:text-lg">
-          Traditional habit trackers rely on streaks—a high-pressure system that turns a single missed day into a catastrophic failure. We believe in compassionate progress. The Recovery-First philosophy focuses on psychological safety, long-term sustainability, and honoring browser honesty over punitive gamification.
+          Traditional habit trackers rely on rigid streaks that inevitably break. We believe in compassionate progress—focusing on psychological safety, long-term sustainability, and browser honesty over punitive gamification.
         </p>
       </section>
 
