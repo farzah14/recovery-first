@@ -8,7 +8,7 @@ describe('HowItWorksPage', () => {
     render(<HowItWorksPage />);
 
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Built for the reality of your life.' }),
+      screen.getByRole('heading', { level: 1, name: 'How the 6-Step Loop Works.' }),
     ).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Design' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Do' })).toBeVisible();

@@ -12,10 +12,10 @@ export default function HowItWorksPage(): React.JSX.Element {
       {/* Hero Section */}
       <section className="mb-20 max-w-3xl text-center">
         <h1 className="mb-6 text-4xl font-bold tracking-tight text-[var(--color-primary)] sm:text-5xl">
-          Built for the reality of your life.
+          How the 6-Step Loop Works.
         </h1>
         <p className="mx-auto max-w-2xl text-base leading-7 text-[var(--color-text-secondary)] sm:text-lg">
-          Traditional habit trackers rely on rigid streaks that inevitably break. Our 6-step loop is designed to adapt to your fluctuating energy levels, ensuring that even on your hardest days, you can maintain momentum without the guilt.
+          Our 6-step loop is designed to adapt to your fluctuating energy levels, ensuring that even on your hardest days, you can maintain momentum without the guilt.
         </p>
       </section>
 
