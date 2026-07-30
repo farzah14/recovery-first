@@ -1,8 +1,69 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 :root {
-  color-scheme: light;
-  font-synthesis: none;
+  --color-emerald-50: #f0f7f3;
+  --color-emerald-100: #ddefe4;
+  --color-emerald-200: #a0c8b0;
+  --color-emerald-300: #629176;
+  --color-emerald-400: #309050;
+  --color-emerald-500: #288848;
+  --color-emerald-600: #187040;
+  --color-emerald-700: #106838;
+  --color-emerald-800: #106038;
+  --color-emerald-900: #0d522f;
+  --color-emerald-950: #0a3d24;
+  --color-neutral-50: #f8f9f9;
+  --color-neutral-100: #f0f4f3;
+  --color-neutral-150: #ebefef;
+  --color-neutral-200: #dde5e1;
+  --color-neutral-300: #c4cfcd;
+  --color-neutral-400: #9fa9a4;
+  --color-neutral-500: #7f8a84;
+  --color-neutral-600: #68736d;
+  --color-neutral-700: #4e5b54;
+  --color-neutral-800: #355749;
+  --color-neutral-900: #242a26;
+  --color-neutral-950: #161a17;
+  --color-white: #ffffff;
+  --color-amber: #f59e0b;
+  --color-coral: #ef4444;
+  --color-purple: #8b5cf6;
+  --color-blue: #3b82f6;
+  --color-cyan: #38afc7;
+  --color-gold: #eab308;
+  --color-brown: #6b4937;
+  --color-page: var(--color-neutral-50);
+  --color-surface: var(--color-white);
+  --color-surface-subtle: var(--color-neutral-100);
+  --color-surface-selected: var(--color-emerald-50);
+  --color-text-primary: var(--color-neutral-950);
+  --color-text-secondary: var(--color-neutral-700);
+  --color-text-muted: var(--color-neutral-600);
+  --color-text-disabled: var(--color-neutral-400);
+  --color-border: var(--color-neutral-200);
+  --color-border-strong: var(--color-neutral-300);
+  --color-focus: var(--color-emerald-700);
+  --color-primary: var(--color-emerald-500);
+  --color-primary-hover: var(--color-emerald-600);
+  --color-primary-pressed: var(--color-emerald-700);
+  --color-primary-disabled: var(--color-emerald-200);
+  --color-success: var(--color-emerald-500);
+  --color-minimum: var(--color-amber);
+  --color-skipped: var(--color-neutral-600);
+  --color-unrecorded: var(--color-neutral-500);
+  --color-recovery: var(--color-purple);
+  --color-warning: #b86b00;
+  --color-danger: var(--color-coral);
+  --color-info: var(--color-blue);
+  --color-premium: var(--color-gold);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --shadow-card: 0 1px 2px rgb(22 26 23 / 6%);
+  --shadow-overlay: 0 16px 48px rgb(22 26 23 / 18%);
+  --motion-fast: 120ms;
+  --motion-standard: 180ms;
+  --motion-slow: 240ms;
 }
 
 * {
@@ -11,15 +72,18 @@
 
 html {
   min-width: 320px;
-  background: #ffffff;
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  scroll-behavior: smooth;
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
-  background: #ffffff;
-  color: #161a17;
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-page);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -31,4 +95,25 @@ textarea {
 
 a {
   color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-focus) 70%, white);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-emerald-100);
+  color: var(--color-emerald-950);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

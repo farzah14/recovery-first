@@ -1,24 +1,29 @@
-import type { Metadata, Viewport } from 'next';
-import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   title: {
     default: 'Recovery First',
     template: '%s | Recovery First',
   },
-  description: 'A recovery-first habit system for sustainable progress.',
+  description: 'A recovery-first habit system for building sustainable routines.',
 };
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  colorScheme: 'light',
-};
-
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>): React.JSX.Element {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>{children}</body>
     </html>
   );
