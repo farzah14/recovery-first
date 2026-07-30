@@ -13,6 +13,7 @@ export const routes = {
   home: '/',
   features: '/features',
   howItWorks: '/how-it-works',
+  about: '/about',
   pricing: '/pricing',
   help: '/help',
   status: '/status',
@@ -39,8 +40,9 @@ export type NavigationItem = Readonly<{
 
 export const publicNavigation = [
   { label: 'Features', href: routes.features },
-  { label: 'How It Works', href: routes.howItWorks },
   { label: 'Pricing', href: routes.pricing },
+  { label: 'How It Works', href: routes.howItWorks },
+  { label: 'About', href: routes.about },
   { label: 'Help', href: routes.help },
 ] as const;
 
