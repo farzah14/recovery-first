@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, Heart, Leaf, Sliders, User } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Heart, Leaf, Sliders } from 'lucide-react';
 
 import { ContentContainer } from '@/components/layout/content-container';
 import { Card, CardContent } from '@/components/ui/card';
@@ -98,7 +98,7 @@ export default function AboutPage(): React.JSX.Element {
       </section>
 
       {/* Section 3: Our Story */}
-      <section className="mb-16">
+      <section className="mb-12">
         <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-6 md:p-8">
           <h2 className="mb-6 text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">Our Story</h2>
           <div className="space-y-4 text-sm leading-relaxed text-[var(--color-text-secondary)] sm:text-base">
@@ -111,50 +111,6 @@ export default function AboutPage(): React.JSX.Element {
             <p>
               We started with a blank slate, a greenfield project focused entirely on sustainability. We stripped away the confetti, the fire emojis, and the pressure-inducing mechanics. In their place, we built a system that recognizes nuance, values minimal effort on hard days, and celebrates the act of returning to a habit after a break. Our mission is to help you build habits that last a lifetime, not just until your next vacation.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: Meet the Team */}
-      <section className="mb-12">
-        <h2 className="mb-6 border-b border-[var(--color-border)] pb-3 text-2xl font-bold text-[var(--color-text-primary)] sm:text-3xl">
-          Meet the Team
-        </h2>
-        <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-          {/* Member 1 */}
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-20 items-center justify-center rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-surface-subtle)] text-[var(--color-primary)]">
-              <User className="size-10" />
-            </div>
-            <h4 className="text-base font-bold text-[var(--color-text-primary)]">Sarah Jenkins</h4>
-            <p className="text-xs text-[var(--color-text-secondary)]">Lead Psychologist</p>
-          </div>
-
-          {/* Member 2 */}
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-20 items-center justify-center rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-surface-subtle)] text-[var(--color-primary)]">
-              <User className="size-10" />
-            </div>
-            <h4 className="text-base font-bold text-[var(--color-text-primary)]">David Chen</h4>
-            <p className="text-xs text-[var(--color-text-secondary)]">Product Architect</p>
-          </div>
-
-          {/* Member 3 */}
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-20 items-center justify-center rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-surface-subtle)] text-[var(--color-primary)]">
-              <User className="size-10" />
-            </div>
-            <h4 className="text-base font-bold text-[var(--color-text-primary)]">Maya Patel</h4>
-            <p className="text-xs text-[var(--color-text-secondary)]">UX Director</p>
-          </div>
-
-          {/* Member 4 */}
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-4 flex size-20 items-center justify-center rounded-full border-2 border-[var(--color-primary)] bg-[var(--color-surface-subtle)] text-[var(--color-primary)]">
-              <User className="size-10" />
-            </div>
-            <h4 className="text-base font-bold text-[var(--color-text-primary)]">Marcus Johnson</h4>
-            <p className="text-xs text-[var(--color-text-secondary)]">Engineering Lead</p>
           </div>
         </div>
       </section>
