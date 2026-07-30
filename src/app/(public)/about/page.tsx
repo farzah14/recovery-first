@@ -7,11 +7,11 @@ export default function AboutPage(): React.JSX.Element {
   return (
     <ContentContainer className="py-16">
       {/* Hero Section */}
-      <section className="mb-16 max-w-3xl">
+      <section className="mx-auto mb-16 max-w-3xl text-center">
         <h1 className="mb-6 text-4xl font-bold tracking-tight text-[var(--color-primary)] sm:text-5xl">
-          Built for the reality of your life.
+          About Us
         </h1>
-        <p className="text-base leading-relaxed text-[var(--color-text-secondary)] sm:text-lg">
+        <p className="mx-auto max-w-2xl text-base leading-relaxed text-[var(--color-text-secondary)] sm:text-lg">
           Traditional habit trackers rely on streaks—a high-pressure system that turns a single missed day into a catastrophic failure. We believe in compassionate progress. The Recovery-First philosophy focuses on psychological safety, long-term sustainability, and honoring browser honesty over punitive gamification.
         </p>
       </section>
