@@ -15,11 +15,11 @@ export function PublicHeader(): React.JSX.Element {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild className="hidden sm:inline-flex text-white hover:text-white" variant="ghost">
-            <Link className="text-white" href={routes.signIn}>Sign In</Link>
+          <Button asChild className="hidden sm:inline-flex bg-[var(--color-primary)] !text-white hover:bg-[var(--color-primary-hover)]" variant="primary">
+            <Link className="!text-white" href={routes.signIn}>Sign In</Link>
           </Button>
-          <Button asChild size="compact" className="text-white">
-            <Link className="text-white" href={routes.today}>Start Free</Link>
+          <Button asChild size="compact" className="bg-[var(--color-primary)] !text-white hover:bg-[var(--color-primary-hover)]" variant="primary">
+            <Link className="!text-white" href={routes.today}>Start Free</Link>
           </Button>
         </div>
       </ContentContainer>
