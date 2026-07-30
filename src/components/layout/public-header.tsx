@@ -19,6 +19,9 @@ export function PublicHeader(): React.JSX.Element {
               Pricing
             </Link>
             <Link className="text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-primary)]" href={routes.howItWorks}>
+              How It Works
+            </Link>
+            <Link className="text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-primary)]" href={routes.howItWorks}>
               About
             </Link>
           </div>
