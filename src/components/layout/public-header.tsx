@@ -1,28 +1,38 @@
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { ContentContainer } from '@/components/layout/content-container';
-import { publicNavigation, routes } from '@/lib/navigation/route-definitions';
+import { routes } from '@/lib/navigation/route-definitions';
 
 export function PublicHeader(): React.JSX.Element {
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface)_94%,transparent)] backdrop-blur">
-      <ContentContainer className="flex min-h-16 items-center justify-between gap-4">
-        <Link className="font-semibold text-[var(--color-emerald-800)]" href={routes.home}>Recovery First</Link>
-        <nav aria-label="Public navigation" className="hidden items-center gap-1 md:flex">
-          {publicNavigation.map((item) => (
-            <Button asChild key={item.href} variant="ghost"><Link href={item.href}>{item.label}</Link></Button>
-          ))}
-        </nav>
-        <div className="flex items-center gap-2">
-          <Button asChild className="hidden sm:inline-flex" variant="ghost">
-            <Link href={routes.signIn}>Sign In</Link>
-          </Button>
-          <Button asChild size="compact" variant="primary">
-            <Link className="!text-white" href={routes.today}>Start Free</Link>
-          </Button>
+    <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 shadow-sm sm:px-8">
+      <ContentContainer className="flex items-center justify-between gap-8 px-0">
+        <div className="flex items-center gap-8">
+          <Link className="text-xl font-bold tracking-tight text-[var(--color-primary)]" href={routes.home}>
+            RecoveryFirst
+          </Link>
+          <div className="hidden items-center gap-6 md:flex">
+            <Link className="text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-primary)]" href={routes.features}>
+              Features
+            </Link>
+            <Link className="text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-primary)]" href={routes.pricing}>
+              Pricing
+            </Link>
+            <Link className="text-sm font-semibold text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-primary)]" href={routes.howItWorks}>
+              About
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <Link className="text-sm font-semibold text-[var(--color-primary)] transition-colors hover:text-[var(--color-primary-hover)]" href={routes.signIn}>
+            Sign In
+          </Link>
+          <Link className="flex min-h-[44px] items-center justify-center rounded-lg bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold !text-white transition-opacity hover:opacity-90" href={routes.today}>
+            Start Free
+          </Link>
         </div>
       </ContentContainer>
-    </header>
+    </nav>
   );
 }
