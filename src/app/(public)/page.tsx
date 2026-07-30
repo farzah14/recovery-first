@@ -21,8 +21,8 @@ export default function HomePage(): React.JSX.Element {
               The only habit tracker designed for recovery, not punishment. Switch between Full and Minimum targets to keep your continuity alive without the shame of broken streaks.
             </p>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-              <Button asChild size="large">
-                <Link href={routes.today}>Start Free - No Account Required</Link>
+              <Button asChild size="large" className="text-white">
+                <Link className="text-white" href={routes.today}>Start Free</Link>
               </Button>
               <Button asChild size="large" variant="secondary">
                 <Link href={routes.howItWorks}>See How It Works</Link>

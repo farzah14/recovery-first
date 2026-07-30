@@ -9,7 +9,7 @@ describe('HomePage', () => {
       screen.getByRole('heading', { name: /Build habits that actually stick/i }),
     ).toBeVisible();
     expect(
-      screen.getByRole('link', { name: /Start Free - No Account Required/i }),
+      screen.getByRole('link', { name: 'Start Free' }),
     ).toHaveAttribute('href', '/app/today');
   });
 });
