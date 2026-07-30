@@ -5,10 +5,12 @@ describe('HomePage', () => {
   it('presents the product name and application entry link', () => {
     renderWithProviders(<HomePage />);
 
-    expect(screen.getByRole('heading', { name: 'Recovery First' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Open application shell' })).toHaveAttribute(
+    expect(
+      screen.getByRole('heading', { name: 'Build habits that can recover when life changes.' }),
+    ).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Start Free' })).toHaveAttribute(
       'href',
-      '/app',
+      '/app/today',
     );
   });
 });
