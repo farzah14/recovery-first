@@ -3644,7 +3644,7 @@ git commit -m "feat: generate typed Supabase database contracts"
 - Create: `tests/unit/indexed-db/database.test.ts`
 - Create: `tests/unit/indexed-db/migrations.test.ts`
 
-- [ ] **Step 1: Write failing IndexedDB database tests**
+- [x] **Step 1: Write failing IndexedDB database tests**
 
 Create `tests/unit/indexed-db/database.test.ts`:
 
@@ -3744,7 +3744,7 @@ describe('RecoveryFirstDatabase', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing migration-preservation test**
+- [x] **Step 2: Write the failing migration-preservation test**
 
 Create `tests/unit/indexed-db/migrations.test.ts`:
 
@@ -3808,7 +3808,7 @@ describe('IndexedDB migrations', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests and confirm failure**
+- [x] **Step 3: Run tests and confirm failure**
 
 Run:
 
@@ -3818,7 +3818,7 @@ pnpm exec vitest run tests/unit/indexed-db/database.test.ts tests/unit/indexed-d
 
 Expected: FAIL because the IndexedDB modules do not exist.
 
-- [ ] **Step 4: Define all local record contracts**
+- [x] **Step 4: Define all local record contracts**
 
 Create `src/lib/indexed-db/types.ts`:
 
@@ -4017,7 +4017,7 @@ export type SettingRecord = {
 };
 ```
 
-- [ ] **Step 5: Define append-only schema versions**
+- [x] **Step 5: Define append-only schema versions**
 
 Create `src/lib/indexed-db/schema.ts`:
 
@@ -4049,7 +4049,7 @@ export const recoveryFirstStoresV2 = {
 export const currentIndexedDbVersion = 2;
 ```
 
-- [ ] **Step 6: Define the version 2 migration**
+- [x] **Step 6: Define the version 2 migration**
 
 Create `src/lib/indexed-db/migrations.ts`:
 
@@ -4068,7 +4068,7 @@ export async function migrateVersionOneToTwo(transaction: Transaction): Promise<
 }
 ```
 
-- [ ] **Step 7: Implement the Dexie database and Guest activation transaction**
+- [x] **Step 7: Implement the Dexie database and Guest activation transaction**
 
 Create `src/lib/indexed-db/database.ts`:
 
@@ -4172,7 +4172,7 @@ export class RecoveryFirstDatabase extends Dexie {
 }
 ```
 
-- [ ] **Step 8: Run IndexedDB tests**
+- [x] **Step 8: Run IndexedDB tests**
 
 Run:
 
@@ -4190,7 +4190,7 @@ Expected:
 - Guest activation is atomic;
 - the fourth active Guest habit is rejected without partial writes.
 
-- [ ] **Step 9: Commit IndexedDB schema contracts**
+- [x] **Step 9: Commit IndexedDB schema contracts**
 
 Run:
 
