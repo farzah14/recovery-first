@@ -1914,7 +1914,7 @@ git commit -m "feat: add recovery review reminder and entitlement schema"
 - Create: `supabase/migrations/20260729014000_domain_functions.sql`
 - Create: `supabase/tests/00030_domain_functions.test.sql`
 
-- [ ] **Step 1: Create authoritative plan and idempotency helpers**
+- [x] **Step 1: Create authoritative plan and idempotency helpers**
 
 Create `supabase/migrations/20260729014000_domain_functions.sql` with the complete content below:
 
@@ -2644,7 +2644,7 @@ grant execute on function public.ensure_session(uuid, uuid, uuid, date, time, te
 grant execute on function public.record_check_in(uuid, uuid, public.check_in_outcome, text, text, timestamptz, text, bigint, uuid) to authenticated;
 ```
 
-- [ ] **Step 2: Write transactional function tests**
+- [x] **Step 2: Write transactional function tests**
 
 Create `supabase/tests/00030_domain_functions.test.sql`:
 
@@ -2830,7 +2830,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 3: Reset and run transactional tests**
+- [x] **Step 3: Reset and run transactional tests**
 
 Run:
 
@@ -2841,7 +2841,7 @@ pnpm db:test
 
 Expected: schema, constraints, idempotency, revision, version, session, history, and Recovery-counter assertions pass.
 
-- [ ] **Step 4: Commit authoritative database functions**
+- [x] **Step 4: Commit authoritative database functions**
 
 Run:
 
