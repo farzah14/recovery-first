@@ -3540,7 +3540,7 @@ git commit -m "feat: enforce database ownership with row level security"
 - Create: `tests/unit/supabase/database-types.test.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: Start the migrated local database**
+- [x] **Step 1: Start the migrated local database**
 
 Run:
 
@@ -3551,7 +3551,7 @@ pnpm db:reset
 
 Expected: all Plan 01 and Plan 03 migrations apply from an empty database.
 
-- [ ] **Step 2: Generate the canonical TypeScript database types**
+- [x] **Step 2: Generate the canonical TypeScript database types**
 
 Run:
 
@@ -3561,7 +3561,7 @@ pnpm db:types:write
 
 Expected: `src/lib/supabase/database.types.ts` contains generated `public` tables, views, functions, and enums.
 
-- [ ] **Step 3: Write a compile-time type contract test**
+- [x] **Step 3: Write a compile-time type contract test**
 
 Create `tests/unit/supabase/database-types.test.ts`:
 
@@ -3590,7 +3590,7 @@ describe('generated database types', () => {
 });
 ```
 
-- [ ] **Step 4: Add the Supabase type test to the unit suite without weakening existing scripts**
+- [x] **Step 4: Add the Supabase type test to the unit suite without weakening existing scripts**
 
 Run:
 
@@ -3606,7 +3606,7 @@ fs.writeFileSync('package.json', `${JSON.stringify(packageJson, null, 2)}\n`);
 NODE
 ```
 
-- [ ] **Step 5: Verify generated types and compile-time contracts**
+- [x] **Step 5: Verify generated types and compile-time contracts**
 
 Run:
 
@@ -3622,7 +3622,7 @@ Expected:
 - the type contract test passes;
 - strict typecheck passes.
 
-- [ ] **Step 6: Commit generated types**
+- [x] **Step 6: Commit generated types**
 
 Run:
 
