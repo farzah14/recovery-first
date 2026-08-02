@@ -4,11 +4,13 @@
 
 **Goal:** Implement monthly and annual Lite and Premium website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative entitlement, subscription management, and non-destructive downgrade handling.
 
-**Architecture:** Product code depends on a provider-neutral `PaymentProvider` interface. The initial adapter uses Paddle Billing in sandbox and production environments, while domain code consumes normalized billing events rather than Paddle-specific payloads. Checkout attempts are created by the authenticated server, the browser opens Paddle Checkout with a server-created transaction, and Premium capabilities change only after a verified webhook or authoritative provider reconciliation updates PostgreSQL.
+**Architecture:** Product code depends on a provider-neutral `PaymentProvider` interface. The initial adapter uses Paddle Billing in sandbox and production environments, while domain code consumes normalized billing events rather than Paddle-specific payloads. Checkout attempts are created by the authenticated server, the browser opens Paddle Checkout with a server-created transaction, and Lite or Premium capabilities change only after a verified webhook or authoritative provider reconciliation updates PostgreSQL.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase Auth and PostgreSQL, Supabase Edge Functions, Paddle Node.js SDK, Paddle.js, React Hook Form, TanStack Query, Vitest, React Testing Library, Playwright, pgTAP, axe-core, pnpm.
 
 **03A amendment:** Billing must support both paid tiers. Free is the default account tier; Lite and Premium entitlements are resolved only from verified backend events. The active limits are Free `5`, Lite `10`, and Premium `30`; any original Premium-only task examples must be expanded to cover Lite before execution.
+
+Guest is not a supported billing or entitlement identity. Historical Guest examples elsewhere in this plan are migration context and must not be reintroduced into checkout, subscription, downgrade, or capability code.
 
 ---
 
@@ -52,7 +54,7 @@ This plan does not implement:
 
 - No plan is selected by default.
 - A trial begins only after an authenticated user explicitly selects monthly or annual, accepts the displayed terms, confirms checkout, and the backend receives authoritative provider evidence.
-- Checkout return parameters, browser storage, Paddle.js events, or client-side receipts never grant Premium.
+- Checkout return parameters, browser storage, Paddle.js events, or client-side receipts never grant Lite or Premium.
 - The application displays `Processing` until authoritative entitlement exists.
 - Duplicate valid provider events produce one state transition.
 - Events are ordered by provider `occurredAt`, not HTTP arrival time.
@@ -232,7 +234,7 @@ Accepted.
 
 ## Decision
 
-The initial website billing adapter uses Paddle Billing. Product code depends only on internal payment-provider and normalized-event contracts. Checkout return state is informational; Premium access is projected only from verified webhook events or authoritative provider reconciliation stored in PostgreSQL.
+The initial website billing adapter uses Paddle Billing. Product code depends only on internal payment-provider and normalized-event contracts. Checkout return state is informational; Lite or Premium access is projected only from verified webhook events or authoritative provider reconciliation stored in PostgreSQL.
 
 ## Consequences
 
@@ -951,7 +953,7 @@ const checkoutInput = z.object({
 Create `src/server/billing/create-checkout.ts` that:
 
 1. reads the authenticated user from the server Supabase client;
-2. rejects Guest and anonymous callers;
+2. rejects anonymous callers;
 3. reads the email from verified auth identity;
 4. resolves server plan configuration;
 5. creates a same-origin return URL containing only the checkout-attempt UUID;

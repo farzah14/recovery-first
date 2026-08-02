@@ -8,6 +8,8 @@
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase Auth and PostgreSQL, Supabase Storage and Edge Functions, Dexie, Sentry-compatible error-monitoring adapter, PostHog-compatible analytics adapter, Vitest, React Testing Library, Playwright, pgTAP, axe-core, pnpm.
 
+**03A amendment:** Normal product data belongs to authenticated Free, Lite, or Premium accounts. There is no normal Guest identity, Guest export, or Guest analytics event. Existing pre-change browser data is legacy-local data and may be exported or transferred only through the explicit legacy-local-data recovery service; old Guest export examples below are historical migration context.
+
 ---
 
 # 1. Prerequisites and Boundaries
@@ -18,7 +20,7 @@ Begin only after Plans 01–09 are verified complete. The repository must alread
 
 - strict TypeScript, deterministic clocks and UUIDs, validated environments, and repeatable quality commands;
 - responsive public and authenticated application shells;
-- Guest IndexedDB persistence, pending-operation synchronization, conflict handling, and reminder delivery contracts;
+- account IndexedDB cache/draft/outbox persistence, legacy-local-data recovery, pending-operation synchronization, conflict handling, and reminder delivery contracts;
 - authenticated SSR sessions, route protection, account profiles, browser installations, and safe sign-out;
 - PostgreSQL RLS, private audit and idempotency records, immutable habit versions, lifecycle state, Recovery, Weekly Review, Premium programs, Insights, and billing entitlement projection;
 - Paddle sandbox billing through a provider-neutral adapter with verified webhook processing;
@@ -47,7 +49,7 @@ This plan does not perform:
 - Correlation uses generated request IDs, command IDs, provider event IDs, safe operation names, and irreversible internal hashes.
 - Analytics failure never blocks product behavior.
 - Monitoring failure never exposes private data and never changes user-visible domain state.
-- Guest export is browser-local and does not require account creation.
+- Legacy-local-data export is browser-local and may be used before account transfer or clearing; it does not silently create or impersonate an account.
 - Signed-in export contains only the authenticated user's portable data and expires automatically.
 - Habit Trash is retained for 30 days and may be restored before purge.
 - Account deletion requires explicit confirmation and recent authentication, blocks new mutations while pending, and does not claim completion before every required stage is recorded.
@@ -266,7 +268,7 @@ Create `docs/architecture/ADR-014-data-lifecycle.md`:
 Accepted
 
 ## Decision
-Guest export is generated locally. Signed-in export is asynchronous and delivered through an expiring signed URL. Habit Trash is retained for 30 days. Account deletion is a staged, auditable workflow that blocks new mutations, revokes sessions and installations, deletes private product data, and retains only minimized legally required records.
+Legacy-local-data export is generated locally. Signed-in account export is asynchronous and delivered through an expiring signed URL. Habit Trash is retained for 30 days. Account deletion is a staged, auditable workflow that blocks new mutations, revokes sessions and installations, deletes private product data, and retains only minimized legally required records.
 
 ## Consequences
 Deletion is not a single browser request or direct cascade. Export artifacts, deletion jobs, purge jobs, and external cleanup have explicit status and retry semantics.
@@ -1366,7 +1368,7 @@ const analyticsPropertiesSchema = z.record(z.union([
 
 export const analyticsEventSchema = z.object({
   name: z.enum([
-    "guest_started", "habit_created", "check_in_recorded", "recovery_started",
+    "account_signed_in", "entitlement_resolved", "legacy_data_transfer", "habit_created", "check_in_recorded", "recovery_started",
     "weekly_review_completed", "premium_preview_opened", "checkout_started",
     "export_requested", "account_deletion_requested"
   ]),

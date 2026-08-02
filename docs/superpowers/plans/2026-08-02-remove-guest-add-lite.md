@@ -155,6 +155,8 @@
 
 ## Task 8: Align billing, entitlements, analytics, and release evidence
 
+**Task 8 execution status:** Contract and analytics alignment is complete. Provider checkout, webhook reconciliation, downgrade mutation, and production observability remain implementation work in the later billing/security plans and are not fabricated here without provider credentials or their server contracts.
+
 **Files:**
 
 - Modify: `docs/implementation/08-premium-programs-insights.md`
@@ -166,7 +168,7 @@
 - [ ] Map provider products to Free, Lite, and Premium without granting access from browser state.
 - [ ] Implement Lite checkout, cancellation, expiry, refund, and downgrade behavior.
 - [ ] Preserve data when moving Premium → Lite or Lite → Free; pause only over-limit active habits.
-- [ ] Ensure analytics uses tier names consistently and never includes habit names or private notes.
+- [x] Ensure analytics uses tier names consistently and never includes habit names or private notes.
 - [ ] Add observability for auth, entitlement resolution, checkout, downgrade, and legacy-data transfer failures.
 - [ ] Commit: `feat: align billing and release contracts for account tiers`.
 
