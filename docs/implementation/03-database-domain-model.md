@@ -551,7 +551,7 @@ git commit -m "feat: define identity lifecycle and active limits"
 - Create: `tests/unit/domain/recurrence.test.ts`
 - Create: `tests/unit/domain/session-identity.test.ts`
 
-- [ ] **Step 1: Write failing recurrence tests**
+- [x] **Step 1: Write failing recurrence tests**
 
 Create `tests/unit/domain/recurrence.test.ts`:
 
@@ -591,7 +591,7 @@ describe('recurrence validation', () => {
 });
 ```
 
-- [ ] **Step 2: Write failing session identity tests**
+- [x] **Step 2: Write failing session identity tests**
 
 Create `tests/unit/domain/session-identity.test.ts`:
 
@@ -634,7 +634,7 @@ describe('session identity', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests and confirm failure**
+- [x] **Step 3: Run tests and confirm failure**
 
 Run:
 
@@ -644,7 +644,7 @@ pnpm exec vitest run tests/unit/domain/recurrence.test.ts tests/unit/domain/sess
 
 Expected: FAIL because the modules do not exist.
 
-- [ ] **Step 4: Implement recurrence contracts**
+- [x] **Step 4: Implement recurrence contracts**
 
 Create `src/domain/habits/recurrence.ts`:
 
@@ -723,7 +723,7 @@ export function validateRecurrenceRule(
 }
 ```
 
-- [ ] **Step 5: Implement deterministic session identity**
+- [x] **Step 5: Implement deterministic session identity**
 
 Create `src/domain/habits/session-identity.ts`:
 
@@ -755,7 +755,7 @@ export function isValidIanaTimezone(value: string): boolean {
 }
 ```
 
-- [ ] **Step 6: Run focused verification**
+- [x] **Step 6: Run focused verification**
 
 Run:
 
@@ -766,7 +766,7 @@ pnpm typecheck
 
 Expected: all tests and typecheck pass.
 
-- [ ] **Step 7: Commit recurrence and session identity**
+- [x] **Step 7: Commit recurrence and session identity**
 
 Run:
 
