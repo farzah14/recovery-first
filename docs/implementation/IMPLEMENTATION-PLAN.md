@@ -836,8 +836,8 @@ The following rules must remain true after every plan:
 
 | Plan | File | Status | Dependency gate |
 |---:|---|---|---|
-| 01 | `01-web-project-foundation.md` | Not created | Specifications approved |
-| 02 | `02-web-design-system-navigation.md` | Not created | Plan 01 verified |
+| 01 | `01-web-project-foundation.md` | Verified complete | Specifications approved |
+| 02 | `02-web-design-system-navigation.md` | Detailed plan created | Plan 01 verified |
 | 03 | `03-database-domain-model.md` | Not created | Plan 02 verified |
 | 04 | `04-habits-sessions-checkins.md` | Not created | Plan 03 verified |
 | 05 | `05-offline-resilience-reminders.md` | Not created | Plan 04 verified |

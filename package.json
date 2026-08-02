@@ -72,6 +72,8 @@
     "test:unit": "vitest run tests/unit",
     "test:component": "vitest run tests/component",
     "test:integration": "vitest run tests/integration",
+    "test:accessibility": "vitest run tests/accessibility",
+    "test:visual": "playwright test tests/e2e/visual-baselines.spec.ts",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
