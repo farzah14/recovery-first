@@ -1041,7 +1041,7 @@ export type Database = {
         | "archived"
         | "trash"
         | "decision_required"
-      plan_tier: "free" | "premium"
+      plan_tier: "free" | "lite" | "premium"
       recommendation_status:
         | "pending"
         | "applied"
@@ -1217,7 +1217,7 @@ export const Constants = {
         "trash",
         "decision_required",
       ],
-      plan_tier: ["free", "premium"],
+      plan_tier: ["free", "lite", "premium"],
       recommendation_status: [
         "pending",
         "applied",
