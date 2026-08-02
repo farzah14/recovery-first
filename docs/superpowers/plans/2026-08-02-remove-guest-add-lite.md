@@ -46,13 +46,13 @@
 - Modify: `tests/unit/domain/active-slot-policy.test.ts`
 - Add: `tests/unit/domain/plan-tier.test.ts`
 
-- [ ] Make `PlanTier` exactly `free | lite | premium`.
-- [ ] Set active-habit limits to Free 5, Lite 10, Premium 30.
-- [ ] Add an explicit tier ordering function used for comparisons and downgrade decisions.
-- [ ] Remove Guest from runtime identity types; use authenticated account identity for normal application ownership.
-- [ ] Add tests for parsing, ordering, every limit, invalid values, and downgrade target selection.
-- [ ] Run `pnpm test:domain` and `pnpm typecheck`.
-- [ ] Commit: `feat: define free lite premium tier contracts`.
+- [x] Make `PlanTier` exactly `free | lite | premium`.
+- [x] Set active-habit limits to Free 5, Lite 10, Premium 30.
+- [x] Add an explicit tier ordering function used for comparisons and downgrade decisions.
+- [x] Remove Guest from runtime identity types; use authenticated account identity for normal application ownership.
+- [x] Add tests for parsing, ordering, every limit, invalid values, and downgrade target selection.
+- [x] Run `pnpm test:domain` and `pnpm typecheck`.
+- [x] Commit: `feat: define free lite premium tier contracts`.
 
 ## Task 3: Add the append-only database tier migration
 

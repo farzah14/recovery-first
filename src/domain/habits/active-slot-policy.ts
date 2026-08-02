@@ -1,10 +1,12 @@
 import type { PlanTier } from '@/domain/shared/plan-tier';
 
 const activeHabitLimits: Readonly<Record<PlanTier, number>> = {
-  guest: 3,
   free: 5,
-  premium: 20,
+  lite: 10,
+  premium: 30,
 };
+
+const legacyGuestActiveHabitLimit = 3;
 
 export type ActivationDecision =
   | {
@@ -18,7 +20,17 @@ export type ActivationDecision =
       reason: 'active_limit_reached';
     };
 
-export function activeHabitLimitFor(planTier: PlanTier): number {
+export function activeHabitLimitFor(planTier: PlanTier): number;
+/**
+ * @deprecated Only retained while versioned local data is migrated. New runtime
+ * ownership must use an authenticated Free, Lite, or Premium account.
+ */
+export function activeHabitLimitFor(planTier: 'guest'): number;
+export function activeHabitLimitFor(planTier: PlanTier | 'guest'): number {
+  if (planTier === 'guest') {
+    return legacyGuestActiveHabitLimit;
+  }
+
   return activeHabitLimits[planTier];
 }
 
