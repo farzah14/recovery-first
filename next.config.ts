@@ -13,6 +13,7 @@ const baselineSecurityHeaders = [
 const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  devIndicators: false,
   async headers() {
     return [
       {
