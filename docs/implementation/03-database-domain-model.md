@@ -265,7 +265,7 @@ git commit -m "build: add domain and database tooling"
 - Create: `tests/unit/domain/habit-lifecycle.test.ts`
 - Create: `tests/unit/domain/active-slot-policy.test.ts`
 
-- [ ] **Step 1: Write the failing lifecycle test**
+- [x] **Step 1: Write the failing lifecycle test**
 
 Create `tests/unit/domain/habit-lifecycle.test.ts`:
 
@@ -314,7 +314,7 @@ describe('habit lifecycle', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing active-limit test**
+- [x] **Step 2: Write the failing active-limit test**
 
 Create `tests/unit/domain/active-slot-policy.test.ts`:
 
@@ -351,7 +351,7 @@ describe('active slot policy', () => {
 });
 ```
 
-- [ ] **Step 3: Run both tests and confirm failure**
+- [x] **Step 3: Run both tests and confirm failure**
 
 Run:
 
@@ -361,7 +361,7 @@ pnpm exec vitest run tests/unit/domain/habit-lifecycle.test.ts tests/unit/domain
 
 Expected: FAIL because the domain modules do not exist.
 
-- [ ] **Step 4: Implement identity and plan contracts**
+- [x] **Step 4: Implement identity and plan contracts**
 
 Create `src/domain/shared/identity-mode.ts`:
 
@@ -401,7 +401,7 @@ export const synchronizationStates = [
 export type SynchronizationState = (typeof synchronizationStates)[number];
 ```
 
-- [ ] **Step 5: Implement lifecycle rules**
+- [x] **Step 5: Implement lifecycle rules**
 
 Create `src/domain/habits/habit-lifecycle.ts`:
 
@@ -467,7 +467,7 @@ export function canTransitionHabit(
 }
 ```
 
-- [ ] **Step 6: Implement the active-slot policy**
+- [x] **Step 6: Implement the active-slot policy**
 
 Create `src/domain/habits/active-slot-policy.ts`:
 
@@ -520,7 +520,7 @@ export function evaluateActivation({
 }
 ```
 
-- [ ] **Step 7: Run focused tests**
+- [x] **Step 7: Run focused tests**
 
 Run:
 
@@ -531,7 +531,7 @@ pnpm typecheck
 
 Expected: all tests and typecheck pass.
 
-- [ ] **Step 8: Commit domain identity and lifecycle rules**
+- [x] **Step 8: Commit domain identity and lifecycle rules**
 
 Run:
 
