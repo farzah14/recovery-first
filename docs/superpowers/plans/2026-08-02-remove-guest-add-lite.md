@@ -155,7 +155,7 @@
 
 ## Task 8: Align billing, entitlements, analytics, and release evidence
 
-**Task 8 execution status:** Contract and analytics alignment is complete. Provider checkout, webhook reconciliation, downgrade mutation, and production observability remain implementation work in the later billing/security plans and are not fabricated here without provider credentials or their server contracts.
+**Task 8 execution status:** Product mapping, authoritative entitlement-window policy, idempotent/stale billing transitions, normalized provider-event boundary, and billing metadata redaction are implemented and tested. Provider checkout, webhook reconciliation, downgrade mutation, and production observability remain implementation work that requires provider credentials and server integration; they are not fabricated here.
 
 **Files:**
 
@@ -164,8 +164,15 @@
 - Modify: `docs/implementation/10-security-observability-data-lifecycle.md`
 - Modify: `docs/implementation/11-testing-release-production.md`
 - Modify: tier-related analytics schemas and tests
+- Create: `src/domain/billing/product-catalog.ts`
+- Create: `src/domain/billing/transition-policy.ts`
+- Create: `src/domain/billing/normalized-event.ts`
+- Create: `src/lib/payments/payment-provider.ts`
+- Create: `src/lib/payments/redaction.ts`
+- Create: `supabase/migrations/20260803010000_align_paid_tier_entitlement_windows.sql`
+- Create: billing catalog, transition, entitlement-window, and redaction tests
 
-- [ ] Map provider products to Free, Lite, and Premium without granting access from browser state.
+- [x] Map provider products to Free, Lite, and Premium without granting access from browser state.
 - [ ] Implement Lite checkout, cancellation, expiry, refund, and downgrade behavior.
 - [ ] Preserve data when moving Premium → Lite or Lite → Free; pause only over-limit active habits.
 - [x] Ensure analytics uses tier names consistently and never includes habit names or private notes.
