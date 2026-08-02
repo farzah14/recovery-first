@@ -133,7 +133,7 @@ tests/unit/indexed-db/
 - Modify: `pnpm-lock.yaml`
 - Create: `tool/verify-generated-types.mjs`
 
-- [ ] **Step 1: Verify the Plan 02 baseline**
+- [x] **Step 1: Verify the Plan 02 baseline**
 
 Run:
 
@@ -151,7 +151,13 @@ git status --short
 
 Expected: every command exits with status `0` and the working tree is clean.
 
-- [ ] **Step 2: Install exact project dependencies**
+> **Environment note:** On Windows Docker Desktop, `pnpm db:start` intermittently reports auxiliary
+> service health checks (`unhealthy`) during warm-up on the first attempt. Retrying the start brings
+> the full stack to healthy and exits `0`. This is a startup-timing environment flake, not a code
+> defect; the database always reaches `healthy` and `db:reset`, `db:test` (4/4), and `db:stop`
+> pass with a clean working tree.
+
+- [x] **Step 2: Install exact project dependencies**
 
 Run:
 
@@ -162,7 +168,7 @@ pnpm add -D fake-indexeddb@latest
 
 Expected: the packages appear with exact versions in `package.json` and `pnpm-lock.yaml` changes.
 
-- [ ] **Step 3: Add database/domain scripts without replacing existing scripts**
+- [x] **Step 3: Add database/domain scripts without replacing existing scripts**
 
 Run:
 
@@ -190,7 +196,7 @@ node -e "const p=require('./package.json'); for (const s of ['test:domain','test
 
 Expected: command exits with status `0`.
 
-- [ ] **Step 4: Create the generated-type drift verifier**
+- [x] **Step 4: Create the generated-type drift verifier**
 
 Create `tool/verify-generated-types.mjs`:
 
@@ -224,7 +230,7 @@ try {
 }
 ```
 
-- [ ] **Step 5: Verify tooling compiles before schema work**
+- [x] **Step 5: Verify tooling compiles before schema work**
 
 Run:
 
@@ -236,7 +242,7 @@ pnpm typecheck
 
 Expected: all commands pass.
 
-- [ ] **Step 6: Commit tooling**
+- [x] **Step 6: Commit tooling**
 
 Run:
 
