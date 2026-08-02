@@ -157,6 +157,8 @@
 
 **Task 8 execution status:** Product mapping, authoritative entitlement-window policy, idempotent/stale billing transitions, normalized provider-event boundary, and billing metadata redaction are implemented and tested. Provider checkout, webhook reconciliation, downgrade mutation, and production observability remain implementation work that requires provider credentials and server integration; they are not fabricated here.
 
+The checkout service boundary is now implemented and tested; provider price IDs and authenticated server ownership are injected by the future server route.
+
 **Files:**
 
 - Modify: `docs/implementation/08-premium-programs-insights.md`
@@ -169,6 +171,7 @@
 - Create: `src/domain/billing/normalized-event.ts`
 - Create: `src/lib/payments/payment-provider.ts`
 - Create: `src/lib/payments/redaction.ts`
+- Create: `src/features/subscriptions/checkout-service.ts`
 - Create: `supabase/migrations/20260803010000_align_paid_tier_entitlement_windows.sql`
 - Create: billing catalog, transition, entitlement-window, and redaction tests
 
