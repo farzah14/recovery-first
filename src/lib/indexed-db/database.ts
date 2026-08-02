@@ -2,8 +2,13 @@ import Dexie, { type Table } from 'dexie';
 
 import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { isSlotConsumingHabitState } from '@/domain/habits/habit-lifecycle';
-import { migrateVersionOneToTwo } from '@/lib/indexed-db/migrations';
-import { recoveryFirstStoresV1, recoveryFirstStoresV2 } from '@/lib/indexed-db/schema';
+import type { PlanTier } from '@/domain/shared/plan-tier';
+import { migrateVersionOneToTwo, migrateVersionTwoToThree } from '@/lib/indexed-db/migrations';
+import {
+  recoveryFirstStoresV1,
+  recoveryFirstStoresV2,
+  recoveryFirstStoresV3,
+} from '@/lib/indexed-db/schema';
 import type {
   BrowserInstallationRecord,
   DraftRecord,
@@ -13,6 +18,7 @@ import type {
   LocalProfileRecord,
   LocalRecommendationRecord,
   LocalRecoveryPlanRecord,
+  LegacyLocalDataRecord,
   LocalReminderConfigRecord,
   LocalReviewItemRecord,
   LocalSessionRecord,
@@ -22,10 +28,10 @@ import type {
   SyncMetadataRecord,
 } from '@/lib/indexed-db/types';
 
-export class GuestActiveLimitError extends Error {
+export class ActiveLimitError extends Error {
   constructor() {
-    super('guest_active_limit_reached');
-    this.name = 'GuestActiveLimitError';
+    super('active_limit_reached');
+    this.name = 'ActiveLimitError';
   }
 }
 
@@ -45,28 +51,34 @@ export class RecoveryFirstDatabase extends Dexie {
   syncMetadata!: Table<SyncMetadataRecord, string>;
   queryCache!: Table<QueryCacheRecord, string>;
   settings!: Table<SettingRecord, string>;
+  legacyLocalData!: Table<LegacyLocalDataRecord, string>;
 
   constructor(name = 'recovery_first_web') {
     super(name);
 
     this.version(1).stores(recoveryFirstStoresV1);
     this.version(2).stores(recoveryFirstStoresV2).upgrade(migrateVersionOneToTwo);
+    this.version(3).stores(recoveryFirstStoresV3).upgrade(migrateVersionTwoToThree);
   }
 
-  async activateGuestHabit(ownerId: string, habitId: string): Promise<number> {
+  async activateAccountHabit(
+    ownerId: string,
+    planTier: PlanTier,
+    habitId: string,
+  ): Promise<number> {
     return this.transaction('rw', this.habits, async () => {
       const habit = await this.habits.get(habitId);
-      if (!habit || habit.ownerType !== 'guest' || habit.ownerId !== ownerId) {
-        throw new Error('guest_habit_not_found');
+      if (!habit || habit.ownerType !== 'account' || habit.ownerId !== ownerId) {
+        throw new Error('account_habit_not_found');
       }
 
       if (isSlotConsumingHabitState(habit.lifecycleState)) {
-        return this.countGuestActiveHabits(ownerId);
+        return this.countAccountActiveHabits(ownerId);
       }
 
-      const activeCount = await this.countGuestActiveHabits(ownerId);
-      if (activeCount >= activeHabitLimitFor('guest')) {
-        throw new GuestActiveLimitError();
+      const activeCount = await this.countAccountActiveHabits(ownerId);
+      if (activeCount >= activeHabitLimitFor(planTier)) {
+        throw new ActiveLimitError();
       }
 
       await this.habits.update(habitId, {
@@ -79,10 +91,10 @@ export class RecoveryFirstDatabase extends Dexie {
     });
   }
 
-  private async countGuestActiveHabits(ownerId: string): Promise<number> {
+  private async countAccountActiveHabits(ownerId: string): Promise<number> {
     const habits = await this.habits
       .where('[ownerType+ownerId]')
-      .equals(['guest', ownerId])
+      .equals(['account', ownerId])
       .toArray();
 
     return habits.filter(

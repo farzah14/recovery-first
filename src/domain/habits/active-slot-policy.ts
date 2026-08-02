@@ -6,8 +6,6 @@ const activeHabitLimits: Readonly<Record<PlanTier, number>> = {
   premium: 30,
 };
 
-const legacyGuestActiveHabitLimit = 3;
-
 export type ActivationDecision =
   | {
       allowed: true;
@@ -20,17 +18,7 @@ export type ActivationDecision =
       reason: 'active_limit_reached';
     };
 
-export function activeHabitLimitFor(planTier: PlanTier): number;
-/**
- * @deprecated Only retained while versioned local data is migrated. New runtime
- * ownership must use an authenticated Free, Lite, or Premium account.
- */
-export function activeHabitLimitFor(planTier: 'guest'): number;
-export function activeHabitLimitFor(planTier: PlanTier | 'guest'): number {
-  if (planTier === 'guest') {
-    return legacyGuestActiveHabitLimit;
-  }
-
+export function activeHabitLimitFor(planTier: PlanTier): number {
   return activeHabitLimits[planTier];
 }
 

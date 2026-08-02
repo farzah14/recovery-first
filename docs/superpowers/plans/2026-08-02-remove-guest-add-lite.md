@@ -85,13 +85,13 @@
 - Add: `src/features/legacy-local-data/legacy-local-data.ts`
 - Add: `tests/features/legacy-local-data/legacy-local-data.test.ts`
 
-- [ ] Make normal local records account-owned cache/draft/outbox records with an authenticated `ownerId`.
-- [ ] Remove `activateGuestHabit`, `GuestActiveLimitError`, and Guest-only limit enforcement from normal runtime code.
-- [ ] Add an explicit migration marker for pre-change Guest records.
-- [ ] Preserve legacy records until one of two explicit outcomes: transactional account transfer succeeds or the user exports and confirms clearing them.
-- [ ] Never relabel legacy records as cloud-backed Free data before server acknowledgement.
-- [ ] Test reload preservation, transfer retry idempotency, export-before-clear, and no cross-account ownership.
-- [ ] Commit: `refactor: remove guest runtime ownership safely`.
+- [x] Make normal local records account-owned cache/draft/outbox records with an authenticated `ownerId`.
+- [x] Remove `activateGuestHabit`, `GuestActiveLimitError`, and Guest-only limit enforcement from normal runtime code.
+- [x] Add an explicit migration marker for pre-change Guest records.
+- [x] Preserve legacy records until one of two explicit outcomes: transactional account transfer succeeds or the user exports and confirms clearing them.
+- [x] Never relabel legacy records as cloud-backed Free data before server acknowledgement.
+- [x] Test reload preservation, transfer retry idempotency, export-before-clear, and no cross-account ownership.
+- [x] Commit: `refactor: remove guest runtime ownership safely`.
 
 ## Task 5: Make authentication the required application boundary
 
