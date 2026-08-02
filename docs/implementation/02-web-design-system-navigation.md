@@ -3310,7 +3310,7 @@ Run:
 
 ```bash
 temporary_directory="$(mktemp -d)"
-git clone --local . "$temporary_directory/recovery-first-habit-tracker"
+git clone . "$temporary_directory/recovery-first-habit-tracker"
 cd "$temporary_directory/recovery-first-habit-tracker"
 pnpm install --frozen-lockfile
 cp .env.example .env.local
