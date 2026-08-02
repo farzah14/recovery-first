@@ -1198,7 +1198,7 @@ git commit -m "feat: define recovery and entitlement states"
 - Create: `supabase/migrations/20260729011000_habits_sessions_checkins.sql`
 - Create: `supabase/tests/00010_schema_contract.test.sql`
 
-- [ ] **Step 1: Create shared PostgreSQL enums, timestamps, profiles, and browser installations**
+- [x] **Step 1: Create shared PostgreSQL enums, timestamps, profiles, and browser installations**
 
 Create `supabase/migrations/20260729010000_domain_enums_and_profiles.sql`:
 
@@ -1311,7 +1311,7 @@ create index browser_installations_user_last_seen_idx
   on public.browser_installations (user_id, last_seen_at desc);
 ```
 
-- [ ] **Step 2: Create habit, immutable version, session, and check-in tables**
+- [x] **Step 2: Create habit, immutable version, session, and check-in tables**
 
 Create `supabase/migrations/20260729011000_habits_sessions_checkins.sql`:
 
@@ -1491,7 +1491,7 @@ create index check_in_history_check_in_idx
   on public.check_in_history (check_in_id, replaced_at desc);
 ```
 
-- [ ] **Step 3: Write the schema contract test**
+- [x] **Step 3: Write the schema contract test**
 
 Create `supabase/tests/00010_schema_contract.test.sql`:
 
@@ -1529,7 +1529,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 4: Reset and test the schema**
+- [x] **Step 4: Reset and test the schema**
 
 Run:
 
@@ -1541,7 +1541,7 @@ pnpm db:test
 
 Expected: migrations apply from an empty database and pgTAP reports all Foundation plus schema assertions passing.
 
-- [ ] **Step 5: Commit the core schema**
+- [x] **Step 5: Commit the core schema**
 
 Run:
 
