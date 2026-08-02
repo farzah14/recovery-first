@@ -4210,7 +4210,7 @@ git commit -m "feat: add versioned browser local data schema"
 - Create: `docs/architecture/ADR-004-domain-determinism.md`
 - Create: `docs/operations/DATABASE-DEVELOPMENT.md`
 
-- [ ] **Step 1: Replace the Foundation seed with deterministic product fixtures**
+- [x] **Step 1: Replace the Foundation seed with deterministic product fixtures**
 
 Replace `supabase/seed.sql` with:
 
@@ -4366,7 +4366,7 @@ values (
 on conflict (id) do nothing;
 ```
 
-- [ ] **Step 2: Document the IndexedDB decision**
+- [x] **Step 2: Document the IndexedDB decision**
 
 Create `docs/architecture/ADR-003-indexeddb-dexie.md`:
 
@@ -4393,7 +4393,7 @@ Use one Dexie database named `recovery_first_web` per website origin. Schema ver
 - Live queue leadership and synchronization are deferred to Plan 05.
 ```
 
-- [ ] **Step 3: Document deterministic domain computation**
+- [x] **Step 3: Document deterministic domain computation**
 
 Create `docs/architecture/ADR-004-domain-determinism.md`:
 
@@ -4420,7 +4420,7 @@ Implement framework-independent TypeScript domain functions for client and test 
 - Derived metrics can be recomputed from authoritative sessions and check-ins.
 ```
 
-- [ ] **Step 4: Document local database development commands**
+- [x] **Step 4: Document local database development commands**
 
 Create `docs/operations/DATABASE-DEVELOPMENT.md`:
 
@@ -4463,7 +4463,7 @@ pnpm db:stop
 - Never place real personal data, provider payloads, tokens, or secrets in seeds.
 ```
 
-- [ ] **Step 5: Verify deterministic reset and seed data**
+- [x] **Step 5: Verify deterministic reset and seed data**
 
 Run:
 
@@ -4482,7 +4482,7 @@ Expected:
 - generated types remain current;
 - formatting passes.
 
-- [ ] **Step 6: Commit fixtures and architecture records**
+- [x] **Step 6: Commit fixtures and architecture records**
 
 Run:
 
