@@ -785,7 +785,7 @@ git commit -m "feat: define recurrence and session identity"
 - Create: `src/domain/check-ins/metrics.ts`
 - Create: `tests/unit/domain/check-in-metrics.test.ts`
 
-- [ ] **Step 1: Write the failing check-in metric tests**
+- [x] **Step 1: Write the failing check-in metric tests**
 
 Create `tests/unit/domain/check-in-metrics.test.ts`:
 
@@ -831,7 +831,7 @@ describe('check-in metrics', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 Run:
 
@@ -841,7 +841,7 @@ pnpm exec vitest run tests/unit/domain/check-in-metrics.test.ts
 
 Expected: FAIL because the check-in modules do not exist.
 
-- [ ] **Step 3: Implement check-in contracts**
+- [x] **Step 3: Implement check-in contracts**
 
 Create `src/domain/check-ins/check-in.ts`:
 
@@ -885,7 +885,7 @@ export function isSuccessfulOutcome(outcome: CheckInOutcome): boolean {
 }
 ```
 
-- [ ] **Step 4: Implement deterministic metrics**
+- [x] **Step 4: Implement deterministic metrics**
 
 Create `src/domain/check-ins/metrics.ts`:
 
@@ -949,7 +949,7 @@ export function nextManualSkipCounter(
 }
 ```
 
-- [ ] **Step 5: Run focused verification**
+- [x] **Step 5: Run focused verification**
 
 Run:
 
@@ -960,7 +960,7 @@ pnpm typecheck
 
 Expected: all tests and typecheck pass.
 
-- [ ] **Step 6: Commit check-in domain contracts**
+- [x] **Step 6: Commit check-in domain contracts**
 
 Run:
 
