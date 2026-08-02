@@ -2,9 +2,9 @@
 
 > **Execution mode:** Single-agent sequential execution. Use the `executing-plans` workflow. Do not create, delegate to, or dispatch subagents. Complete one task, run its fresh verification commands, commit it, and only then continue. Steps use checkbox (`- [ ]`) syntax for progress tracking.
 
-**Goal:** Deliver the complete browser-local Guest core loop and signed-in-compatible application contracts for creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, and preserving immutable history.
+**Goal:** Deliver the complete authenticated account core loop for Free, Lite, and Premium users: creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, and preserving immutable history.
 
-**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03. Guest mode uses a Dexie-backed repository as the canonical source, while a Supabase-backed repository implements the same interface for later authenticated wiring. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
+**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03A. Supabase is canonical for authenticated account data; Dexie provides account cache, drafts, and pending operations. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, React Hook Form, Zod, `@hookform/resolvers`, Dexie, Supabase PostgreSQL functions and views, TanStack Query contracts, Tailwind CSS, shadcn/ui primitives, Lucide, Vitest, React Testing Library, `fake-indexeddb`, Playwright, pnpm.
 
@@ -21,15 +21,17 @@
 7. `docs/implementation/03-database-domain-model.md`
 8. This plan
 
+**03A amendment:** This file's original Guest-first task examples are superseded. Do not begin this plan until authenticated account routing, Free/Lite/Premium tier contracts, the Lite database migration, and legacy-local recovery boundaries have passed their quality gates. The active limits are Free `5`, Lite `10`, and Premium `30`.
+
 **Prerequisites:**
 
 - Plan 01 Final Acceptance Checklist passes.
 - Plan 02 Final Acceptance Checklist passes.
-- Plan 03 Final Acceptance Checklist passes.
+- Plan 03A account-tier and identity amendment passes.
 - The repository is on a dedicated implementation branch or worktree.
 - `pnpm verify`, `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, and `pnpm build` pass before Task 1.
 
-**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, authentication screens, Guest-to-account transfer, Premium analytics, payment-provider integration, production monitoring, and release operations.
+**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, legacy-local recovery UI, Premium analytics, payment-provider integration, production monitoring, and release operations.
 
 ---
 

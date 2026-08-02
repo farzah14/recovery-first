@@ -2,11 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `executing-plans` to implement this plan task-by-task. This project uses one agent only; do not dispatch subagents. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement monthly and annual website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative Premium entitlement, subscription management, and non-destructive downgrade handling.
+**Goal:** Implement monthly and annual Lite and Premium website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative entitlement, subscription management, and non-destructive downgrade handling.
 
 **Architecture:** Product code depends on a provider-neutral `PaymentProvider` interface. The initial adapter uses Paddle Billing in sandbox and production environments, while domain code consumes normalized billing events rather than Paddle-specific payloads. Checkout attempts are created by the authenticated server, the browser opens Paddle Checkout with a server-created transaction, and Premium capabilities change only after a verified webhook or authoritative provider reconciliation updates PostgreSQL.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase Auth and PostgreSQL, Supabase Edge Functions, Paddle Node.js SDK, Paddle.js, React Hook Form, TanStack Query, Vitest, React Testing Library, Playwright, pgTAP, axe-core, pnpm.
+
+**03A amendment:** Billing must support both paid tiers. Free is the default account tier; Lite and Premium entitlements are resolved only from verified backend events. The active limits are Free `5`, Lite `10`, and Premium `30`; any original Premium-only task examples must be expanded to cover Lite before execution.
 
 ---
 
@@ -21,7 +23,7 @@ Begin only after Plans 01–08 are verified complete. The repository must alread
 - PostgreSQL `entitlements`, private `payment_events`, private `idempotency_records`, private `audit_events`, and subscription status read views;
 - the Plan 08 capability contract in `src/domain/entitlements/` and server-side capability resolution;
 - Premium routes and actions that already reject missing authoritative capability;
-- active-habit limits of 3 for Guest, 5 for Free, and 20 for Premium;
+- active-habit limits of 5 for Free, 10 for Lite, and 30 for Premium;
 - lifecycle, versioning, Recovery, Weekly Review, Premium program, reminder, and Insights data that must survive downgrade;
 - accessible buttons, cards, banners, dialogs, tables, skeletons, focus management, and responsive application shell.
 

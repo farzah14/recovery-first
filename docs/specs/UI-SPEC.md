@@ -123,7 +123,7 @@ The user must understand what will happen before:
 - creating a new habit version;
 - applying a recommendation;
 - enabling browser notifications;
-- merging Guest data;
+- recovering legacy local data;
 - confirming a subscription;
 - cancelling renewal;
 - exporting or deleting data.
@@ -764,7 +764,7 @@ Mobile stacks title, supporting text, and full-width primary action when necessa
 Profile menu includes:
 
 - avatar;
-- display name or Guest label;
+- display name;
 - plan badge;
 - Profile;
 - Subscription;
@@ -772,7 +772,7 @@ Profile menu includes:
 - Help;
 - Sign In or Sign Out.
 
-The menu must not show Sign Out to a Guest profile.
+The menu always shows Sign Out for authenticated account profiles.
 
 ## 10.7 Global banners
 
@@ -951,8 +951,8 @@ Badge structure:
 Supported badges include:
 
 ```text
-Guest
 Free
+Lite
 Premium
 Trial
 Active
@@ -1359,7 +1359,7 @@ Display a focused session-expired page or dialog with:
 
 - explanation;
 - Sign In action;
-- Guest continuation only when safe;
+- legacy local-data recovery only after authentication;
 - preservation statement for unsynchronized local data;
 - no automatic destructive redirect.
 
@@ -1432,7 +1432,7 @@ Each step uses a small diagram and concise explanation.
 
 Contains:
 
-- Guest, Free, and Premium comparison;
+- Free, Lite, and Premium comparison;
 - monthly and annual billing selector;
 - 14-day trial disclosure;
 - exact post-trial price placeholder populated from authoritative configuration;
@@ -1464,8 +1464,8 @@ Centered responsive state with:
 Possible transitions:
 
 - restore signed-in account;
-- restore Guest profile;
-- create new Guest profile;
+- restore signed-in account;
+- recover legacy local data;
 - recover from offline cache;
 - show session-expired state.
 
@@ -1481,7 +1481,7 @@ Content:
 - divider;
 - email field;
 - Send magic link or OTP;
-- Guest continuation where allowed;
+- no unauthenticated application continuation;
 - privacy and terms links.
 
 ## 15.3 AUTH-003 Email sent
@@ -1509,7 +1509,7 @@ States:
 - offline;
 - unexpected failure.
 
-## 15.5 AUTH-005 Guest data transfer
+## 15.5 AUTH-005 Legacy local data recovery
 
 Displays:
 
@@ -1520,7 +1520,7 @@ Displays:
 - transfer progress;
 - recoverable failure state.
 
-No Guest data is deleted before verified transfer completion.
+No legacy local data is deleted before verified transfer or export completion.
 
 ---
 
@@ -2079,9 +2079,9 @@ Contains:
 
 - avatar;
 - display name;
-- email or Guest state;
+- email and account state;
 - plan;
-- account creation prompt for Guest;
+- legacy local data recovery or export prompt where applicable;
 - subscription management;
 - sign-out action for accounts.
 
@@ -2563,7 +2563,7 @@ Visual regression coverage must include at minimum:
 ## 28.4 Screens
 
 - [ ] Public landing, features, how-it-works, pricing, help, and status paths are designed.
-- [ ] Guest entry and account authentication states are designed.
+- [ ] Account entry and authentication states are designed.
 - [ ] Today includes empty, complete, offline, pending-sync, and sync-failed states.
 - [ ] Habit creation includes templates, custom definition, targets, schedule, reminder, summary, and active-limit resolution.
 - [ ] Habit Detail includes Overview, History, Insights, and Versions.

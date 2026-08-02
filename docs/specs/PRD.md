@@ -52,7 +52,7 @@ The core interaction loop is:
 >
 > Design → Do → Check-in → Identify friction → Adapt → Recover
 
-The MVP is guest-first. A user can create and track habits in a browser without creating an account. Guest data is stored in that browser and remains available offline on the same browser profile. Accounts add cloud backup, cross-device synchronization, and secure recovery. Premium unlocks adaptive programs, advanced analysis, and higher active-habit limits. The product must remain useful on the Free tier; the core recovery philosophy cannot be fully paywalled.
+The MVP is account-first. A user authenticates before entering the application and receives a Free account with cloud backup, cross-device synchronization, and secure recovery. Lite expands capacity and recovery guidance; Premium unlocks adaptive programs, advanced analysis, and the highest active-habit limit. The product must remain useful on the Free tier; the core recovery philosophy cannot be fully paywalled.
 
 ## 1.1 Product thesis
 
@@ -70,7 +70,7 @@ The MVP is guest-first. A user can create and track habits in a browser without 
 
 ## 1.2 MVP outcome
 
-A first-time visitor should be able to create a habit, understand Full / Minimum / Skipped, optionally configure reminders, complete check-ins, recover after repeated misses, and review progress without creating an account.
+A first-time visitor should be able to create an account, create a habit, understand Full / Minimum / Skipped, optionally configure reminders, complete check-ins, recover after repeated misses, and review progress.
 
 A returning user should be able to understand why the system is making a recommendation and retain control over whether that recommendation changes the habit.
 
@@ -109,9 +109,9 @@ Create a personal behavior system that helps users build realistic routines, rec
 
 - Keep all major habit changes reversible through version history.
 
-- Preserve guest progress in the same browser and provide a safe upgrade path to an account.
+- Preserve signed-in progress across supported browsers and provide a safe recovery path for legacy browser-local data.
 
-- Convert users to accounts and Premium through demonstrated value rather than forced onboarding.
+- Convert Free users to Lite and Premium through demonstrated value rather than deceptive or punitive prompts.
 
 - Deliver a consistent experience across desktop, laptop, tablet, and mobile browsers.
 
@@ -185,9 +185,9 @@ An individual who wants to build one or more habits but has difficulty with cons
 
 - No recommendation presented as a psychological diagnosis.
 
-- No hidden conversion of guest data into an account without explicit user action.
+- No hidden transfer of legacy local data into an account without explicit user action.
 
-- No misleading claim that guest data is backed up or available across devices.
+- No misleading claim that legacy local data is backed up or available across devices.
 
 - No payment-state change based only on client-side browser data.
 
@@ -199,15 +199,15 @@ An individual who wants to build one or more habits but has difficulty with cons
 
 | **User state** | **Active habits** | **Storage / synchronization** | **Premium access** |
 |---|---:|---|---|
-| Guest | 3 | Browser-local only; no cross-device backup | Preview only |
-| Free account | 5 | Cloud backup and basic cross-device synchronization | Preview only |
-| Premium | 20 | Cloud backup and synchronization | Full Premium programs and analysis |
+| Free account | 5 | Cloud backup and basic cross-device synchronization | Basic recovery and review |
+| Lite account | 10 | Cloud backup and cross-device synchronization | Enhanced recovery and capacity analysis |
+| Premium account | 30 | Cloud backup and synchronization | Full Premium programs and analysis |
 
 Paused, Stopped, Completed, Archived, Trash, and Decision Required items do not consume active-habit slots. Draft handling must not allow users to bypass active limits; a Draft becomes slot-consuming only when activated.
 
 ## 4.2 Feature entitlement matrix
 
-| **Capability** | **Guest** | **Free** | **Premium** |
+| **Capability** | **Free** | **Lite** | **Premium** |
 |---|---|---|---|
 | Basic templates | Yes | Yes | Yes |
 | Custom habits | Yes | Yes | Yes |
@@ -215,20 +215,22 @@ Paused, Stopped, Completed, Archived, Trash, and Decision Required items do not 
 | In-app reminder schedule | Yes | Yes | Yes |
 | Web Push reminders | Where browser support and permission allow | Where browser support and permission allow | Where browser support and permission allow |
 | Email reminder fallback | No | Basic | Configurable |
-| Recovery Mode | Basic | Basic | Enhanced guidance |
-| Weekly Review | Basic | Basic | Advanced insights |
+| Recovery Mode | Basic | Enhanced guidance | Full adaptive guidance |
+| Weekly Review | Basic | Capacity analysis | Advanced insights |
 | Adaptive program | Preview | Preview | Yes |
-| Adaptive reminder analysis | No | No | Yes |
-| Cloud backup / synchronization | No | Yes | Yes |
-| Active-habit limit | 3 | 5 | 20 |
+| Adaptive reminder analysis | No | Basic capacity analysis | Yes |
+| Cloud backup / synchronization | Yes | Yes | Yes |
+| Active-habit limit | 5 | 10 | 30 |
 
-## 4.3 Premium commercial model
+## 4.3 Free, Lite, and Premium commercial model
 
-- Monthly and annual subscription plans.
+- Free is an account tier with no subscription charge.
 
-- A 14-day trial is available for either plan.
+- Lite and Premium are available as monthly and annual subscription plans.
 
-- The user must create or sign in to an account before starting a trial or purchasing.
+- A 14-day trial is available for either paid plan.
+
+- The user must create or sign in to an account before using the application or starting a trial.
 
 - The user must explicitly choose a plan; no plan is selected by default.
 
@@ -238,7 +240,11 @@ Paused, Stopped, Completed, Archived, Trash, and Decision Required items do not 
 
 - The trial converts to the selected paid plan unless cancelled under the disclosed subscription terms.
 
-- Illustrative pricing hypotheses are $5.99 per month and $47.99 per year. Final pricing is not approved by this PRD.
+- Lite pricing is $5 per month or $48 per year.
+
+- Premium pricing is $10 per month or $96 per year.
+
+- Final provider product identifiers remain configured in the billing implementation, not in browser code.
 
 - The payment architecture must allow the payment provider to be changed without rewriting product entitlement rules.
 
@@ -304,7 +310,7 @@ Delete Account remains inside Account Settings and requires a separate confirmat
 
 ## 5.4 Core journey: first habit
 
-1. Visit the website as Guest.
+1. Visit the website and create or sign in to an account.
 2. Choose a goal category.
 3. Select a basic template or create a custom habit.
 4. Define the Normal version and Minimum version.
@@ -314,13 +320,13 @@ Delete Account remains inside Account Settings and requires a separate confirmat
 8. Review the configuration and create the habit.
 9. Arrive on Today and receive non-blocking guidance for the first check-in.
 
-## 5.5 Core journey: guest account conversion
+## 5.5 Core journey: legacy local data recovery
 
-1. The Guest chooses cloud backup, reaches the Guest active-habit limit, starts a trial, or explicitly selects Sign In.
-2. The product explains the benefit and the browser-local nature of current Guest data.
-3. The user authenticates with Google or email magic link / OTP.
+1. The user signs in while a legacy browser-local dataset is detected.
+2. The product explains the dataset's local-only status and offers transfer or export.
+3. The user confirms the transfer with Google or email magic link / OTP.
 4. The system validates the callback and resumes the original context.
-5. Guest data is copied to the account through a transactional transfer.
+5. Legacy local data is copied to the account through a transactional transfer.
 6. If cloud data already exists, the user receives a safe merge summary before confirmation.
 7. Browser-local data is retained until the server confirms a successful transfer.
 
@@ -336,7 +342,7 @@ Delete Account remains inside Account Settings and requires a separate confirmat
 
 ## 5.7 Core journey: Premium preview
 
-1. A Guest or Free user opens Premium Programs.
+1. A Free or Lite user opens Premium Programs.
 2. Locked programs remain visible with Preview actions.
 3. The user sees description, benefits, and Days 1–3.
 4. The user simulates Full, Minimum, or Skipped outcomes.
@@ -352,7 +358,7 @@ Delete Account remains inside Account Settings and requires a separate confirmat
 4. The user confirms checkout.
 5. The payment provider completes or redirects the user back to the website.
 6. The browser shows a pending state until the backend verifies the authoritative payment event.
-7. Premium is enabled only after entitlement confirmation.
+7. Lite or Premium is enabled only after entitlement confirmation.
 8. The subscription page displays status, next billing or expiry date, plan management, cancellation, and refresh-status actions.
 
 ## 5.9 Core journey: temporary offline use
@@ -377,15 +383,15 @@ The product shall provide public Landing, Pricing, Sign In, Help, Privacy, Terms
 
 ### FR-PUB-02 — Application entry
 
-The primary Start action shall allow the visitor to continue as Guest or authenticate.
+The primary Start action shall allow the visitor to create or sign in to an account.
 
-**Acceptance:** Continue as Guest does not require email, payment, or browser-notification permission.
+**Acceptance:** Public pages explain that account creation is required before entering private application routes.
 
-### FR-ONB-01 — Guest-first entry
+### FR-ONB-01 — Account-first entry
 
-The application shall allow full basic onboarding and habit tracking without account creation.
+The application shall require an authenticated account before private onboarding and habit tracking.
 
-**Acceptance:** A first-time visitor can create and check in to a habit without authentication; after the initial page load, supported Guest actions continue during temporary connectivity loss.
+**Acceptance:** A first-time visitor is sent through account creation or sign-in, receives a Free profile, and can then create and check in to a habit.
 
 ### FR-ONB-02 — Progressive habit wizard
 
@@ -395,7 +401,7 @@ The first-habit wizard shall collect goal, habit/template, Normal version, Minim
 
 ### FR-ONB-03 — Contextual account request
 
-The application shall request account creation only when the user seeks cloud backup/synchronization, exceeds the Guest limit, starts a Premium trial/purchase, configures account-only email reminders, or explicitly chooses Sign In.
+The application shall resolve the account and entitlement before private application access; it shall request upgrades only when the user seeks Lite or Premium capabilities.
 
 **Acceptance:** Closing the account prompt returns the user to the prior context without data loss.
 
@@ -405,11 +411,11 @@ The Today page shall display non-blocking interactive guidance for Full, Minimum
 
 **Acceptance:** The guide can be skipped, does not return automatically after completion, and remains available from Help.
 
-### FR-ONB-05 — Guest storage disclosure
+### FR-ONB-05 — Legacy local data disclosure
 
-The product shall explain that Guest data is stored only in the current browser profile and may be lost if browser data is cleared.
+The product shall explain that legacy browser-local data is not cloud-backed and may be lost if browser data is cleared.
 
-**Acceptance:** The disclosure appears during Guest onboarding and before any operation that could remove local data.
+**Acceptance:** The disclosure appears before transfer, export, or clearing of legacy local data.
 
 ### FR-ONB-06 — Authentication methods
 
@@ -439,15 +445,15 @@ A habit may include cue/context, Normal version, Minimum version, fallback, freq
 
 ### FR-HAB-03 — Basic templates
 
-Basic templates shall remain available to Guest and Free users and demonstrate Normal, Minimum, cue, and fallback concepts.
+Basic templates shall remain available to Free, Lite, and Premium users and demonstrate Normal, Minimum, cue, and fallback concepts.
 
 **Acceptance:** A basic template is editable before activation and does not require Premium.
 
 ### FR-HAB-04 — Active-limit enforcement
 
-The system shall enforce limits of 3 Guest, 5 Free, and 20 Premium active habits.
+The system shall enforce limits of 5 Free, 10 Lite, and 30 Premium active habits.
 
-**Acceptance:** When the limit is reached, the Add flow explains the limit and offers pause, account creation, upgrade, or draft actions as applicable.
+**Acceptance:** When the limit is reached, the Add flow explains the current tier limit and offers pause, upgrade, or draft actions as applicable.
 
 ### FR-HAB-05 — Draft preservation
 
@@ -765,7 +771,7 @@ Premium programs shall begin with a structured 7-, 14-, or 30-day plan and provi
 
 ### FR-PRG-02 — Free preview visibility
 
-Guest and Free users shall see Premium Programs with a lock indicator and Preview action.
+Free and Lite users shall see Premium Programs with a lock indicator and Preview action.
 
 **Acceptance:** The catalogue does not falsely imply that a locked program is active.
 
@@ -871,7 +877,7 @@ After a successful prior load, the website shall provide a usable cached applica
 
 ### FR-OFF-02 — Local pending queue
 
-Supported Guest and signed-in actions shall be stored locally when connectivity is unavailable.
+Supported signed-in actions shall be stored locally when connectivity is unavailable.
 
 **Acceptance:** Pending check-ins and approved draft changes survive refresh and browser restart in the same browser profile.
 
@@ -901,11 +907,11 @@ Authenticated users shall be able to request an export of their account data in 
 
 **Acceptance:** Export includes habits, versions, sessions, check-ins, recommendations, Recovery history, subscription status history, and relevant settings, excluding secrets and internal security data.
 
-### FR-DAT-02 — Guest export
+### FR-DAT-02 — Legacy local data export
 
-Guest users shall be able to export locally stored habit data before clearing browser storage.
+Users with legacy local data shall be able to export locally stored habit data before clearing browser storage.
 
-**Acceptance:** Guest export works without creating an account where technically possible in the current browser.
+**Acceptance:** Legacy local data export works before transfer or clearing and does not claim cloud authority.
 
 ### FR-DAT-03 — Account deletion
 
@@ -913,9 +919,9 @@ Authenticated users shall be able to initiate account deletion through Account S
 
 **Acceptance:** The product explains the deletion lifecycle, subscription consequences, retention exceptions, and irreversible effects before confirmation.
 
-### FR-DAT-04 — Clear local Guest data
+### FR-DAT-04 — Clear legacy local data
 
-Guest users shall be able to clear all browser-local product data through Settings.
+Users shall be able to clear legacy browser-local product data through Settings.
 
 **Acceptance:** The action requires explicit confirmation and provides an export opportunity before irreversible deletion.
 
@@ -995,8 +1001,8 @@ Guest users shall be able to clear all browser-local product data through Settin
 
 | **Entity** | **Purpose** | **Key relationships** |
 |---|---|---|
-| User / Guest Profile | Identity, plan, settings, timezone, quiet hours | Owns habits and entitlements |
-| Browser Installation | Local browser identity, capability, push subscription, queue ownership | Belongs to Guest or account context |
+| Account Profile | Identity, plan, settings, timezone, quiet hours | Owns habits and entitlements |
+| Browser Installation | Local browser identity, capability, push subscription, queue ownership | Belongs to an authenticated account |
 | Habit | Stable identity across redesigns | Has versions, sessions, lifecycle state |
 | Habit Version | Immutable approved configuration snapshot | Generates future sessions |
 | Session | One eligible scheduled occurrence | Has status and timezone snapshot |
@@ -1006,7 +1012,7 @@ Guest users shall be able to clear all browser-local product data through Settin
 | Review Item | Weekly or contextual attention item | May reference recommendation |
 | Reminder Configuration | Channel, schedule, quiet hours, capability state | Belongs to habit and installation/account |
 | Pending Operation | Local offline action awaiting synchronization | References one idempotency key |
-| Subscription Entitlement | Backend-authoritative Premium state | Controls feature access |
+| Subscription Entitlement | Backend-authoritative Lite or Premium state | Controls feature access |
 | Payment Event | Signed provider event and processing result | Updates entitlement audit trail |
 | Change History | Version and settings decisions | Supports restore/revert |
 
@@ -1024,15 +1030,15 @@ Guest users shall be able to clear all browser-local product data through Settin
 
 - Version identifiers are stable across offline retries and cloud synchronization.
 
-## 8.3 Guest browser storage
+## 8.3 Signed-in browser cache and legacy local data
 
-- Guest habits, versions, sessions, check-ins, drafts, settings, recommendations, and pending operations are stored in browser-managed local storage designed for structured application data.
+- Signed-in habits, versions, sessions, check-ins, drafts, settings, recommendations, and pending operations use browser-managed IndexedDB as a cache, draft store, and pending-operation store.
 
-- Guest data is scoped to the current browser profile and origin.
+- Account-local records are scoped to the authenticated account and browser installation.
 
-- Private/incognito browsing, browser-data clearing, storage eviction, profile deletion, or device loss may remove Guest data.
+- Private/incognito browsing, browser-data clearing, storage eviction, profile deletion, or device loss may remove local cache and draft data, but PostgreSQL remains canonical for signed-in records.
 
-- The product shall provide clear account-conversion and export paths but shall not imply that Guest data is cloud-backed.
+- Browser data from a pre-account legacy version is never presented as cloud-backed Free data. The product provides an explicit transfer or export path before any legacy local data is cleared.
 
 ## 8.4 Signed-in synchronization model
 
@@ -1048,11 +1054,11 @@ Guest users shall be able to clear all browser-local product data through Settin
 
 - Entitlement requires online backend reconciliation; a cached entitlement may be used only under an explicitly defined grace policy.
 
-## 8.5 Guest-to-account data transfer
+## 8.5 Legacy local data transfer
 
-- Local habits, versions, sessions, check-ins, reminder settings, recommendations, drafts, and relevant settings are transferred to the new account.
+- Local habits, versions, sessions, check-ins, reminder settings, recommendations, drafts, and relevant settings from an older browser-local dataset may be transferred to the signed-in account.
 
-- Migration is transactional from the user's perspective: either the account confirms the imported dataset or the Guest dataset remains intact for retry.
+- Migration is transactional from the user's perspective: either the account confirms the imported dataset or the legacy local dataset remains intact for retry.
 
 - If account data already exists, the product presents a safe merge path rather than silently replacing either dataset.
 
@@ -1136,7 +1142,7 @@ Unsupported browsers receive a clear compatibility message and access to export,
 
 - Subscription entitlement must be reconciled with signed backend payment events.
 
-- Version creation, check-in edits, guest data transfer, and payment-event handling require transactional safeguards.
+- Version creation, check-in edits, legacy local data transfer, and payment-event handling require transactional safeguards.
 
 - Offline queue processing must survive refresh and browser restart in the same profile.
 
@@ -1231,7 +1237,7 @@ The product should optimize for sustainable eligible-session success and success
 | Post-recovery retention | Habit still active 14 days after Recovery | Measures durable return |
 | Recommendation acceptance | Apply or Customize / recommendations viewed | Measures relevance and trust |
 | Automatic Skipped rate | Automatic Skipped / eligible sessions | Measures check-in friction |
-| Guest-to-account conversion | Guest profiles converted to accounts | Measures backup/synchronization value |
+| Legacy data recovery | Legacy local datasets transferred or exported | Measures continuity and backup value |
 | Offline queue success rate | Pending operations synchronized successfully | Measures resilience quality |
 | Trial-to-paid conversion | Paid starts / trials started | Measures Premium value |
 
@@ -1253,7 +1259,7 @@ The product should optimize for sustainable eligible-session success and success
 
 - Offline queue failure, duplicate-prevention, and conflict rates.
 
-- Authentication callback failure and guest data-transfer failure rates.
+- Authentication callback failure and legacy data-transfer failure rates.
 
 ## 10.4 Event taxonomy direction
 
@@ -1292,19 +1298,19 @@ Analytics events must not include:
 
 # 11. Acceptance Criteria by Epic
 
-## 11.1 Epic A — Public website and Guest habit tracking
+## 11.1 Epic A — Public website and account habit tracking
 
 - A visitor can access Landing, Pricing, Help, Privacy, Terms, Cookie, and Refund pages without authentication.
 
-- A new user can create up to three active habits without authentication.
+- A new user authenticates before entering the application and receives a Free account with up to five active habits.
 
-- Refreshing and reopening the same browser profile preserves Guest habits, sessions, and check-ins.
+- Refreshing and reopening the same browser profile restores the signed-in account cache while PostgreSQL remains canonical.
 
-- The product clearly states that Guest data is browser-local and not cross-device backed up.
+- The product clearly distinguishes local cache from cloud-backed account data.
 
 - Full and Minimum are available as immediate check-in actions.
 
-- Supported Guest actions remain available during temporary connectivity loss after the application has loaded previously.
+- Supported signed-in actions remain available from the local cache during temporary connectivity loss after the application has loaded previously.
 
 ## 11.2 Epic B — Flexible metrics
 
@@ -1344,15 +1350,15 @@ Analytics events must not include:
 
 - Check-in Review evaluates web and email reminder capability rather than assuming native notification support.
 
-## 11.5 Epic E — Authentication, backup, and guest conversion
+## 11.5 Epic E — Authentication, backup, and legacy data recovery
 
-- A Guest can authenticate with Google or email magic link / OTP.
+- A user can authenticate with Google or email magic link / OTP before entering the application.
 
 - Authentication returns the user to the initiating context.
 
-- Guest data remains intact until the cloud transfer succeeds.
+- Legacy browser-local data remains intact until an explicit transfer or export succeeds.
 
-- Existing cloud data is never silently replaced by Guest data.
+- Existing cloud data is never silently replaced by legacy browser-local data.
 
 - Signed-in data is protected through account-scoped authorization and Row Level Security.
 
@@ -1360,7 +1366,7 @@ Analytics events must not include:
 
 ## 11.6 Epic F — Premium and subscription
 
-- A Guest can preview Premium programs without creating an account.
+- Free and Lite users can preview Premium programs without receiving Premium access.
 
 - A trial cannot start until an account exists and a plan is explicitly selected.
 
@@ -1368,7 +1374,7 @@ Analytics events must not include:
 
 - Cancellation retains entitlement until the authoritative expiry.
 
-- Downgrade preserves all history and guides the user to five active habits.
+- Downgrade preserves all history and guides the user to the active limit of the selected lower tier: 10 for Lite or 5 for Free.
 
 - Refresh Status reconciles entitlement without duplicating the subscription.
 
@@ -1416,7 +1422,7 @@ Analytics events must not include:
 
 - Public Landing, Pricing, Help, and required legal pages.
 
-- Guest-first onboarding and browser-local persistence.
+- Authenticated Free onboarding and account-backed persistence.
 
 - Basic templates and custom habit wizard.
 
@@ -1434,7 +1440,7 @@ Analytics events must not include:
 
 - Google and email authentication.
 
-- Cloud backup, basic cross-device synchronization, safe guest data transfer, and offline pending queue.
+- Cloud backup, basic cross-device synchronization, safe legacy-local data recovery, and offline pending queue.
 
 - Premium program preview simulation.
 
@@ -1449,10 +1455,10 @@ Analytics events must not include:
 | **Phase** | **Scope** | **Exit criterion** |
 |---|---|---|
 | 1. Web foundation | Next.js shell, environments, design tokens, authentication foundation, Supabase local setup | Verified local, preview, and production configuration boundaries |
-| 2. Core tracking | Guest storage, wizard, Today, check-ins, metrics | Guest completes a full weekly loop in one browser |
+| 2. Core tracking | Account storage, wizard, Today, check-ins, metrics | A Free account completes a full weekly loop across supported browsers |
 | 3. Lifecycle | Habits, versions, pause/stop/trash, history | No destructive change loses history |
 | 4. Recovery and review | Recovery, Weekly Review, Check-in Review | All trigger and exclusion rules pass |
-| 5. Account and synchronization | Authentication, guest data transfer, cloud backup, conflict handling, multiple tabs | Guest data transfers safely and signed-in state synchronizes idempotently |
+| 5. Account and synchronization | Authentication, legacy-local data recovery, cloud backup, conflict handling, multiple tabs | Signed-in state synchronizes idempotently and legacy data is recoverable |
 | 6. Reminders and offline resilience | Web Push, email fallback, quiet hours, service worker, pending queue | Supported actions remain safe through connectivity interruption |
 | 7. Premium programs | Catalogue, preview simulation, adaptive programs | Preview and real program remain clearly separated |
 | 8. Commerce and release | Checkout, webhooks, entitlement, downgrade, analytics, observability, QA | Authoritative payment state and product access remain consistent |
@@ -1489,7 +1495,7 @@ Analytics events must not include:
 | Free tier feels incomplete | Low trust and conversion | Keep core templates, check-ins, Recovery, and Weekly Review useful |
 | Premium preview gives too little or too much | Low conversion or product leakage | Test three-day simulation depth and CTA timing |
 | Reminder fatigue | Users block notifications or unsubscribe | Contextual permission, one optional follow-up, quiet hours, and reduction trials |
-| Browser storage is cleared | Guest data loss | Clear disclosure, export, contextual account conversion, and safe data transfer |
+| Browser storage is cleared | Legacy local data loss | Clear disclosure, export, and safe data transfer |
 | Web Push is unavailable or unreliable | Missed reminders | In-app state, email fallback, capability messaging, and no guaranteed-delivery claim |
 | Offline queue creates duplicates | Metric corruption | Stable IDs, idempotency keys, one queue worker, and backend constraints |
 | Multiple tabs create stale writes | Lost or conflicting configuration | Revision checks, cross-tab coordination, and recoverable conflict handling |
@@ -1524,7 +1530,7 @@ Analytics events must not include:
 | One recommendation improves trust | Change one variable at a time | Acceptance, customization, and revert rates |
 | Three-day Premium simulation demonstrates value | Days 1–3 interactive | Preview completion and View Plans conversion |
 | Fixed weekly review is easier to build as a routine | Default Sunday | Review completion and rescheduling behavior |
-| Browser-local Guest mode increases activation | No account required for first value | Guest activation and later account conversion |
+| Account-first onboarding reduces activation | Authentication adds first-use friction | Account completion, first habit activation, and first check-in |
 | Email fallback improves reminder reliability | Available to signed-in users | Reminder engagement without excessive unsubscribe rate |
 | Responsive desktop navigation improves review behavior | Persistent sidebar on larger screens | Review completion and route discoverability |
 
@@ -1540,7 +1546,7 @@ Analytics events must not include:
 
 - Hosting and deployment: Vercel.
 
-- Guest persistence: browser-local structured storage.
+- Account persistence: Supabase PostgreSQL canonical data with IndexedDB cache, drafts, and pending operations.
 
 - Signed-in canonical data: Supabase PostgreSQL with browser cache and pending-operation queue.
 
@@ -1586,7 +1592,10 @@ Analytics events must not include:
 | Recovery Mode | Short guided plan after three consecutive Manual Skipped sessions. |
 | Check-in Review | A review triggered by repeated Automatic Skipped sessions. |
 | Habit Version | Immutable configuration snapshot created by material changes or restore. |
-| Guest | An unauthenticated browser-local user context. |
+| Free | An authenticated account with the basic cloud-backed capability set. |
+| Lite | An authenticated account with expanded capacity and enhanced recovery capability. |
+| Premium | An authenticated account with the full paid capability set. |
+| Legacy local dataset | Browser-local records created before the account-only application boundary. |
 | Browser Installation | One browser profile and origin storing local state and capability information. |
 | Pending Operation | A local action waiting for safe cloud synchronization. |
 | Entitlement | Backend-authoritative record of feature access. |
@@ -1604,11 +1613,11 @@ Analytics events must not include:
 >
 > 3 consecutive Manual Skipped → Recovery recommendation → user approves/customizes/keeps current → 3 scheduled recovery sessions → 2/3 success returns to Normal target → 0–1/3 creates lighter second plan → second failure creates Needs Review.
 
-## 14.4 Reference flow — Guest account conversion
+## 14.4 Reference flow — Legacy local data recovery
 
-> **Guest conversion flow**
+> **Legacy data recovery flow**
 >
-> Guest selects cloud-backed action → authentication → callback validation → local dataset inventory → optional merge summary → transactional import → backend confirmation → local Guest data retained until success → account context becomes active.
+> User authenticates → callback validation → legacy local dataset inventory → optional merge summary → transactional import or export → backend confirmation → legacy local data retained until success → account cache becomes active.
 
 ## 14.5 Reference flow — Offline check-in
 
@@ -1620,7 +1629,7 @@ Analytics events must not include:
 
 > **Premium expiry flow**
 >
-> Backend entitlement expires → user selects up to 5 active habits → remaining active habits become Paused → adaptive programs enter Decision Required → user chooses Continue as Static or Pause → no history is deleted.
+> Backend entitlement expires → user selects up to the active limit of the new tier (10 for Lite or 5 for Free) → remaining active habits become Paused → adaptive programs enter Decision Required → user chooses Continue as Static or Pause → no history is deleted.
 
 ## 14.7 Reference flow — Website payment
 
@@ -1636,7 +1645,7 @@ Analytics events must not include:
 
 - UX flows cover desktop, tablet, mobile web, empty, offline, error, locked, payment, authentication, and downgrade states.
 
-- Technical design resolves identity, guest storage, synchronization, multiple tabs, Web Push, email reminders, security, and entitlement architecture.
+- Technical design resolves account identity, local cache, synchronization, multiple tabs, Web Push, email reminders, security, and entitlement architecture.
 
 - Analytics events, cookie handling, privacy review, and legal pages are approved before production release.
 
