@@ -1,19 +1,36 @@
 import { expect, test } from '@playwright/test';
 
+const mobileViewports = [
+  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 834, height: 1112 },
+] as const;
+
+const desktopViewports = [
+  { name: 'laptop', width: 1280, height: 800 },
+  { name: 'desktop', width: 1440, height: 1024 },
+  { name: 'wide', width: 1728, height: 1117 },
+] as const;
+
 test.describe('Responsive Navigation', () => {
-  test('displays sidebar navigation on desktop viewports', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.goto('/app/today');
+  for (const viewport of desktopViewports) {
+    test(`displays the sidebar at ${viewport.name} width`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/app/today');
 
-    const sidebar = page.getByTestId('application-sidebar');
-    await expect(sidebar).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Today' })).toBeVisible();
-  });
+      await expect(page.getByTestId('application-sidebar')).toBeVisible();
+      await expect(page.getByTestId('mobile-bottom-navigation')).toBeHidden();
+      await expect(page.getByRole('link', { name: 'Today' })).toBeVisible();
+    });
+  }
 
-  test('displays top app bar and mobile navigation on mobile viewports', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/app/today');
+  for (const viewport of mobileViewports) {
+    test(`displays bottom navigation at ${viewport.name} width`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/app/today');
 
-    await expect(page.getByRole('heading', { level: 1, name: 'RecoveryFirst' })).toBeVisible();
-  });
+      await expect(page.getByTestId('application-sidebar')).toBeHidden();
+      await expect(page.getByTestId('mobile-bottom-navigation')).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'RecoveryFirst' })).toBeVisible();
+    });
+  }
 });

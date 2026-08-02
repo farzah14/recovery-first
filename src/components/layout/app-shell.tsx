@@ -28,6 +28,7 @@ import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
 import { addHabitToSync, getTodayDateStr } from '@/lib/storage/habits-sync';
 
 const sidebarCollapsedStorageKey = 'recovery-first.sidebar-collapsed';
+const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
 
 export interface DayOverview {
   day: string;
@@ -62,6 +63,9 @@ export function AppShell({
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [resolvedCurrentDate, setResolvedCurrentDate] = useState(
+    currentDate ?? DESIGN_REFERENCE_DATE,
+  );
 
   useEffect(() => {
     const persisted = window.localStorage.getItem(sidebarCollapsedStorageKey) === 'true';
@@ -70,6 +74,16 @@ export function AppShell({
       setSidebarCollapsed(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (currentDate) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setResolvedCurrentDate(new Date());
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [currentDate]);
 
   const [collapseAnimationsEnabled, setCollapseAnimationsEnabled] = useState(false);
   const [fallbackCreateDialogOpen, setFallbackCreateDialogOpen] = useState(false);
@@ -114,7 +128,7 @@ export function AppShell({
 
   // Dynamic Weekly Overview Data based on Completed Habits by Days & Dates
   // Calculate real day of week for current date (Monday = 0, ..., Sunday = 6)
-  const refDate = currentDate || new Date();
+  const refDate = currentDate ?? resolvedCurrentDate;
   const jsDay = refDate.getDay();
   const currentDayIndex = jsDay === 0 ? 6 : jsDay - 1; // 0-indexed starting Monday
 
@@ -182,7 +196,7 @@ export function AppShell({
       {/* Desktop Side Navigation */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 hidden h-screen flex-col overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-surface)] md:flex',
+          'fixed top-0 left-0 z-50 hidden h-screen flex-col overflow-y-auto border-r border-[var(--color-border)] bg-[var(--color-surface)] lg:flex',
           collapseTransitionClass,
           sidebarCollapsed ? 'w-20' : 'w-64',
         )}
@@ -360,7 +374,7 @@ export function AppShell({
       </aside>
 
       {/* Mobile Top App Bar */}
-      <header className="sticky top-0 z-40 flex w-full items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 shadow-2xs md:hidden">
+      <header className="sticky top-0 z-40 flex w-full items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 shadow-2xs lg:hidden">
         <h1 className="text-lg font-bold text-[var(--color-primary)]">RecoveryFirst</h1>
         <div className="flex items-center gap-3">
           <button
@@ -390,9 +404,9 @@ export function AppShell({
       {/* Main Content Area */}
       <main
         className={cn(
-          'w-full flex-1 pb-24 md:pb-8 lg:pr-80',
+          'w-full flex-1 pb-24 lg:pr-80 lg:pb-8',
           collapseTransitionClass,
-          sidebarCollapsed ? 'md:pl-20' : 'md:pl-64',
+          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64',
         )}
       >
         <div key={pathname} className="animate-page-enter motion-reduce:animate-none">
@@ -517,7 +531,10 @@ export function AppShell({
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 z-50 flex h-16 w-full items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] px-2 shadow-lg md:hidden">
+      <nav
+        className="fixed bottom-0 z-50 flex h-16 w-full items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] px-2 shadow-lg lg:hidden"
+        data-testid="mobile-bottom-navigation"
+      >
         {mainNavItems.slice(0, 4).map((item) => {
           const isActive =
             pathname === item.href || (item.href === routes.today && pathname === routes.app);

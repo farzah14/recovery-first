@@ -10,6 +10,16 @@ test.describe('Visual Baselines', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   });
 
+  test('matches the public landing desktop visual baseline', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium-desktop', 'Desktop public baseline only');
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.goto('/');
+    await expect(page).toHaveScreenshot('public-landing.png', {
+      animations: 'disabled',
+      fullPage: true,
+    });
+  });
+
   test('matches today dashboard visual baseline', async ({ page }, testInfo) => {
     await page.setViewportSize(
       testInfo.project.name === 'chromium-mobile'

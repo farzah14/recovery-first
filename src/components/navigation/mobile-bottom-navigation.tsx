@@ -26,7 +26,7 @@ export function MobileBottomNavigation({
   return (
     <nav
       aria-label="Mobile bottom navigation"
-      className="fixed right-0 bottom-0 left-0 z-40 flex h-16 items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] px-2 shadow-lg md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-40 flex h-16 items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-surface)] px-2 shadow-lg lg:hidden"
     >
       {navItems.map((item) => {
         const isActive =
