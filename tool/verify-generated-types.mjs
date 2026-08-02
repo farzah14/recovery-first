@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -7,8 +7,9 @@ const trackedPath = 'src/lib/supabase/database.types.ts';
 const temporaryPath = join(tmpdir(), `recovery-first-database-types-${process.pid}.ts`);
 
 try {
-  const generated = execFileSync(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['db:types'], {
+  const generated = execSync('pnpm db:types', {
     encoding: 'utf8',
+    shell: true,
   });
 
   writeFileSync(temporaryPath, generated, 'utf8');

@@ -82,6 +82,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
     "test:domain": "vitest run tests/unit/domain",
+    "test:database-types": "vitest run tests/unit/supabase/database-types.test.ts",
     "test:indexed-db": "vitest run tests/unit/indexed-db",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
