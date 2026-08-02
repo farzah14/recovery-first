@@ -1,14 +1,20 @@
-# ADR-003: IndexedDB through Dexie
+# ADR-003: IndexedDB with Dexie
 
-**Status:** Accepted  
-**Date:** 2026-07-28
+## Status
+
+Accepted.
+
+## Context
+
+Guest users require durable browser-local canonical data. Signed-in users require local cache, drafts, and pending operations. Native IndexedDB is asynchronous and transactional but verbose to version and test directly.
 
 ## Decision
 
-Use IndexedDB through Dexie for Guest data, drafts, durable cache, and pending operations.
+Use one Dexie database named `recovery_first_web` per website origin. Schema versions are append-only. Guest domain records are not deliberately evicted. Derived query-cache rows are evictable. Migration tests start from every supported prior version.
 
 ## Consequences
 
-- Browser-local schemas use explicit versioned migrations.
-- Guest data has no cloud authority before account conversion.
-- Signed-in PostgreSQL data remains canonical.
+- Guest data remains limited to the current browser profile and origin.
+- Clearing browser storage can remove Guest data.
+- Schema changes require explicit Dexie version upgrades.
+- Live queue leadership and synchronization are deferred to Plan 05.
