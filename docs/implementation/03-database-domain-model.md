@@ -1560,7 +1560,7 @@ git commit -m "feat: add core recovery-first database schema"
 - Create: `supabase/migrations/20260729013000_entitlements_commands_audit.sql`
 - Create: `supabase/tests/00020_constraints.test.sql`
 
-- [ ] **Step 1: Create Recovery, review, and reminder tables**
+- [x] **Step 1: Create Recovery, review, and reminder tables**
 
 Create `supabase/migrations/20260729012000_recovery_reviews_reminders.sql`:
 
@@ -1692,7 +1692,7 @@ create index reminder_configs_user_enabled_idx
   on public.reminder_configs (user_id, enabled);
 ```
 
-- [ ] **Step 2: Create entitlement, payment event, idempotency, and audit tables**
+- [x] **Step 2: Create entitlement, payment event, idempotency, and audit tables**
 
 Create `supabase/migrations/20260729013000_entitlements_commands_audit.sql`:
 
@@ -1770,7 +1770,7 @@ revoke all on table private.idempotency_records from public, anon, authenticated
 revoke all on table private.audit_events from public, anon, authenticated;
 ```
 
-- [ ] **Step 3: Write database constraint tests**
+- [x] **Step 3: Write database constraint tests**
 
 Create `supabase/tests/00020_constraints.test.sql`:
 
@@ -1886,7 +1886,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 4: Reset and test all schema constraints**
+- [x] **Step 4: Reset and test all schema constraints**
 
 Run:
 
@@ -1897,7 +1897,7 @@ pnpm db:test
 
 Expected: all pgTAP files pass with zero failed assertions.
 
-- [ ] **Step 5: Commit supporting tables and constraints**
+- [x] **Step 5: Commit supporting tables and constraints**
 
 Run:
 
