@@ -242,7 +242,7 @@ Task 12 Add accessibility, responsive, visual-regression, and final quality gate
 - Create: `src/lib/cn.ts`
 - Create: `tests/unit/cn.test.ts`
 
-- [ ] **Step 1: Install runtime and test dependencies**
+- [x] **Step 1: Install runtime and test dependencies**
 
 Run:
 
@@ -253,7 +253,7 @@ pnpm add -D @axe-core/playwright axe-core
 
 Expected: `package.json` and `pnpm-lock.yaml` change, and pnpm exits with status `0`.
 
-- [ ] **Step 2: Create project-owned component configuration**
+- [x] **Step 2: Create project-owned component configuration**
 
 Create `components.json`:
 
@@ -279,7 +279,7 @@ Create `components.json`:
 }
 ```
 
-- [ ] **Step 3: Write the failing class-composition test**
+- [x] **Step 3: Write the failing class-composition test**
 
 Create `tests/unit/cn.test.ts`:
 
@@ -297,7 +297,7 @@ describe('cn', () => {
 });
 ```
 
-- [ ] **Step 4: Run the focused test and confirm the expected failure**
+- [x] **Step 4: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -307,7 +307,7 @@ pnpm test:unit -- tests/unit/cn.test.ts
 
 Expected: FAIL because `@/lib/cn` does not exist.
 
-- [ ] **Step 5: Implement the shared class utility**
+- [x] **Step 5: Implement the shared class utility**
 
 Create `src/lib/cn.ts`:
 
@@ -320,7 +320,7 @@ export function cn(...inputs: ClassValue[]): string {
 }
 ```
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run:
 
@@ -345,7 +345,7 @@ Expected: focused test, typecheck, and lint pass before the commit is created.
 - Modify: `src/app/layout.tsx`
 - Create: `tests/unit/design-tokens.test.ts`
 
-- [ ] **Step 1: Write the failing token-contract test**
+- [x] **Step 1: Write the failing token-contract test**
 
 Create `tests/unit/design-tokens.test.ts`:
 
@@ -373,7 +373,7 @@ describe('design tokens', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -383,7 +383,7 @@ pnpm test:unit -- tests/unit/design-tokens.test.ts
 
 Expected: FAIL because `@/styles/design-tokens` does not exist.
 
-- [ ] **Step 3: Create the TypeScript token contract**
+- [x] **Step 3: Create the TypeScript token contract**
 
 Create `src/styles/design-tokens.ts`:
 
@@ -480,7 +480,7 @@ export const designTokens = {
 } as const;
 ```
 
-- [ ] **Step 4: Replace the global stylesheet with semantic CSS variables and accessible base rules**
+- [x] **Step 4: Replace the global stylesheet with semantic CSS variables and accessible base rules**
 
 Replace `src/app/globals.css` with:
 
@@ -606,7 +606,7 @@ a {
 }
 ```
 
-- [ ] **Step 5: Configure the application font and metadata**
+- [x] **Step 5: Configure the application font and metadata**
 
 Replace `src/app/layout.tsx` with:
 
@@ -643,7 +643,7 @@ export default function RootLayout({
 }
 ```
 
-- [ ] **Step 6: Verify tokens and commit**
+- [x] **Step 6: Verify tokens and commit**
 
 Run:
 
@@ -671,7 +671,7 @@ Expected: focused test, typecheck, lint, and production build pass.
 - Create: `src/components/ui/card.tsx`
 - Create: `tests/component/layout-primitives.test.tsx`
 
-- [ ] **Step 1: Write the failing component tests**
+- [x] **Step 1: Write the failing component tests**
 
 Create `tests/component/layout-primitives.test.tsx`:
 
@@ -709,7 +709,7 @@ describe('layout primitives', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -719,7 +719,7 @@ pnpm test:component -- tests/component/layout-primitives.test.tsx
 
 Expected: FAIL because the layout and card modules do not exist.
 
-- [ ] **Step 3: Implement the content container and section primitives**
+- [x] **Step 3: Implement the content container and section primitives**
 
 Create `src/components/layout/content-container.tsx`:
 
@@ -763,7 +763,7 @@ export function Section({
 }
 ```
 
-- [ ] **Step 4: Implement the page header**
+- [x] **Step 4: Implement the page header**
 
 Create `src/components/layout/page-header.tsx`:
 
@@ -804,7 +804,7 @@ export function PageHeader({
 }
 ```
 
-- [ ] **Step 5: Implement card and skeleton primitives**
+- [x] **Step 5: Implement card and skeleton primitives**
 
 Create `src/components/ui/card.tsx`:
 
@@ -860,7 +860,7 @@ export function Skeleton({ className, ...props }: React.ComponentProps<'div'>): 
 }
 ```
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run:
 
@@ -885,7 +885,7 @@ Expected: focused tests, typecheck, and lint pass.
 - Create: `src/components/ui/badge.tsx`
 - Create: `tests/component/button.test.tsx`
 
-- [ ] **Step 1: Write the failing action-primitive tests**
+- [x] **Step 1: Write the failing action-primitive tests**
 
 Create `tests/component/button.test.tsx`:
 
@@ -916,7 +916,7 @@ describe('action primitives', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -926,7 +926,7 @@ pnpm test:component -- tests/component/button.test.tsx
 
 Expected: FAIL because the button modules do not exist.
 
-- [ ] **Step 3: Implement the variant-driven button**
+- [x] **Step 3: Implement the variant-driven button**
 
 Create `src/components/ui/button.tsx`:
 
@@ -997,7 +997,7 @@ export function Button({
 }
 ```
 
-- [ ] **Step 4: Implement icon button and badge**
+- [x] **Step 4: Implement icon button and badge**
 
 Create `src/components/ui/icon-button.tsx`:
 
@@ -1061,7 +1061,7 @@ export function Badge({
 }
 ```
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
@@ -1095,7 +1095,7 @@ Expected: focused tests, typecheck, and lint pass.
 - Create: `src/components/forms/select-field.tsx`
 - Create: `tests/component/form-controls.test.tsx`
 
-- [ ] **Step 1: Write the failing form-control tests**
+- [x] **Step 1: Write the failing form-control tests**
 
 Create `tests/component/form-controls.test.tsx`:
 
@@ -1143,7 +1143,7 @@ describe('form controls', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -1153,7 +1153,7 @@ pnpm test:component -- tests/component/form-controls.test.tsx
 
 Expected: FAIL because the form modules do not exist.
 
-- [ ] **Step 3: Implement the native text controls**
+- [x] **Step 3: Implement the native text controls**
 
 Create `src/components/ui/input.tsx`:
 
@@ -1192,7 +1192,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<'textarea
 }
 ```
 
-- [ ] **Step 4: Implement checkbox and switch primitives**
+- [x] **Step 4: Implement checkbox and switch primitives**
 
 Create `src/components/ui/checkbox.tsx`:
 
@@ -1251,7 +1251,7 @@ export function Switch({
 }
 ```
 
-- [ ] **Step 5: Implement radio group and select primitives**
+- [x] **Step 5: Implement radio group and select primitives**
 
 Create `src/components/ui/radio-group.tsx`:
 
@@ -1359,7 +1359,7 @@ export function SelectItem({
 }
 ```
 
-- [ ] **Step 6: Implement accessible field wrappers**
+- [x] **Step 6: Implement accessible field wrappers**
 
 Create `src/components/forms/input-field.tsx`:
 
@@ -1545,7 +1545,7 @@ export function SelectField({
 }
 ```
 
-- [ ] **Step 7: Verify and commit**
+- [x] **Step 7: Verify and commit**
 
 Run:
 
@@ -1583,7 +1583,7 @@ Expected: focused tests, typecheck, and lint pass.
 - Create: `src/components/feedback/decision-required-state.tsx`
 - Create: `tests/component/system-states.test.tsx`
 
-- [ ] **Step 1: Write the failing system-state test**
+- [x] **Step 1: Write the failing system-state test**
 
 Create `tests/component/system-states.test.tsx`:
 
@@ -1615,7 +1615,7 @@ describe('system states', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -1625,7 +1625,7 @@ pnpm test:component -- tests/component/system-states.test.tsx
 
 Expected: FAIL because the state components do not exist.
 
-- [ ] **Step 3: Implement status and progress primitives**
+- [x] **Step 3: Implement status and progress primitives**
 
 Create `src/components/data-display/status-badge.tsx`:
 
@@ -1708,7 +1708,7 @@ export function ProgressRing({
 }
 ```
 
-- [ ] **Step 4: Implement alert and state components**
+- [x] **Step 4: Implement alert and state components**
 
 Create `src/components/ui/alert.tsx`:
 
@@ -1903,7 +1903,7 @@ export function AppBanner({
 }
 ```
 
-- [ ] **Step 5: Implement overlay, menu, tooltip, and toast wrappers**
+- [x] **Step 5: Implement overlay, menu, tooltip, and toast wrappers**
 
 Create `src/components/ui/dialog.tsx`:
 
@@ -2055,7 +2055,7 @@ export function Toaster(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run:
 
@@ -2079,7 +2079,7 @@ Expected: focused tests, typecheck, and lint pass.
 - Create: `src/lib/navigation/route-metadata.ts`
 - Create: `tests/unit/route-definitions.test.ts`
 
-- [ ] **Step 1: Write the failing route-contract tests**
+- [x] **Step 1: Write the failing route-contract tests**
 
 Create `tests/unit/route-definitions.test.ts`:
 
@@ -2124,7 +2124,7 @@ describe('route definitions', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -2134,7 +2134,7 @@ pnpm test:unit -- tests/unit/route-definitions.test.ts
 
 Expected: FAIL because the navigation modules do not exist.
 
-- [ ] **Step 3: Implement typed route definitions**
+- [x] **Step 3: Implement typed route definitions**
 
 Create `src/lib/navigation/route-definitions.ts`:
 
@@ -2200,7 +2200,7 @@ export const moreNavigation = [
 ] as const;
 ```
 
-- [ ] **Step 4: Implement route metadata**
+- [x] **Step 4: Implement route metadata**
 
 Create `src/lib/navigation/route-metadata.ts`:
 
@@ -2232,7 +2232,7 @@ export function metadataFor(route: AppRoute): Metadata {
 }
 ```
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
@@ -2266,7 +2266,7 @@ Expected: focused tests, typecheck, and lint pass.
 - Create: `src/app/auth/sign-in/page.tsx`
 - Create: `tests/component/public-shell.test.tsx`
 
-- [ ] **Step 1: Write the failing public-shell test**
+- [x] **Step 1: Write the failing public-shell test**
 
 Create `tests/component/public-shell.test.tsx`:
 
@@ -2295,7 +2295,7 @@ describe('public shell', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -2305,7 +2305,7 @@ pnpm test:component -- tests/component/public-shell.test.tsx
 
 Expected: FAIL because the public shell modules do not exist.
 
-- [ ] **Step 3: Implement public header and footer**
+- [x] **Step 3: Implement public header and footer**
 
 Create `src/components/layout/public-header.tsx`:
 
@@ -2364,7 +2364,7 @@ export function PublicFooter(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 4: Implement public layout and reusable placeholder content**
+- [x] **Step 4: Implement public layout and reusable placeholder content**
 
 Create `src/app/(public)/layout.tsx`:
 
@@ -2404,7 +2404,7 @@ export function PublicPlaceholder({ title, description }: Readonly<{ title: stri
 }
 ```
 
-- [ ] **Step 5: Implement the landing page**
+- [x] **Step 5: Implement the landing page**
 
 Replace `src/app/(public)/page.tsx` with:
 
@@ -2444,7 +2444,7 @@ export default function HomePage(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 6: Create public route pages**
+- [x] **Step 6: Create public route pages**
 
 Create each page with the exact content shown:
 
@@ -2514,7 +2514,7 @@ export default function SignInPage(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 7: Verify and commit**
+- [x] **Step 7: Verify and commit**
 
 Run:
 
@@ -2543,7 +2543,7 @@ Expected: focused tests, typecheck, lint, and production build pass.
 - Replace: `src/app/(app)/app/page.tsx`
 - Create: `tests/component/navigation.test.tsx`
 
-- [ ] **Step 1: Write the failing desktop navigation test**
+- [x] **Step 1: Write the failing desktop navigation test**
 
 Create `tests/component/navigation.test.tsx`:
 
@@ -2567,7 +2567,7 @@ describe('application navigation', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -2577,7 +2577,7 @@ pnpm test:component -- tests/component/navigation.test.tsx
 
 Expected: FAIL because the application navigation modules do not exist.
 
-- [ ] **Step 3: Implement the desktop sidebar**
+- [x] **Step 3: Implement the desktop sidebar**
 
 Create `src/components/navigation/app-sidebar.tsx`:
 
@@ -2630,7 +2630,7 @@ export function AppSidebar(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 4: Implement top bar and profile placeholder**
+- [x] **Step 4: Implement top bar and profile placeholder**
 
 Create `src/components/navigation/profile-menu-placeholder.tsx`:
 
@@ -2675,7 +2675,7 @@ export function TopBar(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 5: Implement app shell and route redirect**
+- [x] **Step 5: Implement app shell and route redirect**
 
 Create `src/components/layout/app-shell.tsx`:
 
@@ -2721,7 +2721,7 @@ export default function ApplicationIndexPage(): never {
 }
 ```
 
-- [ ] **Step 6: Temporarily add a compile-safe mobile navigation stub**
+- [x] **Step 6: Temporarily add a compile-safe mobile navigation stub**
 
 Create `src/components/navigation/mobile-bottom-navigation.tsx`:
 
@@ -2731,7 +2731,7 @@ export function MobileBottomNavigation(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 7: Verify and commit**
+- [x] **Step 7: Verify and commit**
 
 Run:
 
@@ -2756,7 +2756,7 @@ Expected: focused tests, typecheck, lint, and production build pass.
 - Create: `src/components/navigation/mobile-more-drawer.tsx`
 - Modify: `tests/component/navigation.test.tsx`
 
-- [ ] **Step 1: Extend the failing navigation test for mobile destinations**
+- [x] **Step 1: Extend the failing navigation test for mobile destinations**
 
 Append to `tests/component/navigation.test.tsx`:
 
@@ -2774,7 +2774,7 @@ it('renders four primary mobile destinations and a labelled More control', () =>
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -2784,7 +2784,7 @@ pnpm test:component -- tests/component/navigation.test.tsx
 
 Expected: FAIL because the compile-safe stub does not render mobile controls.
 
-- [ ] **Step 3: Implement the More drawer**
+- [x] **Step 3: Implement the More drawer**
 
 Create `src/components/navigation/mobile-more-drawer.tsx`:
 
@@ -2822,7 +2822,7 @@ export function MobileMoreDrawer(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 4: Replace the mobile navigation stub**
+- [x] **Step 4: Replace the mobile navigation stub**
 
 Replace `src/components/navigation/mobile-bottom-navigation.tsx` with:
 
@@ -2858,7 +2858,7 @@ export function MobileBottomNavigation(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
@@ -2890,7 +2890,7 @@ Expected: navigation tests, typecheck, and lint pass.
 - Replace: `src/app/not-found.tsx`
 - Create: `tests/e2e/route-placeholders.spec.ts`
 
-- [ ] **Step 1: Write the failing browser route test**
+- [x] **Step 1: Write the failing browser route test**
 
 Create `tests/e2e/route-placeholders.spec.ts`:
 
@@ -2915,7 +2915,7 @@ for (const [path, heading] of routes) {
 }
 ```
 
-- [ ] **Step 2: Run the focused browser test and confirm the expected failure**
+- [x] **Step 2: Run the focused browser test and confirm the expected failure**
 
 Run:
 
@@ -2925,7 +2925,7 @@ pnpm test:e2e -- tests/e2e/route-placeholders.spec.ts
 
 Expected: FAIL because the application route pages do not exist.
 
-- [ ] **Step 3: Implement the shared application placeholder**
+- [x] **Step 3: Implement the shared application placeholder**
 
 Create `src/components/layout/application-placeholder.tsx`:
 
@@ -2956,7 +2956,7 @@ export function ApplicationPlaceholder({
 }
 ```
 
-- [ ] **Step 4: Create each application route page**
+- [x] **Step 4: Create each application route page**
 
 `src/app/(app)/app/today/page.tsx`
 
@@ -3000,7 +3000,7 @@ import { ApplicationPlaceholder } from '@/components/layout/application-placehol
 export default function SettingsPage(): React.JSX.Element { return <ApplicationPlaceholder description="Profile, browser data, accessibility, export, and account settings will appear here." title="Settings" />; }
 ```
 
-- [ ] **Step 5: Implement route loading, error, and not-found states**
+- [x] **Step 5: Implement route loading, error, and not-found states**
 
 Create `src/app/(app)/app/loading.tsx`:
 
@@ -3052,7 +3052,7 @@ export default function NotFound(): React.JSX.Element {
 }
 ```
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run:
 
@@ -3081,7 +3081,7 @@ Expected: route browser tests, typecheck, lint, and production build pass.
 - Create: `docs/operations/VISUAL-REGRESSION.md`
 - Modify: `docs/implementation/IMPLEMENTATION-PLAN.md`
 
-- [ ] **Step 1: Add axe-based primitive accessibility tests**
+- [x] **Step 1: Add axe-based primitive accessibility tests**
 
 Create `tests/accessibility/primitives.accessibility.test.tsx`:
 
@@ -3113,7 +3113,7 @@ describe('primitive accessibility', () => {
 });
 ```
 
-- [ ] **Step 2: Add application-shell accessibility tests**
+- [x] **Step 2: Add application-shell accessibility tests**
 
 Create `tests/accessibility/app-shell.accessibility.test.tsx`:
 
@@ -3135,7 +3135,7 @@ describe('application shell accessibility', () => {
 });
 ```
 
-- [ ] **Step 3: Run accessibility tests and fix any reported violation**
+- [x] **Step 3: Run accessibility tests and fix any reported violation**
 
 Run:
 
@@ -3145,7 +3145,7 @@ pnpm vitest run tests/accessibility
 
 Expected: all accessibility tests pass with zero axe violations.
 
-- [ ] **Step 4: Add responsive navigation browser tests**
+- [x] **Step 4: Add responsive navigation browser tests**
 
 Create `tests/e2e/responsive-navigation.spec.ts`:
 
@@ -3187,7 +3187,7 @@ test('mobile More drawer exposes secondary destinations', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 5: Add visual-regression tests for high-value surfaces**
+- [x] **Step 5: Add visual-regression tests for high-value surfaces**
 
 Create `tests/e2e/visual-baselines.spec.ts`:
 
@@ -3213,7 +3213,7 @@ test('public landing visual baseline', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 6: Add visual scripts to package.json**
+- [x] **Step 6: Add visual scripts to package.json**
 
 Add these scripts without removing existing Plan 01 scripts:
 
@@ -3236,7 +3236,7 @@ pnpm test:visual
 
 Expected: baseline images are created under Playwright's snapshot directory and the second command passes without updating files.
 
-- [ ] **Step 7: Document visual-regression policy**
+- [x] **Step 7: Document visual-regression policy**
 
 Create `docs/operations/VISUAL-REGRESSION.md`:
 
@@ -3261,11 +3261,11 @@ A changed screenshot is not accepted solely because implementation changed. Revi
 - Run screenshots with the Playwright browser version pinned by `pnpm-lock.yaml`.
 ```
 
-- [ ] **Step 8: Update the master plan status**
+- [x] **Step 8: Update the master plan status**
 
 In `docs/implementation/IMPLEMENTATION-PLAN.md`, change the Plan 02 status entry from `Not created` to `Detailed plan created`, and do not mark implementation complete.
 
-- [ ] **Step 9: Run the complete Plan 02 quality gate**
+- [x] **Step 9: Run the complete Plan 02 quality gate**
 
 Run:
 
@@ -3294,7 +3294,7 @@ Expected:
 - repository policy check passes;
 - only Task 12 files are uncommitted before the commit.
 
-- [ ] **Step 10: Commit Plan 02 verification assets and status**
+- [x] **Step 10: Commit Plan 02 verification assets and status**
 
 Run:
 
@@ -3344,26 +3344,26 @@ Expected:
 
 Plan 02 is complete only when fresh command output proves every item:
 
-- [ ] All approved emerald, neutral, accent, semantic, and status tokens are encoded without scattered replacement colors in Plan 02 components.
-- [ ] Global typography, focus, reduced-motion, selection, background, border, radius, and elevation rules are active.
-- [ ] Primary pointer and touch controls meet the minimum sizes defined in `UI-SPEC.md`.
-- [ ] Button, badge, card, skeleton, input, textarea, checkbox, radio, switch, select, alert, progress, dialog, sheet, dropdown, tooltip, and toast primitives compile and are covered by focused tests.
-- [ ] Status components always include textual labels rather than color-only meaning.
-- [ ] Public header and footer expose Features, How It Works, Pricing, Help, Sign In, Start Free, Status, Privacy, and Terms routes.
-- [ ] Desktop application navigation exposes Today, Habits, Review, Insights, Reminders, and Settings.
-- [ ] Mobile application navigation exposes Today, Habits, Review, Insights, and More.
-- [ ] Mobile More exposes Reminders, Settings, Help, and Guest identity context.
-- [ ] Selected navigation uses `aria-current="page"`.
-- [ ] Every primary navigation item includes a visible text label.
-- [ ] `/app` redirects to `/app/today`.
-- [ ] Public and application placeholder routes render without fabricated product records.
-- [ ] Loading, error, not-found, empty, offline, permission, locked, and decision-required components exist.
-- [ ] Keyboard focus remains visible on all tested controls.
-- [ ] Axe reports zero automatically detectable violations in the tested primitive and application-shell samples.
-- [ ] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
-- [ ] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
-- [ ] Unit, component, accessibility, browser, and visual tests pass.
-- [ ] Strict typecheck, lint, formatting, repository checks, and production build pass.
+- [x] All approved emerald, neutral, accent, semantic, and status tokens are encoded without scattered replacement colors in Plan 02 components.
+- [x] Global typography, focus, reduced-motion, selection, background, border, radius, and elevation rules are active.
+- [x] Primary pointer and touch controls meet the minimum sizes defined in `UI-SPEC.md`.
+- [x] Button, badge, card, skeleton, input, textarea, checkbox, radio, switch, select, alert, progress, dialog, sheet, dropdown, tooltip, and toast primitives compile and are covered by focused tests.
+- [x] Status components always include textual labels rather than color-only meaning.
+- [x] Public header and footer expose Features, How It Works, Pricing, Help, Sign In, Start Free, Status, Privacy, and Terms routes.
+- [x] Desktop application navigation exposes Today, Habits, Review, Insights, Reminders, and Settings.
+- [x] Mobile application navigation exposes Today, Habits, Review, Insights, and More.
+- [x] Mobile More exposes Reminders, Settings, Help, and Guest identity context.
+- [x] Selected navigation uses `aria-current="page"`.
+- [x] Every primary navigation item includes a visible text label.
+- [x] `/app` redirects to `/app/today`.
+- [x] Public and application placeholder routes render without fabricated product records.
+- [x] Loading, error, not-found, empty, offline, permission, locked, and decision-required components exist.
+- [x] Keyboard focus remains visible on all tested controls.
+- [x] Axe reports zero automatically detectable violations in the tested primitive and application-shell samples.
+- [x] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
+- [x] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
+- [x] Unit, component, accessibility, browser, and visual tests pass.
+- [x] Strict typecheck, lint, formatting, repository checks, and production build pass.
 - [ ] Clean-checkout verification passes.
 - [ ] Working tree is clean.
 
