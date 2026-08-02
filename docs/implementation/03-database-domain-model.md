@@ -4499,7 +4499,7 @@ git commit -m "docs: record database and local storage contracts"
 
 - Modify: `docs/implementation/IMPLEMENTATION-PLAN.md`
 
-- [ ] **Step 1: Mark Plan 03 verified only after every prior task commit exists**
+- [x] **Step 1: Mark Plan 03 verified only after every prior task commit exists**
 
 In `docs/implementation/IMPLEMENTATION-PLAN.md`, update only the Plan 03 tracking row from:
 
@@ -4515,7 +4515,7 @@ to:
 
 Do not mark Plan 04 started.
 
-- [ ] **Step 2: Run formatting, lint, type, domain, and IndexedDB checks**
+- [x] **Step 2: Run formatting, lint, type, domain, and IndexedDB checks**
 
 Run:
 
@@ -4531,7 +4531,7 @@ pnpm test:database-types
 
 Expected: every command exits with status `0`.
 
-- [ ] **Step 3: Run all regression suites and production build**
+- [x] **Step 3: Run all regression suites and production build**
 
 Run:
 
@@ -4547,7 +4547,7 @@ pnpm build
 
 Expected: Plan 01 and Plan 02 tests continue to pass and production build succeeds.
 
-- [ ] **Step 4: Run complete database verification from a clean local reset**
+- [x] **Step 4: Run complete database verification from a clean local reset**
 
 Run:
 
@@ -4568,7 +4568,7 @@ Expected:
 - database lint exits with status `0`;
 - Supabase stops cleanly.
 
-- [ ] **Step 5: Run repository policy checks**
+- [x] **Step 5: Run repository policy checks**
 
 Run:
 
@@ -4580,7 +4580,7 @@ git status --short
 
 Expected: repository policy and whitespace checks pass; only the master-plan status change is uncommitted.
 
-- [ ] **Step 6: Commit the verified status**
+- [x] **Step 6: Commit the verified status**
 
 Run:
 
@@ -4589,7 +4589,7 @@ git add docs/implementation/IMPLEMENTATION-PLAN.md
 git commit -m "docs: mark database domain plan verified"
 ```
 
-- [ ] **Step 7: Verify from a clean checkout**
+- [x] **Step 7: Verify from a clean checkout**
 
 Run:
 
@@ -4617,7 +4617,7 @@ pnpm check:repository
 
 Expected: every command exits with status `0` using only tracked files and generated local dependencies.
 
-- [ ] **Step 8: Return and capture final evidence**
+- [x] **Step 8: Return and capture final evidence**
 
 Run:
 
@@ -4638,31 +4638,31 @@ Expected:
 
 Plan 03 is complete only when fresh command output proves every item:
 
-- [ ] Framework-independent identity, plan, lifecycle, synchronization, recurrence, session identity, check-in, recommendation, Recovery, and entitlement types exist.
-- [ ] Guest, Free, and Premium active limits are exactly 3, 5, and 20.
-- [ ] Slot-consuming lifecycle states match the PRD.
-- [ ] Full and Minimum count as successful consistency and continuity.
-- [ ] Manual Skipped increments the Recovery counter; Full or Minimum resets it.
-- [ ] Automatic Skipped cannot increment the Manual Skipped Recovery counter.
-- [ ] PostgreSQL contains every Plan 03 core table, ownership column, revision, timestamp, soft-delete field, constraint, and required index.
-- [ ] Published Habit Version rows reject updates and deletes.
-- [ ] Active-habit limits are enforced inside an authoritative transaction.
-- [ ] Habit version creation is monotonic, immutable, revision-checked, and idempotent.
-- [ ] Session creation is deterministic and duplicate-safe.
-- [ ] Check-in writes preserve prior history, update session state, update Recovery counters, and reject stale revisions.
-- [ ] Reusing a command ID with the same request returns the prior result without duplicate state.
-- [ ] Reusing a command ID with a different request is rejected.
-- [ ] RLS is enabled for every account-owned table.
-- [ ] Owner access succeeds and cross-user access fails.
-- [ ] Browser roles cannot read private payment, idempotency, or audit tables.
-- [ ] Read views use security-invoker behavior and exclude provider identifiers.
-- [ ] Supabase TypeScript types are reproducibly generated and drift-checked.
-- [ ] Dexie schema version 1 upgrades to version 2 without deleting Guest records.
-- [ ] Guest activation is atomic and rejects the fourth slot without partial writes.
-- [ ] Seed fixtures use fixed synthetic data and `.invalid` email addresses only.
-- [ ] Domain, IndexedDB, database, accessibility, browser, visual, and regression suites pass.
-- [ ] Database reset, pgTAP, type generation, database lint, production build, and clean-checkout verification pass.
-- [ ] Working tree is clean.
+- [x] Framework-independent identity, plan, lifecycle, synchronization, recurrence, session identity, check-in, recommendation, Recovery, and entitlement types exist.
+- [x] Guest, Free, and Premium active limits are exactly 3, 5, and 20.
+- [x] Slot-consuming lifecycle states match the PRD.
+- [x] Full and Minimum count as successful consistency and continuity.
+- [x] Manual Skipped increments the Recovery counter; Full or Minimum resets it.
+- [x] Automatic Skipped cannot increment the Manual Skipped Recovery counter.
+- [x] PostgreSQL contains every Plan 03 core table, ownership column, revision, timestamp, soft-delete field, constraint, and required index.
+- [x] Published Habit Version rows reject updates and deletes.
+- [x] Active-habit limits are enforced inside an authoritative transaction.
+- [x] Habit version creation is monotonic, immutable, revision-checked, and idempotent.
+- [x] Session creation is deterministic and duplicate-safe.
+- [x] Check-in writes preserve prior history, update session state, update Recovery counters, and reject stale revisions.
+- [x] Reusing a command ID with the same request returns the prior result without duplicate state.
+- [x] Reusing a command ID with a different request is rejected.
+- [x] RLS is enabled for every account-owned table.
+- [x] Owner access succeeds and cross-user access fails.
+- [x] Browser roles cannot read private payment, idempotency, or audit tables.
+- [x] Read views use security-invoker behavior and exclude provider identifiers.
+- [x] Supabase TypeScript types are reproducibly generated and drift-checked.
+- [x] Dexie schema version 1 upgrades to version 2 without deleting Guest records.
+- [x] Guest activation is atomic and rejects the fourth slot without partial writes.
+- [x] Seed fixtures use fixed synthetic data and `.invalid` email addresses only.
+- [x] Domain, IndexedDB, database, accessibility, browser, visual, and regression suites pass.
+- [x] Database reset, pgTAP, type generation, database lint, production build, and clean-checkout verification pass.
+- [x] Working tree is clean.
 
 ---
 

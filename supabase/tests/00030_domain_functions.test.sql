@@ -1,6 +1,6 @@
 begin;
 
-select plan(15);
+select plan(16);
 
 insert into auth.users (id, email)
 values ('11000000-0000-4000-8000-000000000001', 'function-owner@example.invalid');
@@ -63,6 +63,24 @@ select results_eq(
   $$select count(*)::integer from public.habit_versions where habit_id = '21000000-0000-4000-8000-000000000001'$$,
   $$values (1)$$,
   'duplicate command does not duplicate the version'
+);
+
+select throws_ok(
+  $$select public.create_habit_version(
+    '21000000-0000-4000-8000-000000000001',
+    '31000000-0000-4000-8000-000000000001',
+    1,
+    '{"kind":"count","value":20}'::jsonb,
+    '{"kind":"count","value":6}'::jsonb,
+    '{"kind":"daily"}'::jsonb,
+    '{"kind":"after_breakfast"}'::jsonb,
+    '{"durationSessions":3,"successThreshold":2}'::jsonb,
+    'creation',
+    '41000000-0000-4000-8000-000000000001'
+  )$$,
+  '22000',
+  'idempotency_key_reused_with_different_request',
+  'reusing a command ID with a different request is rejected'
 );
 
 select lives_ok(

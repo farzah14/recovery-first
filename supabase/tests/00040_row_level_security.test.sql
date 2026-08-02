@@ -1,6 +1,6 @@
 begin;
 
-select plan(9);
+select plan(12);
 
 insert into auth.users (id, email)
 values
@@ -274,6 +274,27 @@ select results_eq(
   $$select count(*)::bigint from public.subscription_status_view$$,
   $$values (0::bigint)$$,
   'subscription view denies cross-user entitlements'
+);
+
+select throws_ok(
+  $$select count(*) from private.payment_events$$,
+  '42501',
+  null,
+  'authenticated role cannot read private payment events'
+);
+
+select throws_ok(
+  $$select count(*) from private.idempotency_records$$,
+  '42501',
+  null,
+  'authenticated role cannot read private idempotency records'
+);
+
+select throws_ok(
+  $$select count(*) from private.audit_events$$,
+  '42501',
+  null,
+  'authenticated role cannot read private audit events'
 );
 
 select * from finish();
