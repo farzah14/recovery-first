@@ -104,13 +104,13 @@
 - Modify: `src/app/auth/sign-up/page.tsx`
 - Add: callback route and session tests under `tests/auth/`
 
-- [ ] Implement the approved Supabase Auth callback and secure cookie session handling.
-- [ ] Redirect unauthenticated users from application routes to sign-in without exposing private data.
-- [ ] Create or load the default Free profile after successful account creation.
-- [ ] Preserve the requested return path with an allowlist.
-- [ ] Keep the sign-in and sign-up screens honest; no fake success state.
-- [ ] Run auth unit, integration, accessibility, and route-gating tests.
-- [ ] Commit: `feat: require authenticated account application access`.
+- [x] Implement the approved Supabase Auth callback and secure cookie session handling.
+- [x] Redirect unauthenticated users from application routes to sign-in without exposing private data.
+- [x] Create or load the default Free profile after successful account creation.
+- [x] Preserve the requested return path with an allowlist.
+- [x] Keep the sign-in and sign-up screens honest; no fake success state.
+- [x] Run auth unit, route-gating, and accessibility tests; provider-backed auth integration remains a later environment gate.
+- [x] Commit: `feat: require authenticated account application access`.
 
 ## Task 6: Adapt the core loop plan from Guest to account-owned data
 

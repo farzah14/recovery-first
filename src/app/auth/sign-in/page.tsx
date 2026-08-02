@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Cloud, ArrowRight } from 'lucide-react';
 
@@ -7,6 +8,50 @@ import { Button } from '@/components/ui/button';
 import { routes } from '@/lib/navigation/route-definitions';
 
 export default function SignInPage(): React.JSX.Element {
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function continueWithGoogle(): Promise<void> {
+    setPending(true);
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase/browser');
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(routes.app)}`,
+      },
+    });
+    if (error) {
+      setMessage('Sign-in is unavailable right now. Please try again.');
+      setPending(false);
+    }
+  }
+
+  async function continueWithEmail(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const email = new FormData(event.currentTarget).get('email');
+    if (typeof email !== 'string' || email.trim() === '') {
+      setMessage('Enter your email address to continue.');
+      return;
+    }
+
+    setPending(true);
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase/browser');
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(routes.app)}`,
+      },
+    });
+    setMessage(
+      error
+        ? 'Sign-in is unavailable right now. Please try again.'
+        : 'Check your email for a sign-in link.',
+    );
+    setPending(false);
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--color-page)] p-4 sm:p-8">
       {/* Abstract supportive background elements */}
@@ -29,6 +74,8 @@ export default function SignInPage(): React.JSX.Element {
         <button
           className="group flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-text-primary)] shadow-2xs transition-colors hover:bg-[var(--color-surface-subtle)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
           type="button"
+          onClick={continueWithGoogle}
+          disabled={pending}
         >
           <svg className="size-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -61,7 +108,7 @@ export default function SignInPage(): React.JSX.Element {
         </div>
 
         {/* Email Form */}
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={continueWithEmail}>
           <div>
             <label className="sr-only" htmlFor="email">
               Email address
@@ -74,10 +121,19 @@ export default function SignInPage(): React.JSX.Element {
               type="email"
             />
           </div>
-          <Button fullWidth size="touch" type="submit" variant="primary">
+          <Button disabled={pending} fullWidth size="touch" type="submit" variant="primary">
             Continue with Email
           </Button>
         </form>
+
+        {message ? (
+          <p
+            aria-live="polite"
+            className="mt-4 text-center text-sm text-[var(--color-text-secondary)]"
+          >
+            {message}
+          </p>
+        ) : null}
 
         {/* Supporting Text / Cloud Sync Badge */}
         <div className="mt-6 text-center">
