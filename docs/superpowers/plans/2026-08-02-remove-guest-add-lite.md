@@ -64,13 +64,13 @@
 - Regenerate: `src/lib/supabase/database.types.ts`
 - Modify: `tests/unit/supabase/database-types.test.ts`
 
-- [ ] Add `lite` to the existing PostgreSQL `plan_tier` enum using an append-only migration.
-- [ ] Update effective-tier resolution so active Lite entitlements resolve to `lite`, active Premium entitlements resolve to `premium`, and the default remains `free`.
-- [ ] Enforce server-side limits of 5/10/30 in the authoritative active-limit function.
-- [ ] Define the accepted internal product codes for Lite and Premium monthly/annual entitlements.
-- [ ] Test default Free, active Lite, active Premium, expired entitlement fallback, and conflicting entitlement precedence.
-- [ ] Run `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, and local database lint.
-- [ ] Commit: `feat: add lite entitlement tier to database`.
+- [x] Add `lite` to the existing PostgreSQL `plan_tier` enum using an append-only migration.
+- [x] Update effective-tier resolution so active Lite entitlements resolve to `lite`, active Premium entitlements resolve to `premium`, and the default remains `free`.
+- [x] Enforce server-side limits of 5/10/30 in the authoritative active-limit function.
+- [x] Define the accepted internal product codes for Lite and Premium monthly/annual entitlements.
+- [x] Test default Free, active Lite, active Premium, expired entitlement fallback, and conflicting entitlement precedence.
+- [x] Run `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, and local database lint.
+- [x] Commit: `feat: add lite entitlement tier to database`.
 
 ## Task 4: Remove Guest as a normal local owner while preserving legacy data
 
