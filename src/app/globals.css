@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --color-emerald-50: #f0f7f3;
@@ -64,6 +64,9 @@
   --motion-fast: 120ms;
   --motion-standard: 180ms;
   --motion-slow: 240ms;
+  --motion-page-enter: 320ms;
+  --motion-content-fade: 260ms;
+  --motion-smooth-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * {
@@ -93,18 +96,91 @@ textarea {
   font: inherit;
 }
 
+input,
+textarea,
+select {
+  font-size: 0.8125rem; /* 13px body-sm scale according to UI-SPEC.md section 7.2 */
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  font-size: 0.75rem; /* 12px caption scale according to UI-SPEC.md section 7.2 */
+  color: var(--color-text-muted);
+}
+
 a {
   color: inherit;
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--color-focus) 70%, white);
-  outline-offset: 3px;
+  outline: 2px solid color-mix(in srgb, var(--color-focus) 70%, white);
+  outline-offset: 2px;
+}
+
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 0px !important;
+  box-shadow: 0 0 0 2px rgba(24, 112, 64, 0.15) !important;
 }
 
 ::selection {
   background: var(--color-emerald-100);
   color: var(--color-emerald-950);
+}
+
+/* Premium Dissolve & Fade-In Page Transition */
+@keyframes pageDissolveFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes contentDissolve {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-page-enter {
+  animation: pageDissolveFade var(--motion-page-enter, 320ms)
+    var(--motion-smooth-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  backface-visibility: hidden;
+  will-change: opacity;
+}
+
+.animate-content-smooth {
+  animation: contentDissolve var(--motion-content-fade, 260ms)
+    var(--motion-smooth-ease, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  backface-visibility: hidden;
+  will-change: opacity;
+}
+
+/* Interactive Micro-animation Helper */
+.interactive-smooth {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 180ms ease,
+    border-color 180ms ease;
+  will-change: transform;
+}
+.interactive-smooth:hover {
+  transform: translate3d(0, -1.5px, 0);
+}
+.interactive-smooth:active {
+  transform: translate3d(0, 0, 0) scale(0.985);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -115,5 +191,15 @@ a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .animate-page-enter,
+  .animate-content-smooth,
+  .interactive-smooth {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transition: none !important;
   }
 }

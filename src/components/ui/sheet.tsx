@@ -15,7 +15,9 @@ export function SheetContent({
   children,
   side = 'right',
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: 'right' | 'bottom' }): React.JSX.Element {
+}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+  side?: 'right' | 'bottom';
+}): React.JSX.Element {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40" />
@@ -29,7 +31,10 @@ export function SheetContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close aria-label="Close drawer" className="absolute top-3 right-3 grid size-10 place-items-center rounded-[var(--radius-md)] hover:bg-[var(--color-surface-subtle)]">
+        <DialogPrimitive.Close
+          aria-label="Close drawer"
+          className="absolute top-3 right-3 grid size-10 place-items-center rounded-[var(--radius-md)] hover:bg-[var(--color-surface-subtle)]"
+        >
           <X aria-hidden="true" className="size-5" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>

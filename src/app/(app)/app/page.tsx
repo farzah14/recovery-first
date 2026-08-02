@@ -1,15 +1,10 @@
-import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { routes } from '@/lib/navigation/route-definitions';
 
 export const metadata = {
-  title: 'Application',
+  title: 'Today Dashboard | RecoveryFirst',
 };
 
-export default function ApplicationPage() {
-  return (
-    <main>
-      <h1>Application foundation</h1>
-      <p>Your habit workspace starts here.</p>
-      <Link href="/">Return to public site</Link>
-    </main>
-  );
+export default function ApplicationIndexPage(): void {
+  redirect(routes.today);
 }

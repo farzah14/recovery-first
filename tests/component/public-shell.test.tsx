@@ -16,7 +16,10 @@ describe('public shell', () => {
     expect(screen.getByRole('link', { name: 'RecoveryFirst' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Features' })).toHaveAttribute('href', '/features');
     expect(screen.getByRole('link', { name: 'Sign In' })).toHaveAttribute('href', '/auth/sign-in');
-    expect(screen.getByRole('link', { name: 'Start Free' })).toHaveAttribute('href', '/app/today');
-    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy');
+    expect(screen.getByRole('link', { name: 'Join' })).toHaveAttribute('href', '/app/today');
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute(
+      'href',
+      '/privacy',
+    );
   });
 });

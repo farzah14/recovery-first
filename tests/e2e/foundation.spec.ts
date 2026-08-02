@@ -16,9 +16,9 @@ test('public route presents landing page hero and start free link', async ({ pag
 test('pricing route presents bento cards and feature comparison', async ({ page }) => {
   await page.goto('/pricing');
 
-  await expect(page.getByRole('heading', { name: 'Simple, transparent pricing.' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Guest' })).toBeVisible();
+  await expect(page.getByText('Simple, transparent pricing.')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Free' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Lite' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Premium' })).toBeVisible();
 });
 

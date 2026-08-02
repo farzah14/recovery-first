@@ -11,7 +11,8 @@ export function PublicPlaceholder({
       <PageHeader description={description} title={title} />
       <Card className="mt-8">
         <CardContent className="py-8 text-sm leading-6 text-[var(--color-text-secondary)]">
-          This page establishes the approved route and responsive shell. Product content is not connected in Plan 02.
+          This page establishes the approved route and responsive shell. Product content is not
+          connected in Plan 02.
         </CardContent>
       </Card>
     </ContentContainer>

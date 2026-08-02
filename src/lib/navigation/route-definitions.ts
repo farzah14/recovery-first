@@ -20,6 +20,7 @@ export const routes = {
   privacy: '/privacy',
   terms: '/terms',
   signIn: '/auth/sign-in',
+  signUp: '/auth/sign-up',
   app: '/app',
   today: '/app/today',
   habits: '/app/habits',
@@ -40,9 +41,8 @@ export type NavigationItem = Readonly<{
 
 export const publicNavigation = [
   { label: 'Features', href: routes.features },
-  { label: 'Pricing', href: routes.pricing },
   { label: 'How It Works', href: routes.howItWorks },
-  { label: 'About', href: routes.about },
+  { label: 'Pricing', href: routes.pricing },
   { label: 'Help', href: routes.help },
 ] as const;
 

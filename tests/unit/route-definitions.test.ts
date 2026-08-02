@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { applicationNavigation, publicNavigation, routes } from '@/lib/navigation/route-definitions';
+import {
+  applicationNavigation,
+  publicNavigation,
+  routes,
+} from '@/lib/navigation/route-definitions';
 
-const unique = <T,>(values: readonly T[]): boolean => new Set(values).size === values.length;
+const unique = <T>(values: readonly T[]): boolean => new Set(values).size === values.length;
 
 describe('route definitions', () => {
   it('defines unique public and application paths', () => {
@@ -28,11 +32,8 @@ describe('route definitions', () => {
       'Reminders',
       'Settings',
     ]);
-    expect(applicationNavigation.filter((item) => item.mobilePrimary).map((item) => item.label)).toEqual([
-      'Today',
-      'Habits',
-      'Review',
-      'Insights',
-    ]);
+    expect(
+      applicationNavigation.filter((item) => item.mobilePrimary).map((item) => item.label),
+    ).toEqual(['Today', 'Habits', 'Review', 'Insights']);
   });
 });

@@ -19,11 +19,17 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40" />
       <DialogPrimitive.Content
-        className={cn('fixed top-1/2 left-1/2 z-50 w-[min(92vw,32rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-overlay)]', className)}
+        className={cn(
+          'fixed top-1/2 left-1/2 z-50 w-[min(92vw,32rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-overlay)]',
+          className,
+        )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close aria-label="Close dialog" className="absolute top-3 right-3 grid size-10 place-items-center rounded-[var(--radius-md)] hover:bg-[var(--color-surface-subtle)]">
+        <DialogPrimitive.Close
+          aria-label="Close dialog"
+          className="absolute top-3 right-3 grid size-10 place-items-center rounded-[var(--radius-md)] hover:bg-[var(--color-surface-subtle)]"
+        >
           <X aria-hidden="true" className="size-5" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>

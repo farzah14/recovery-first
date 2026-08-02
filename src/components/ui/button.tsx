@@ -14,10 +14,8 @@ export const buttonVariants = cva(
           'border border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-subtle)]',
         ghost:
           'bg-transparent text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-subtle)] hover:text-[var(--color-text-primary)]',
-        danger:
-          'bg-[var(--color-danger)] text-white hover:bg-[#D93636] active:bg-[#C52E2E]',
-        recovery:
-          'bg-[var(--color-recovery)] text-white hover:bg-[#7848E7] active:bg-[#6739D5]',
+        danger: 'bg-[var(--color-danger)] text-white hover:bg-[#D93636] active:bg-[#C52E2E]',
+        recovery: 'bg-[var(--color-recovery)] text-white hover:bg-[#7848E7] active:bg-[#6739D5]',
       },
       size: {
         default: 'h-10',

@@ -15,7 +15,10 @@ export function DropdownMenuContent({
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
-        className={cn('z-50 min-w-52 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[var(--shadow-overlay)]', className)}
+        className={cn(
+          'z-50 min-w-52 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-1 shadow-[var(--shadow-overlay)]',
+          className,
+        )}
         sideOffset={sideOffset}
         {...props}
       />
@@ -27,5 +30,13 @@ export function DropdownMenuItem({
   className,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Item>): React.JSX.Element {
-  return <DropdownMenuPrimitive.Item className={cn('flex min-h-10 cursor-default items-center rounded-md px-3 text-sm outline-none data-[highlighted]:bg-[var(--color-surface-selected)]', className)} {...props} />;
+  return (
+    <DropdownMenuPrimitive.Item
+      className={cn(
+        'flex min-h-10 cursor-default items-center rounded-md px-3 text-sm outline-none data-[highlighted]:bg-[var(--color-surface-selected)]',
+        className,
+      )}
+      {...props}
+    />
+  );
 }

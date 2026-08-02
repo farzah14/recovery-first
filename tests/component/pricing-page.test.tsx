@@ -8,9 +8,9 @@ describe('PricingPage', () => {
   it('renders simple transparent pricing title and plan options', () => {
     render(<PricingPage />);
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Simple, transparent pricing.' })).toBeVisible();
-    expect(screen.getByRole('heading', { level: 3, name: 'Guest' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Tracker Plan' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Free' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 3, name: 'Lite' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Premium' })).toBeVisible();
   });
 
@@ -22,6 +22,6 @@ describe('PricingPage', () => {
     await user.click(annualButton);
 
     expect(screen.getByText('$48')).toBeVisible();
-    expect(screen.getByText('/yr')).toBeVisible();
+    expect(screen.getAllByText('/yr')[0]).toBeVisible();
   });
 });

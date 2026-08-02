@@ -18,10 +18,20 @@ export function InputField({
 
   return (
     <div className="grid gap-2">
-      <label className="text-sm font-semibold" htmlFor={id}>{label}</label>
-      {description ? <p className="text-sm text-[var(--color-text-secondary)]" id={descriptionId}>{description}</p> : null}
+      <label className="text-sm font-semibold" htmlFor={id}>
+        {label}
+      </label>
+      {description ? (
+        <p className="text-sm text-[var(--color-text-secondary)]" id={descriptionId}>
+          {description}
+        </p>
+      ) : null}
       <Input aria-describedby={describedBy} aria-invalid={Boolean(error)} id={id} {...props} />
-      {error ? <p className="text-sm font-medium text-[var(--color-danger)]" id={errorId}>{error}</p> : null}
+      {error ? (
+        <p className="text-sm font-medium text-[var(--color-danger)]" id={errorId}>
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

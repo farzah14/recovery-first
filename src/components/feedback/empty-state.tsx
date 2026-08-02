@@ -15,7 +15,9 @@ export function EmptyState({
           <CirclePlus aria-hidden="true" className="size-6" />
         </span>
         <h2 className="text-lg font-semibold">{title}</h2>
-        <p className="max-w-md text-sm leading-6 text-[var(--color-text-secondary)]">{description}</p>
+        <p className="max-w-md text-sm leading-6 text-[var(--color-text-secondary)]">
+          {description}
+        </p>
         <Button className="mt-2">{actionLabel}</Button>
       </CardContent>
     </Card>

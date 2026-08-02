@@ -10,7 +10,11 @@ describe('system states', () => {
     render(
       <>
         <StatusBadge status="minimum" />
-        <EmptyState actionLabel="Add a habit" description="Create your first habit." title="No habits yet" />
+        <EmptyState
+          actionLabel="Add a habit"
+          description="Create your first habit."
+          title="No habits yet"
+        />
         <OfflineState />
       </>,
     );

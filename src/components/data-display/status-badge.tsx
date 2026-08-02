@@ -13,7 +13,9 @@ const statusConfiguration = {
 
 export type StatusBadgeStatus = keyof typeof statusConfiguration;
 
-export function StatusBadge({ status }: Readonly<{ status: StatusBadgeStatus }>): React.JSX.Element {
+export function StatusBadge({
+  status,
+}: Readonly<{ status: StatusBadgeStatus }>): React.JSX.Element {
   const configuration = statusConfiguration[status];
   return <Badge tone={configuration.tone}>{configuration.label}</Badge>;
 }

@@ -11,10 +11,29 @@ export function ProgressRing({
   return (
     <div className="relative inline-grid place-items-center" style={{ height: size, width: size }}>
       <svg aria-hidden="true" className="-rotate-90" height={size} viewBox="0 0 64 64" width={size}>
-        <circle cx="32" cy="32" fill="none" r={radius} stroke="var(--color-neutral-150)" strokeWidth="6" />
-        <circle cx="32" cy="32" fill="none" r={radius} stroke="var(--color-primary)" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" strokeWidth="6" />
+        <circle
+          cx="32"
+          cy="32"
+          fill="none"
+          r={radius}
+          stroke="var(--color-neutral-150)"
+          strokeWidth="6"
+        />
+        <circle
+          cx="32"
+          cy="32"
+          fill="none"
+          r={radius}
+          stroke="var(--color-primary)"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          strokeWidth="6"
+        />
       </svg>
-      <span aria-label={`${label}: ${boundedValue}%`} className="absolute text-sm font-semibold">{boundedValue}%</span>
+      <span aria-label={`${label}: ${boundedValue}%`} className="absolute text-sm font-semibold">
+        {boundedValue}%
+      </span>
     </div>
   );
 }

@@ -12,7 +12,9 @@ export function PublicFooter(): React.JSX.Element {
       <ContentContainer className="flex flex-col items-center justify-between gap-4 md:flex-row">
         <div className="flex flex-col items-center gap-4 md:flex-row">
           <span className="text-xl font-bold text-[var(--color-primary)]">RecoveryFirst</span>
-          <span className="text-sm text-[var(--color-text-secondary)]">© 2026 RecoveryFirst. Built on a Recovery-First philosophy.</span>
+          <span className="text-sm text-[var(--color-text-secondary)]">
+            © 2026 RecoveryFirst. Built on a Recovery-First philosophy.
+          </span>
         </div>
         <div className="flex flex-wrap justify-center gap-2">
           <Link className={footerLinkClasses} href={routes.privacy}>

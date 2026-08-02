@@ -11,7 +11,7 @@ export function Switch({
   return (
     <SwitchPrimitive.Root
       className={cn(
-        'inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-[var(--color-neutral-300)] p-0.5 transition-colors data-[state=checked]:bg-[var(--color-primary)] disabled:opacity-55',
+        'inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-[var(--color-neutral-300)] p-0.5 transition-colors disabled:opacity-55 data-[state=checked]:bg-[var(--color-primary)]',
         className,
       )}
       {...props}

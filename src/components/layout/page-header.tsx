@@ -14,7 +14,9 @@ export function PageHeader({
   className?: string;
 }>): React.JSX.Element {
   return (
-    <header className={cn('flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between', className)}>
+    <header
+      className={cn('flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between', className)}
+    >
       <div className="min-w-0">
         {eyebrow ? (
           <p className="mb-1 text-sm font-semibold text-[var(--color-primary)]">{eyebrow}</p>

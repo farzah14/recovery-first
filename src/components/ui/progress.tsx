@@ -14,7 +14,10 @@ export function Progress({
   return (
     <ProgressPrimitive.Root
       aria-label={label}
-      className={cn('h-2 w-full overflow-hidden rounded-full bg-[var(--color-neutral-150)]', className)}
+      className={cn(
+        'h-2 w-full overflow-hidden rounded-full bg-[var(--color-neutral-150)]',
+        className,
+      )}
       value={boundedValue}
       {...props}
     >

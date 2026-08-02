@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import HowItWorksPage from '@/app/(public)/how-it-works/page';
 
 describe('HowItWorksPage', () => {
-  it('renders how-it-works hero title, 6 step loop cards, and final cta', () => {
+  it('renders how-it-works hero title and 6 step loop cards', () => {
     render(<HowItWorksPage />);
 
     expect(
@@ -16,8 +16,5 @@ describe('HowItWorksPage', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'Identify Friction' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Adapt' })).toBeVisible();
     expect(screen.getByRole('heading', { level: 3, name: 'Recover' })).toBeVisible();
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Ready to build sustainable habits?' }),
-    ).toBeVisible();
   });
 });

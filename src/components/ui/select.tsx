@@ -53,8 +53,11 @@ export function SelectContent({
 export function SelectItem({
   className,
   children,
+  showIndicator = true,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>): React.JSX.Element {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & {
+  showIndicator?: boolean;
+}): React.JSX.Element {
   return (
     <SelectPrimitive.Item
       className={cn(
@@ -64,9 +67,11 @@ export function SelectItem({
       {...props}
     >
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator className="absolute right-2">
-        <Check aria-hidden="true" className="size-4 text-[var(--color-primary)]" />
-      </SelectPrimitive.ItemIndicator>
+      {showIndicator ? (
+        <SelectPrimitive.ItemIndicator className="absolute right-2">
+          <Check aria-hidden="true" className="size-4 text-[var(--color-primary)]" />
+        </SelectPrimitive.ItemIndicator>
+      ) : null}
     </SelectPrimitive.Item>
   );
 }
