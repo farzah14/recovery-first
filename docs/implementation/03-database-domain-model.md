@@ -2858,7 +2858,7 @@ git commit -m "feat: add idempotent domain database functions"
 - Create: `supabase/migrations/20260729015000_row_level_security.sql`
 - Create: `supabase/tests/00040_row_level_security.test.sql`
 
-- [ ] **Step 1: Enable RLS and create least-privilege policies**
+- [x] **Step 1: Enable RLS and create least-privilege policies**
 
 Create `supabase/migrations/20260729015000_row_level_security.sql`:
 
@@ -3196,7 +3196,7 @@ grant select on public.insight_consistency_view to authenticated;
 grant select on public.subscription_status_view to authenticated;
 ```
 
-- [ ] **Step 2: Write RLS coverage and cross-user denial tests**
+- [x] **Step 2: Write RLS coverage and cross-user denial tests**
 
 Create `supabase/tests/00040_row_level_security.test.sql`:
 
@@ -3501,7 +3501,7 @@ select * from finish();
 rollback;
 ```
 
-- [ ] **Step 3: Reset and run RLS tests**
+- [x] **Step 3: Reset and run RLS tests**
 
 Run:
 
@@ -3512,7 +3512,7 @@ pnpm db:test
 
 Expected: all RLS tables are covered; owner reads pass; cross-user reads and writes are denied.
 
-- [ ] **Step 4: Verify browser roles cannot access private tables**
+- [x] **Step 4: Verify browser roles cannot access private tables**
 
 Run:
 
@@ -3522,7 +3522,7 @@ pnpm exec supabase db lint --local --level warning
 
 Expected: command exits with status `0`; no warning reports browser access to `private.payment_events`, `private.idempotency_records`, or `private.audit_events`.
 
-- [ ] **Step 5: Commit RLS and views**
+- [x] **Step 5: Commit RLS and views**
 
 Run:
 
