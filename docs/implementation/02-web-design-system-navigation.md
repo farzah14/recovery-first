@@ -3304,7 +3304,7 @@ find tests -type d -name '*-snapshots' -print0 | xargs -0 git add
 git commit -m "test: verify responsive web design system"
 ```
 
-- [ ] **Step 11: Verify from a clean checkout**
+- [x] **Step 11: Verify from a clean checkout**
 
 Run:
 
@@ -3313,6 +3313,7 @@ temporary_directory="$(mktemp -d)"
 git clone --local . "$temporary_directory/recovery-first-habit-tracker"
 cd "$temporary_directory/recovery-first-habit-tracker"
 pnpm install --frozen-lockfile
+cp .env.example .env.local
 pnpm exec playwright install chromium
 pnpm verify
 pnpm test:accessibility
@@ -3323,7 +3324,7 @@ pnpm check:repository
 
 Expected: every command exits with status `0` using only tracked repository files and generated local dependencies.
 
-- [ ] **Step 12: Capture final evidence**
+- [x] **Step 12: Capture final evidence**
 
 Run:
 
@@ -3364,8 +3365,8 @@ Plan 02 is complete only when fresh command output proves every item:
 - [x] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
 - [x] Unit, component, accessibility, browser, and visual tests pass.
 - [x] Strict typecheck, lint, formatting, repository checks, and production build pass.
-- [ ] Clean-checkout verification passes.
-- [ ] Working tree is clean.
+- [x] Clean-checkout verification passes.
+- [x] Working tree is clean.
 
 ---
 
