@@ -981,7 +981,7 @@ git commit -m "feat: define check-in metrics and recovery counter"
 - Create: `tests/unit/domain/recovery.test.ts`
 - Create: `tests/unit/domain/entitlement.test.ts`
 
-- [ ] **Step 1: Write failing Recovery tests**
+- [x] **Step 1: Write failing Recovery tests**
 
 Create `tests/unit/domain/recovery.test.ts`:
 
@@ -1029,7 +1029,7 @@ describe('Recovery rules', () => {
 });
 ```
 
-- [ ] **Step 2: Write failing entitlement tests**
+- [x] **Step 2: Write failing entitlement tests**
 
 Create `tests/unit/domain/entitlement.test.ts`:
 
@@ -1061,7 +1061,7 @@ describe('entitlement status', () => {
 });
 ```
 
-- [ ] **Step 3: Run tests and confirm failure**
+- [x] **Step 3: Run tests and confirm failure**
 
 Run:
 
@@ -1071,7 +1071,7 @@ pnpm exec vitest run tests/unit/domain/recovery.test.ts tests/unit/domain/entitl
 
 Expected: FAIL because the modules do not exist.
 
-- [ ] **Step 4: Implement recommendation contracts**
+- [x] **Step 4: Implement recommendation contracts**
 
 Create `src/domain/recovery/recommendation.ts`:
 
@@ -1098,7 +1098,7 @@ export type RecommendationDecision =
   (typeof recommendationDecisions)[number];
 ```
 
-- [ ] **Step 5: Implement Recovery contracts**
+- [x] **Step 5: Implement Recovery contracts**
 
 Create `src/domain/recovery/recovery.ts`:
 
@@ -1145,7 +1145,7 @@ export function evaluateRecoveryPlan({
 }
 ```
 
-- [ ] **Step 6: Implement entitlement contracts**
+- [x] **Step 6: Implement entitlement contracts**
 
 Create `src/domain/subscriptions/entitlement.ts`:
 
@@ -1168,7 +1168,7 @@ export function grantsPremiumAccess(status: EntitlementStatus): boolean {
 }
 ```
 
-- [ ] **Step 7: Run focused verification**
+- [x] **Step 7: Run focused verification**
 
 Run:
 
@@ -1180,7 +1180,7 @@ pnpm typecheck
 
 Expected: all domain tests and typecheck pass.
 
-- [ ] **Step 8: Commit Recovery and entitlement contracts**
+- [x] **Step 8: Commit Recovery and entitlement contracts**
 
 Run:
 
