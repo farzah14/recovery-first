@@ -6,6 +6,8 @@ const requiredRouteFiles = [
   'src/app/layout.tsx',
   'src/app/(public)/page.tsx',
   'src/app/(app)/app/page.tsx',
+  'src/app/(app)/app/layout.tsx',
+  'src/app/auth/callback/route.ts',
   'src/app/error.tsx',
   'src/app/global-error.tsx',
   'src/app/not-found.tsx',

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 
@@ -7,6 +8,62 @@ import { Button } from '@/components/ui/button';
 import { routes } from '@/lib/navigation/route-definitions';
 
 export default function SignUpPage(): React.JSX.Element {
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  async function continueWithGoogle(): Promise<void> {
+    setPending(true);
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase/browser');
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(routes.app)}`,
+      },
+    });
+    if (error) {
+      setMessage('Sign-up is unavailable right now. Please try again.');
+      setPending(false);
+    }
+  }
+
+  async function createAccount(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const email = form.get('email');
+    const password = form.get('password');
+    const confirmPassword = form.get('confirm-password');
+    const displayName = form.get('name');
+    if (
+      typeof email !== 'string' ||
+      typeof password !== 'string' ||
+      typeof confirmPassword !== 'string' ||
+      typeof displayName !== 'string' ||
+      password !== confirmPassword
+    ) {
+      setMessage('Enter matching account details to continue.');
+      return;
+    }
+
+    setPending(true);
+    const { createSupabaseBrowserClient } = await import('@/lib/supabase/browser');
+    const supabase = createSupabaseBrowserClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: displayName },
+        emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(routes.app)}`,
+      },
+    });
+    setMessage(
+      error
+        ? 'Sign-up is unavailable right now. Please try again.'
+        : 'Check your email to confirm your account.',
+    );
+    setPending(false);
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--color-page)] p-4 sm:p-8">
       {/* Background decoration circles */}
@@ -34,6 +91,8 @@ export default function SignUpPage(): React.JSX.Element {
         <button
           className="group flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-sm font-semibold text-[var(--color-text-primary)] shadow-2xs transition-colors hover:bg-[var(--color-surface-subtle)] focus:ring-2 focus:ring-[var(--color-primary)] focus:outline-none"
           type="button"
+          onClick={continueWithGoogle}
+          disabled={pending}
         >
           <svg className="size-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -66,7 +125,7 @@ export default function SignUpPage(): React.JSX.Element {
         </div>
 
         {/* Manual Form */}
-        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="flex flex-col gap-4" onSubmit={createAccount}>
           <div className="flex flex-col gap-1.5">
             <label
               className="text-xs font-semibold text-[var(--color-text-primary)]"
@@ -135,10 +194,26 @@ export default function SignUpPage(): React.JSX.Element {
             />
           </div>
 
-          <Button fullWidth size="touch" type="submit" variant="primary" className="mt-2">
+          <Button
+            disabled={pending}
+            fullWidth
+            size="touch"
+            type="submit"
+            variant="primary"
+            className="mt-2"
+          >
             Create Account
           </Button>
         </form>
+
+        {message ? (
+          <p
+            aria-live="polite"
+            className="mt-4 text-center text-sm text-[var(--color-text-secondary)]"
+          >
+            {message}
+          </p>
+        ) : null}
 
         {/* Footer Actions */}
         <div className="mt-8 flex flex-col items-center gap-2 border-t border-[var(--color-border)] pt-6 text-center text-xs">
