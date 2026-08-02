@@ -3339,6 +3339,8 @@ Expected:
 - Plan 02 task commits appear in order;
 - the working tree is clean.
 
+Evidence captured on 2026-08-02 from `C:\Users\korba\AppData\Local\Temp\tracker-habits-clean-095b5a8\recovery-first-habit-tracker` at commit `095b5a8`: `pnpm verify`, `pnpm test:accessibility`, `CI=1 pnpm test:e2e`, `pnpm test:visual`, and `pnpm check:repository` passed. The generated `next-env.d.ts` route import was restored after Next.js checks before confirming an empty `git status --short`.
+
 ---
 
 # 4. Final Acceptance Checklist
@@ -3361,8 +3363,8 @@ Plan 02 is complete only when fresh command output proves every item:
 - [x] Loading, error, not-found, empty, offline, permission, locked, and decision-required components exist.
 - [x] Keyboard focus remains visible on all tested controls.
 - [x] Axe reports zero automatically detectable violations in the tested primitive and application-shell samples.
-- [ ] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
-- [ ] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
+- [x] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
+- [x] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
 - [x] Unit, component, accessibility, browser, and visual tests pass.
 - [x] Strict typecheck, lint, formatting, repository checks, and production build pass.
 - [x] Clean-checkout verification passes.
