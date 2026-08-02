@@ -3361,8 +3361,8 @@ Plan 02 is complete only when fresh command output proves every item:
 - [x] Loading, error, not-found, empty, offline, permission, locked, and decision-required components exist.
 - [x] Keyboard focus remains visible on all tested controls.
 - [x] Axe reports zero automatically detectable violations in the tested primitive and application-shell samples.
-- [x] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
-- [x] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
+- [ ] Responsive navigation tests pass at 390, 834, 1280, 1440, and 1728 pixel widths.
+- [ ] Visual baselines pass for public desktop, application desktop, and application mobile surfaces.
 - [x] Unit, component, accessibility, browser, and visual tests pass.
 - [x] Strict typecheck, lint, formatting, repository checks, and production build pass.
 - [x] Clean-checkout verification passes.
