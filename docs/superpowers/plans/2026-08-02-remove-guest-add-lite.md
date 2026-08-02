@@ -122,13 +122,15 @@
 - Modify: `src/lib/repositories/signed-in/supabase-product-repository.ts`
 - Add or modify: account-owned repository tests and Plan 04 feature tests
 
+**Task 6 execution status:** Complete for the account repository contract and Plan 04 dependency rebase. The remaining unchecked lines below are historical wording retained in the original detailed-plan excerpt and must not be executed.
+
 - [ ] Change the Plan 04 goal from “Guest core loop” to “authenticated Free account core loop”.
-- [ ] Use the authenticated repository as canonical for habit creation, sessions, and check-ins.
-- [ ] Use Dexie only for account cache, drafts, and pending operations.
-- [ ] Keep all core-loop invariants in server-authoritative functions and shared domain contracts.
-- [ ] Update active-limit messages to use the resolved Free/Lite/Premium tier and limit.
+- [x] Use the authenticated repository as canonical for habit creation, sessions, and check-ins.
+- [x] Use Dexie only for account cache, drafts, and pending operations.
+- [x] Keep all core-loop invariants in server-authoritative functions and shared domain contracts.
+- [x] Update active-limit messages to use the resolved Free/Lite/Premium tier and limit.
 - [ ] Do not begin Plan 04 implementation until Tasks 1–5 pass their gates.
-- [ ] Commit: `docs: rebase core loop on account identity`.
+- [x] Commit: `docs: rebase core loop on account identity`.
 
 ## Task 7: Align UI, pricing, navigation, and plan presentation
 

@@ -23,6 +23,8 @@
 
 **03A amendment:** This file's original Guest-first task examples are superseded. Do not begin this plan until authenticated account routing, Free/Lite/Premium tier contracts, the Lite database migration, and legacy-local recovery boundaries have passed their quality gates. The active limits are Free `5`, Lite `10`, and Premium `30`.
 
+**Task 6 rebase amendment:** The active repository contract is authenticated-account-owned. `ProductOwner.identityMode` is `account`, `ProductOwner.planTier` is `free | lite | premium`, Supabase is canonical, and Dexie is limited to account cache, drafts, and pending operations. Legacy browser-local records are handled only by `LegacyLocalDataService`; no new core-loop command may use Guest ownership or attach legacy data before explicit transfer acknowledgement.
+
 **Prerequisites:**
 
 - Plan 01 Final Acceptance Checklist passes.
@@ -39,8 +41,8 @@
 
 Plan 04 must implement these rules exactly:
 
-- Guest may have at most `3` slot-consuming habits.
-- Free and Premium limits remain represented by shared repository contracts but are not exposed through authenticated UI in this plan.
+- Free accounts may have at most `5`, Lite accounts `10`, and Premium accounts `30` slot-consuming habits.
+- All three account limits remain represented by shared repository contracts and server-authoritative functions.
 - Draft habits do not consume active slots and generate no sessions.
 - Every active habit has an immutable published Habit Version containing Normal, Minimum, schedule, cue, and timezone context.
 - Normal and Minimum definitions are both required.
@@ -58,7 +60,7 @@ Plan 04 must implement these rules exactly:
 - A same-day edit replaces the current check-in projection while preserving prior history.
 - Unrecorded remains distinct from Manual Skipped.
 - The resolution window is three local calendar days; Automatic Skipped conversion uses the authoritative domain/database function and cannot trigger Recovery by itself.
-- Guest writes are confirmed from the IndexedDB transaction result, not from transient component state.
+- Account-cache writes are confirmed from the IndexedDB transaction result, not from transient component state.
 - Signed-in repository methods call the server-authoritative functions and views created in Plan 03; React components never duplicate database invariants.
 - No screen uses punitive streak-loss language.
 
