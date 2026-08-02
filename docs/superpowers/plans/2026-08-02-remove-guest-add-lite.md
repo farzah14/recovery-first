@@ -174,6 +174,8 @@
 
 ## Task 9: Run complete regression and clean-checkout verification
 
+**Task 9 execution status:** Deterministic gates and database verification pass. Public foundation E2E passes 8/8 against the production build, and the public visual checks pass. Authenticated Today/Habits visual baselines remain blocked until a real authenticated test fixture/provider environment exists; `pnpm audit --prod` also remains blocked by four inherited high/moderate vulnerabilities in Next's sharp/postcss dependency paths. This task is not marked complete.
+
 **Files:**
 
 - Modify: `docs/implementation/IMPLEMENTATION-PLAN.md`
