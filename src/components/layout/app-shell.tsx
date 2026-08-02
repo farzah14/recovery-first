@@ -24,6 +24,11 @@ import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import {
+  AccountTierNotice,
+  planTierLabel,
+  useAccountState,
+} from '@/components/account/account-state';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
 import { addHabitToSync, getTodayDateStr } from '@/lib/storage/habits-sync';
 
@@ -61,6 +66,7 @@ export function AppShell({
   reflectionNote,
 }: AppShellProps): React.JSX.Element {
   const pathname = usePathname();
+  const account = useAccountState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [resolvedCurrentDate, setResolvedCurrentDate] = useState(
@@ -228,10 +234,13 @@ export function AppShell({
                       : 'max-w-40 translate-x-0 opacity-100',
                   )}
                 >
-                  <h1 className="text-sm font-bold text-[var(--color-primary)]">Alex</h1>
+                  <h1 className="text-sm font-bold text-[var(--color-primary)]">
+                    {account.displayName}
+                  </h1>
                   <p className="text-xs font-medium text-[var(--color-text-muted)]">
-                    Free Subscription
+                    {planTierLabel(account.planTier)} Plan
                   </p>
+                  <AccountTierNotice />
                 </div>
               </div>
 

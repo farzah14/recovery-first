@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { AccountTierSummary } from '@/components/account/account-state';
 import { Settings, User, Shield, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
@@ -47,7 +48,7 @@ export default function SettingsPage(): React.JSX.Element {
                   Profile Information
                 </h2>
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  Alex — Free Subscription Plan
+                  <AccountTierSummary />
                 </p>
               </div>
             </div>
