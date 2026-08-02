@@ -143,13 +143,15 @@
 - Modify: `src/components/home/faq-section.tsx`
 - Modify: affected component, accessibility, and E2E tests
 
+**Task 7 execution status:** Complete; normal UI now uses account state and no longer exposes Guest mode. The first historical checkbox below is retained as wording evidence only.
+
 - [ ] Remove Guest Mode labels and “Continue as Guest” actions from normal UI.
-- [ ] Display the authenticated user name and resolved Free/Lite/Premium tier from account state, not hardcoded text.
-- [ ] Keep Pricing cards ordered Free, Lite, Premium with the approved 5/10/30 limits and existing prices.
-- [ ] Show Lite as a real plan, not a placeholder or a Premium alias.
-- [ ] Add loading, unavailable-entitlement, downgrade, and legacy-local-data recovery states.
-- [ ] Verify responsive and accessibility behavior without changing the approved design tokens.
-- [ ] Commit: `feat: align account tier navigation and pricing UI`.
+- [x] Display the authenticated user name and resolved Free/Lite/Premium tier from account state, not hardcoded text.
+- [x] Keep Pricing cards ordered Free, Lite, Premium with the approved 5/10/30 limits and existing prices.
+- [x] Show Lite as a real plan, not a placeholder or a Premium alias.
+- [x] Add loading, unavailable-entitlement, downgrade, and legacy-local-data recovery states.
+- [x] Verify responsive and accessibility behavior without changing the approved design tokens.
+- [x] Commit: `feat: align account tier navigation and pricing UI`.
 
 ## Task 8: Align billing, entitlements, analytics, and release evidence
 
