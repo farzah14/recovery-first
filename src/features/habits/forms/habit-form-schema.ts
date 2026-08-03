@@ -10,8 +10,7 @@ const weekdaySchema = z.union([
   z.literal(7),
 ]);
 
-export const habitFormSchema = z
-  .object({
+const habitFormObject = z.object({
     creationRoute: z.enum(['template', 'custom']),
     templateId: z.string().nullable(),
     category: z.string().trim().min(1).max(40),
@@ -35,16 +34,23 @@ export const habitFormSchema = z
       .nullable(),
     startLocalDate: z.string().date(),
     activate: z.boolean(),
-  })
-  .superRefine((value, context) => {
-    if (value.normalAction.toLowerCase() === value.minimumAction.toLowerCase()) {
+  });
+
+export const habitFormDraftSchema = habitFormObject.partial();
+
+export const habitFormSchema = habitFormObject.superRefine((value, context) => {
+    if (
+      typeof value.normalAction === 'string' &&
+      typeof value.minimumAction === 'string' &&
+      value.normalAction.toLowerCase() === value.minimumAction.toLowerCase()
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['minimumAction'],
         message: 'Minimum must describe a smaller valid action.',
       });
     }
-    if (value.recurrenceKind === 'weekdays' && value.weekdays.length === 0) {
+    if (value.recurrenceKind === 'weekdays' && value.weekdays?.length === 0) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['weekdays'],
@@ -58,7 +64,7 @@ export const habitFormSchema = z
           path: ['timesPerWeek'],
           message: 'Choose how many sessions occur each week.',
         });
-      } else if (value.weekdays.length !== value.timesPerWeek) {
+      } else if (value.weekdays?.length !== value.timesPerWeek) {
         context.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['weekdays'],
@@ -73,4 +79,4 @@ export const habitFormSchema = z
         message: 'Choose a reminder time.',
       });
     }
-  });
+});
