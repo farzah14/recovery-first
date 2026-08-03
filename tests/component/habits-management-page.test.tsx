@@ -1,9 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 
 import { HabitsManagement } from '@/features/habits/habits-management';
 
 describe('HabitsManagement', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('renders Habits Library header, search bar, status and category dropdowns, active habits cards, and paused habits section', () => {
     render(<HabitsManagement />);
 
@@ -17,6 +21,9 @@ describe('HabitsManagement', () => {
     );
     expect(screen.getByRole('combobox', { name: 'Filter by category' })).toHaveTextContent(
       'All Categories',
+    );
+    expect(screen.getByRole('combobox', { name: 'Filter by time of day' })).toHaveTextContent(
+      'Any Time',
     );
 
     // Active habit cards
@@ -45,6 +52,31 @@ describe('HabitsManagement', () => {
     // Filter by Paused status
     fireEvent.click(screen.getByRole('combobox', { name: 'Filter by status' }));
     fireEvent.click(screen.getByRole('option', { name: 'Paused' }));
+    expect(screen.getByText('Read Tech Documentation')).toBeVisible();
+  }, 30000);
+
+  it('filters habits lists by time-of-day bucket', async () => {
+    render(<HabitsManagement />);
+
+    // Morning bucket keeps morning habits and hides the evening paused habit
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by time of day' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Morning' }));
+    expect(screen.getByText('Daily Meditation')).toBeVisible();
+    expect(screen.getByText('Hydration & Water')).toBeVisible();
+    expect(screen.queryByText('Read Tech Documentation')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Paused Habits/i)).not.toBeInTheDocument();
+
+    // Evening bucket shows only the evening paused habit
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by time of day' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Evening' }));
+    expect(screen.getByText('Read Tech Documentation')).toBeVisible();
+    expect(screen.queryByText('Daily Meditation')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hydration & Water')).not.toBeInTheDocument();
+
+    // Reset to Any Time restores the full lists
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by time of day' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Any Time' }));
+    expect(screen.getByText('Daily Meditation')).toBeVisible();
     expect(screen.getByText('Read Tech Documentation')).toBeVisible();
   }, 30000);
 

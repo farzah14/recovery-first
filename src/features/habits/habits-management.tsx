@@ -28,9 +28,13 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
+  Moon,
+  Sunrise,
+  Sunset,
   type LucideIcon,
 } from 'lucide-react';
 
+import { matchesTimeBucket, type TimeFilterValue } from '@/domain/habits/habit-filters';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +65,7 @@ export interface HabitItem {
   createdDate: string;
   version: string;
   iconName: string;
+  fromTime?: string;
 }
 
 const INITIAL_HABITS: HabitItem[] = [
@@ -147,6 +152,33 @@ const CATEGORY_FILTER_COLORS: Record<CategoryFilter, string> = {
   Social: '#DB2777',
 };
 
+const TIME_FILTER_OPTIONS: { value: TimeFilterValue; label: string; icon: LucideIcon }[] = [
+  { value: 'all', label: 'Any Time', icon: Clock },
+  { value: 'morning', label: 'Morning', icon: Sunrise },
+  { value: 'afternoon', label: 'Afternoon', icon: Sun },
+  { value: 'evening', label: 'Evening', icon: Sunset },
+  { value: 'night', label: 'Night', icon: Moon },
+];
+
+const TIME_FILTER_COLORS: Record<TimeFilterValue, string> = {
+  all: '#3f4940',
+  morning: '#F59E0B',
+  afternoon: '#2563EB',
+  evening: '#7C3AED',
+  night: '#4F46E5',
+};
+
+function TimeFilterIcon({
+  bucket,
+  className,
+}: Readonly<{ bucket: TimeFilterValue; className?: string }>): React.JSX.Element {
+  const option = TIME_FILTER_OPTIONS.find((item) => item.value === bucket);
+  const Icon = option?.icon ?? Clock;
+  return (
+    <Icon aria-hidden="true" className={className} style={{ color: TIME_FILTER_COLORS[bucket] }} />
+  );
+}
+
 function getTodayDateStr(): string {
   const d = new Date();
   return d.toISOString().split('T')[0] ?? '';
@@ -213,6 +245,7 @@ function mergeStoredHabits(stored: ReturnType<typeof getStoredHabits>): HabitIte
       createdDate: habit.createdDate,
       version: 'v1',
       iconName: habit.iconName || INITIAL_HABITS[0]?.iconName || '🎯',
+      ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
     })),
     ...INITIAL_HABITS.filter((habit) => !storedIds.has(habit.id)),
   ];
@@ -253,6 +286,7 @@ export function HabitsManagement(): React.JSX.Element {
           status: h.status,
           createdDate: h.createdDate,
           iconName: h.iconName,
+          ...(h.fromTime ? { fromTime: h.fromTime } : {}),
         })),
       );
       return next;
@@ -262,6 +296,7 @@ export function HabitsManagement(): React.JSX.Element {
   // Filters & Search State
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All');
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilterValue>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Selected Habit for Detail View
@@ -282,6 +317,19 @@ export function HabitsManagement(): React.JSX.Element {
       value === 'Social'
     ) {
       setSelectedCategory(value);
+    }
+  }
+
+  function handleTimeFilterChange(value: string): void {
+    if (
+      value === 'all' ||
+      value === 'morning' ||
+      value === 'afternoon' ||
+      value === 'evening' ||
+      value === 'night'
+    ) {
+      setSelectedTimeFilter(value);
+      setVisibleActiveCount(4);
     }
   }
 
@@ -368,6 +416,7 @@ export function HabitsManagement(): React.JSX.Element {
       createdDate: data.startDate || getTodayDateStr(),
       version: 'v1',
       iconName: data.icon === 'meditation' ? '🧘‍♂️' : data.icon === 'water' ? '💧' : '🎯',
+      fromTime: data.fromTime,
     };
     updateHabitsWithSync((prev) => [newHabit, ...prev]);
     showToast(`New habit "${data.name}" created successfully!`);
@@ -412,7 +461,8 @@ export function HabitsManagement(): React.JSX.Element {
       !searchQuery.trim() ||
       h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       h.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesStatus && matchesSearch;
+    const matchesTime = matchesTimeBucket(h, selectedTimeFilter);
+    return matchesCategory && matchesStatus && matchesSearch && matchesTime;
   });
 
   const [visibleActiveCount, setVisibleActiveCount] = useState<number>(4);
@@ -508,6 +558,52 @@ export function HabitsManagement(): React.JSX.Element {
                           <Icon aria-hidden="true" className="size-4 shrink-0" style={{ color }} />
                           <span className="truncate text-xs font-semibold text-[#161A17] group-hover:text-[#004e27] group-data-[highlighted]:text-[#004e27]">
                             {status === 'All' ? 'All Status' : status}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedTimeFilter} onValueChange={handleTimeFilterChange}>
+                <SelectTrigger
+                  aria-label="Filter by time of day"
+                  className={cn(
+                    'group h-11 min-h-11 w-full items-center justify-between gap-2.5 rounded-xl border bg-white px-3.5 text-xs shadow-2xs transition-colors duration-150 focus-visible:border-[#004e27] focus-visible:ring-4 focus-visible:ring-[#004e27]/10 sm:w-fit',
+                    selectedTimeFilter !== 'all'
+                      ? 'border-[#004e27]/50 bg-[#f7fbf8] font-semibold text-[#004e27]'
+                      : 'border-[var(--color-border-standard,#DDE5E1)] text-[#161A17] hover:border-[#004e27]/70 hover:bg-[#f4f9f6] hover:text-[#004e27]',
+                  )}
+                >
+                  <span className="flex items-center gap-2 overflow-hidden py-0.5">
+                    <TimeFilterIcon
+                      bucket={selectedTimeFilter}
+                      className="size-4 shrink-0 text-[#004e27]"
+                    />
+                    <SelectValue className="font-semibold">
+                      <span className="text-xs font-semibold text-[#161A17]">
+                        {TIME_FILTER_OPTIONS.find((o) => o.value === selectedTimeFilter)?.label ??
+                          'Any Time'}
+                      </span>
+                    </SelectValue>
+                  </span>
+                </SelectTrigger>
+                <SelectContent className="animate-in fade-in-0 zoom-in-95 w-48 rounded-2xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-1.5 shadow-xl shadow-emerald-950/10 backdrop-blur-md transition-all duration-150">
+                  {TIME_FILTER_OPTIONS.map((option) => {
+                    const Icon = option.icon;
+                    const color = TIME_FILTER_COLORS[option.value];
+                    return (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        showIndicator={true}
+                        className="group flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-xs text-[#3f4940] transition-colors duration-150 outline-none hover:bg-[#f0f8f4] hover:text-[#004e27] data-[highlighted]:bg-[#f0f8f4] data-[highlighted]:text-[#004e27] data-[state=checked]:bg-[#e7f3ed] data-[state=checked]:font-semibold data-[state=checked]:text-[#004e27]"
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                          <Icon aria-hidden="true" className="size-4 shrink-0" style={{ color }} />
+                          <span className="truncate text-xs font-semibold text-[#161A17] group-hover:text-[#004e27] group-data-[highlighted]:text-[#004e27]">
+                            {option.label}
                           </span>
                         </span>
                       </SelectItem>
