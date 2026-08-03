@@ -832,9 +832,9 @@ export function HabitsManagement(): React.JSX.Element {
                       <Button
                         type="button"
                         size="compact"
-                        variant="secondary"
+                        variant="ghost"
                         onClick={() => setVisibleActiveCount((prev) => prev + 4)}
-                        className="group inline-flex items-center gap-2 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white px-5 py-2.5 text-xs font-semibold text-[#004e27] shadow-xs transition-all duration-200 hover:border-[#004e27]/60 hover:bg-[#f0f8f4] hover:shadow-md"
+                        className="group inline-flex items-center gap-1.5 rounded-lg bg-transparent px-2 py-1 text-xs font-semibold text-[#004e27] hover:bg-transparent hover:text-[#004e27]/80"
                       >
                         <span>
                           Show More Habits ({activeHabits.length - visibleActiveCount} remaining)
@@ -845,9 +845,9 @@ export function HabitsManagement(): React.JSX.Element {
                       <Button
                         type="button"
                         size="compact"
-                        variant="secondary"
+                        variant="ghost"
                         onClick={() => setVisibleActiveCount(4)}
-                        className="group inline-flex items-center gap-2 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white px-5 py-2.5 text-xs font-semibold text-[#3f4940] shadow-xs transition-all duration-200 hover:border-[#3f4940]/60 hover:bg-[#f3f4f4]"
+                        className="group inline-flex items-center gap-1.5 rounded-lg bg-transparent px-2 py-1 text-xs font-semibold text-[#3f4940] hover:bg-transparent hover:text-[#161A17]"
                       >
                         <span>Show Less</span>
                         <ChevronUp className="size-4 text-[#3f4940] transition-transform duration-200 group-hover:-translate-y-0.5" />
