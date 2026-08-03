@@ -546,7 +546,7 @@ export function HabitsManagement(): React.JSX.Element {
                       className="size-4 shrink-0 text-[#004e27]"
                     />
                     <SelectValue className="font-semibold">
-                      <span className="text-xs font-semibold text-[#161A17]">
+                      <span className="block text-xs leading-none font-semibold text-[#161A17]">
                         {selectedStatus === 'All' ? 'All Status' : selectedStatus}
                       </span>
                     </SelectValue>
@@ -591,7 +591,7 @@ export function HabitsManagement(): React.JSX.Element {
                       className="size-4 shrink-0 text-[#004e27]"
                     />
                     <SelectValue className="font-semibold">
-                      <span className="text-xs font-semibold text-[#161A17]">
+                      <span className="block text-xs leading-none font-semibold text-[#161A17]">
                         {TIME_FILTER_OPTIONS.find((o) => o.value === selectedTimeFilter)?.label ??
                           'Any Time'}
                       </span>
@@ -637,7 +637,7 @@ export function HabitsManagement(): React.JSX.Element {
                       className="size-4 shrink-0 text-[#004e27]"
                     />
                     <SelectValue className="font-semibold">
-                      <span className="text-xs font-semibold text-[#161A17]">
+                      <span className="block text-xs leading-none font-semibold text-[#161A17]">
                         {DATE_FILTER_OPTIONS.find((o) => o.value === selectedDateFilter)?.label ??
                           'All Dates'}
                       </span>
