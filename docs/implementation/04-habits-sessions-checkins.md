@@ -1162,7 +1162,7 @@ git commit -m "feat: define validated habit creation form"
 - Create: `src/lib/repositories/guest/dexie-product-repository.ts`
 - Create: `tests/integration/guest-habit-core-loop.test.ts`
 
-- [ ] **Step 1: Write a failing Dexie version 3 migration test**
+- [x] **Step 1: Write a failing Dexie version 3 migration test**
 
 Create `tests/unit/indexed-db/command-results-migration.test.ts` and prove that upgrading a populated version 2 database:
 
@@ -1171,7 +1171,7 @@ Create `tests/unit/indexed-db/command-results-migration.test.ts` and prove that 
 - adds nullable `replacedAt` and `replacedById` metadata to existing check-in records without changing their outcome;
 - reports `currentIndexedDbVersion === 3`.
 
-- [ ] **Step 2: Run the migration test and confirm failure**
+- [x] **Step 2: Run the migration test and confirm failure**
 
 Run:
 
@@ -1181,7 +1181,7 @@ pnpm vitest run tests/unit/indexed-db/command-results-migration.test.ts
 
 Expected: FAIL because Dexie version 3 and `commandResults` do not exist.
 
-- [ ] **Step 3: Add append-only Dexie version 3 contracts**
+- [x] **Step 3: Add append-only Dexie version 3 contracts**
 
 Extend `src/lib/indexed-db/types.ts`:
 
@@ -1220,7 +1220,7 @@ Add `migrateVersionTwoToThree` in `src/lib/indexed-db/migrations.ts` to set miss
 
 Register version 3 and `commandResults!: Table<LocalCommandResultRecord, string>` in `RecoveryFirstDatabase`.
 
-- [ ] **Step 4: Run migration and IndexedDB regression tests**
+- [x] **Step 4: Run migration and IndexedDB regression tests**
 
 Run:
 
@@ -1232,7 +1232,7 @@ pnpm typecheck
 
 Expected: version 1 to 2 to 3 upgrades preserve all existing records and pass.
 
-- [ ] **Step 5: Write the first failing Guest repository integration test**
+- [x] **Step 5: Write the first failing Guest repository integration test**
 
 Create `tests/integration/guest-habit-core-loop.test.ts`:
 
@@ -1313,7 +1313,7 @@ describe('DexieProductRepository', () => {
 });
 ```
 
-- [ ] **Step 6: Run the integration test and confirm the expected failure**
+- [x] **Step 6: Run the integration test and confirm the expected failure**
 
 Run:
 
@@ -1323,7 +1323,7 @@ pnpm vitest run tests/integration/guest-habit-core-loop.test.ts
 
 Expected: FAIL because `DexieProductRepository` does not exist.
 
-- [ ] **Step 7: Implement atomic Guest habit creation and idempotent replay**
+- [x] **Step 7: Implement atomic Guest habit creation and idempotent replay**
 
 Create `src/lib/repositories/guest/dexie-product-repository.ts` with this class skeleton and complete every interface method in later tasks:
 
@@ -1491,7 +1491,7 @@ export class DexieProductRepository implements ProductRepository {
 }
 ```
 
-- [ ] **Step 8: Run the focused test to expose the missing session generator**
+- [x] **Step 8: Run the focused test to expose the missing session generator**
 
 Run:
 
@@ -1501,7 +1501,7 @@ pnpm vitest run tests/integration/guest-habit-core-loop.test.ts
 
 Expected: FAIL because `generateSessionsForCommand` is not implemented.
 
-- [ ] **Step 9: Commit the repository boundary before session implementation**
+- [x] **Step 9: Commit the repository boundary before session implementation**
 
 Run:
 
