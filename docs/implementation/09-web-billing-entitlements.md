@@ -1328,7 +1328,7 @@ Expected: PASS.
 - Create: `src/features/subscriptions/subscription-query.ts`
 - Modify: `src/features/subscriptions/components/billing-processing-state.tsx`
 
-- [ ] **Step 1: Add return-page tests**
+- [x] **Step 1: Add return-page tests**
 
 Extend `tests/component/billing-processing-state.test.tsx` to verify:
 
@@ -1340,7 +1340,7 @@ Extend `tests/component/billing-processing-state.test.tsx` to verify:
 - failed/cancelled checkout displays retry guidance;
 - the layout remains stable across processing, success, and error states.
 
-- [ ] **Step 2: Implement bounded subscription query**
+- [x] **Step 2: Implement bounded subscription query**
 
 Create `src/features/subscriptions/subscription-query.ts` returning:
 
@@ -1358,7 +1358,7 @@ type SubscriptionSnapshot = {
 
 Do not return provider payload, customer ID, subscription ID, raw event, or portal URL.
 
-- [ ] **Step 3: Implement the status route**
+- [x] **Step 3: Implement the status route**
 
 `GET /api/billing/status?attempt=<uuid>` must:
 
@@ -1369,11 +1369,11 @@ Do not return provider payload, customer ID, subscription ID, raw event, or port
 - derive `premium` from Plan 08 capability resolution;
 - never derive it from checkout-attempt status alone.
 
-- [ ] **Step 4: Implement the return page**
+- [x] **Step 4: Implement the return page**
 
 Poll with increasing intervals: 1s, 2s, 3s, then 5s up to a 60-second active window. Stop when the tab is hidden and resume when visible. After the active window, show a manual Refresh status button.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/billing-processing-state.test.tsx

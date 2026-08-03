@@ -74,9 +74,11 @@ type PrivateBillingDatabase = {
       billing_subscriptions: {
         Row: {
           user_id: string;
+          provider_customer_id: string;
           provider_subscription_id: string;
           normalized_status: Database['public']['Enums']['entitlement_status'];
           current_period_end: string | null;
+          updated_at: string;
         };
         Insert: Record<string, Json>;
         Update: Record<string, Json>;
