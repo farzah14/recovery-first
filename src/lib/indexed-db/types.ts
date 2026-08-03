@@ -88,6 +88,19 @@ export type LocalCheckInRecord = {
   timezoneSnapshot: string;
   revision: number;
   synchronizationState: SynchronizationState;
+  replacedAt: string | null;
+  replacedById: string | null;
+};
+
+export type LocalCommandResultRecord = {
+  id: string;
+  ownerType: LocalOwnerType;
+  ownerId: string;
+  operationType: 'create_habit' | 'record_check_in' | 'edit_check_in';
+  requestHash: string;
+  result: unknown;
+  createdAt: string;
+  expiresAt: string;
 };
 
 export type LocalRecommendationRecord = {

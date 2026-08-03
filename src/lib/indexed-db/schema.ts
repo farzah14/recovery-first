@@ -21,4 +21,9 @@ export const recoveryFirstStoresV2 = {
   queryCache: 'key, [ownerType+ownerId], expiresAt, updatedAt',
 } as const;
 
-export const currentIndexedDbVersion = 2;
+export const recoveryFirstStoresV3 = {
+  ...recoveryFirstStoresV2,
+  commandResults: 'id, [ownerType+ownerId], operationType, expiresAt',
+} as const;
+
+export const currentIndexedDbVersion = 3;

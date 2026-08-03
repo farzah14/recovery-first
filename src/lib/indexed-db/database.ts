@@ -2,12 +2,20 @@ import Dexie, { type Table } from 'dexie';
 
 import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { isSlotConsumingHabitState } from '@/domain/habits/habit-lifecycle';
-import { migrateVersionOneToTwo } from '@/lib/indexed-db/migrations';
-import { recoveryFirstStoresV1, recoveryFirstStoresV2 } from '@/lib/indexed-db/schema';
+import {
+  migrateVersionOneToTwo,
+  migrateVersionTwoToThree,
+} from '@/lib/indexed-db/migrations';
+import {
+  recoveryFirstStoresV1,
+  recoveryFirstStoresV2,
+  recoveryFirstStoresV3,
+} from '@/lib/indexed-db/schema';
 import type {
   BrowserInstallationRecord,
   DraftRecord,
   LocalCheckInRecord,
+  LocalCommandResultRecord,
   LocalHabitRecord,
   LocalHabitVersionRecord,
   LocalProfileRecord,
@@ -44,6 +52,7 @@ export class RecoveryFirstDatabase extends Dexie {
   pendingOperations!: Table<PendingOperationRecord, string>;
   syncMetadata!: Table<SyncMetadataRecord, string>;
   queryCache!: Table<QueryCacheRecord, string>;
+  commandResults!: Table<LocalCommandResultRecord, string>;
   settings!: Table<SettingRecord, string>;
 
   constructor(name = 'recovery_first_web') {
@@ -51,6 +60,7 @@ export class RecoveryFirstDatabase extends Dexie {
 
     this.version(1).stores(recoveryFirstStoresV1);
     this.version(2).stores(recoveryFirstStoresV2).upgrade(migrateVersionOneToTwo);
+    this.version(3).stores(recoveryFirstStoresV3).upgrade(migrateVersionTwoToThree);
   }
 
   async activateGuestHabit(ownerId: string, habitId: string): Promise<number> {
