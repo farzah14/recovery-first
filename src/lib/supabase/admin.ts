@@ -74,14 +74,45 @@ type PrivateBillingDatabase = {
       billing_subscriptions: {
         Row: {
           user_id: string;
+          provider: 'paddle';
           provider_customer_id: string;
           provider_subscription_id: string;
+          plan_code: string;
+          provider_status: string;
           normalized_status: Database['public']['Enums']['entitlement_status'];
+          provider_occurred_at: string;
+          current_period_start: string;
           current_period_end: string | null;
+          cancel_at_period_end: boolean;
+          last_event_id: string;
+          revision: number;
+          created_at: string;
           updated_at: string;
         };
         Insert: Record<string, Json>;
         Update: Record<string, Json>;
+        Relationships: [];
+      };
+      audit_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          event_type: string;
+          entity_type: string;
+          entity_id: string | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          event_type: string;
+          entity_type: string;
+          entity_id?: string | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: Record<string, never>;
         Relationships: [];
       };
     };

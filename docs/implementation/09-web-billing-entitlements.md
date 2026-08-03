@@ -1456,7 +1456,7 @@ Expected: PASS.
 - Create: `src/app/api/billing/refresh/route.ts`
 - Create: `tests/integration/entitlement-reconciliation.test.ts`
 
-- [ ] **Step 1: Add reconciliation tests**
+- [x] **Step 1: Add reconciliation tests**
 
 Verify:
 
@@ -1468,7 +1468,7 @@ Verify:
 - one user cannot refresh another user's subscription;
 - refresh is rate limited and audited.
 
-- [ ] **Step 2: Implement reconciliation**
+- [x] **Step 2: Implement reconciliation**
 
 Create `src/server/billing/reconcile-subscription.ts`:
 
@@ -1481,15 +1481,15 @@ export async function reconcileSubscription(userId: string) {
 }
 ```
 
-- [ ] **Step 3: Implement manual refresh route**
+- [x] **Step 3: Implement manual refresh route**
 
 `POST /api/billing/refresh` requires authentication, origin/CSRF validation, and a strict per-user rate limit. Return the bounded subscription snapshot after reconciliation.
 
-- [ ] **Step 4: Define scheduled reconciliation entrypoint**
+- [x] **Step 4: Define scheduled reconciliation entrypoint**
 
 Add a server entrypoint that scans a bounded batch of active, trialing, grace, past-due, or recently cancelled subscriptions. It must use the configured batch size, cursor pagination, advisory locking, and safe retry codes. Scheduling itself is configured in Plan 11.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/entitlement-reconciliation.test.ts

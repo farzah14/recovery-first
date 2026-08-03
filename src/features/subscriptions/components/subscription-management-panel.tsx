@@ -10,7 +10,7 @@ type SubscriptionManagementPanelProps = Readonly<{
   snapshot: SubscriptionSnapshot;
   createPortalSession?: () => Promise<string>;
   navigate?: (url: string) => void;
-  refreshStatus?: () => void;
+  refreshStatus?: () => void | Promise<void>;
 }>;
 
 async function requestPortalSession(): Promise<string> {
@@ -33,14 +33,30 @@ async function requestPortalSession(): Promise<string> {
   return url;
 }
 
+async function requestRefreshStatus(): Promise<void> {
+  const response = await fetch('/api/billing/refresh', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    throw new Error('refresh_unavailable');
+  }
+
+  window.location.reload();
+}
+
 export function SubscriptionManagementPanel({
   snapshot,
   createPortalSession = requestPortalSession,
   navigate = (url) => window.location.assign(url),
-  refreshStatus = () => window.location.reload(),
+  refreshStatus = requestRefreshStatus,
 }: SubscriptionManagementPanelProps): React.JSX.Element {
   const [isOpening, setIsOpening] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
 
   async function handleManageBilling(): Promise<void> {
     setIsOpening(true);
@@ -56,11 +72,24 @@ export function SubscriptionManagementPanel({
     }
   }
 
+  async function handleRefreshStatus(): Promise<void> {
+    setIsRefreshing(true);
+    setRefreshError(null);
+
+    try {
+      await refreshStatus();
+    } catch {
+      setRefreshError('Status refresh is temporarily unavailable. Please try again later.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <SubscriptionStatusCard snapshot={snapshot} onManageBilling={handleManageBilling} />
-      <Button onClick={refreshStatus} variant="ghost">
-        Refresh status
+      <Button onClick={() => void handleRefreshStatus()} variant="ghost" disabled={isRefreshing}>
+        {isRefreshing ? 'Refreshing status…' : 'Refresh status'}
       </Button>
       {isOpening ? (
         <p className="text-sm text-[var(--color-text-secondary)]" role="status">
@@ -77,6 +106,11 @@ export function SubscriptionManagementPanel({
             Try again
           </Button>
         </div>
+      ) : null}
+      {refreshError ? (
+        <p className="text-sm text-[var(--color-danger)]" role="alert">
+          {refreshError}
+        </p>
       ) : null}
     </div>
   );
