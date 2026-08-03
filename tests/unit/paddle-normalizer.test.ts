@@ -108,7 +108,7 @@ describe('Paddle billing normalizer', () => {
 
   it('maps refund and administrative revocation events to non-granting states', () => {
     const refunded = normalizePaddleSubscriptionEvent(
-      event('adjustment.created', { ...baseData, action: 'refund' }),
+      event('adjustment.created', { ...baseData, action: 'refund', subscription_id: 'sub_01' }),
       { priceIds, providerPayloadHash: 'hash_04' },
     );
     const revoked = normalizePaddleSubscriptionEvent(event('subscription.paused', baseData), {
@@ -118,6 +118,43 @@ describe('Paddle billing normalizer', () => {
 
     expect(refunded.status).toBe('refunded');
     expect(revoked.status).toBe('revoked');
+  });
+
+  it.each([
+    ['transaction.payment_failed', 'past_due'],
+    ['transaction.past_due', 'past_due'],
+    ['transaction.completed', 'active'],
+  ] as const)('maps %s to %s for a subscription transaction', (eventType, status) => {
+    const normalized = normalizePaddleSubscriptionEvent(
+      event(eventType, {
+        ...baseData,
+        id: 'txn_01',
+        subscription_id: 'sub_01',
+        status: eventType === 'transaction.payment_failed' ? 'past_due' : 'completed',
+      }),
+      { priceIds, providerPayloadHash: 'hash_transaction' },
+    );
+
+    expect(normalized.subscriptionId).toBe('sub_01');
+    expect(normalized.status).toBe(status);
+  });
+
+  it.each([
+    ['chargeback', 'revoked'],
+    ['chargeback_warning', 'past_due'],
+    ['chargeback_reverse', 'active'],
+  ] as const)('maps the %s adjustment to %s', (action, status) => {
+    const normalized = normalizePaddleSubscriptionEvent(
+      event('adjustment.created', {
+        ...baseData,
+        subscription_id: 'sub_01',
+        action,
+      }),
+      { priceIds, providerPayloadHash: 'hash_chargeback' },
+    );
+
+    expect(normalized.subscriptionId).toBe('sub_01');
+    expect(normalized.status).toBe(status);
   });
 
   it.each([

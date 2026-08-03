@@ -1260,7 +1260,7 @@ Expected: PASS.
 - Create: `src/features/entitlements/billing-entitlement-projector.ts`
 - Create: `tests/integration/entitlement-reconciliation.test.ts`
 
-- [ ] **Step 1: Implement SQL entitlement projection**
+- [x] **Step 1: Implement SQL entitlement projection**
 
 Create `supabase/migrations/20260729062000_entitlement_projection.sql` with:
 
@@ -1287,11 +1287,11 @@ Required behavior:
 - refunded/revoked events may shorten validity only when authoritative occurrence is newer;
 - capability resolution continues using Plan 08 contracts.
 
-- [ ] **Step 2: Write pgTAP transition tests**
+- [x] **Step 2: Write pgTAP transition tests**
 
 Cover all nine internal statuses, valid-window boundaries, cancellation at period end, immediate refund, immediate revocation, and revision increments.
 
-- [ ] **Step 3: Implement the TypeScript projector boundary**
+- [x] **Step 3: Implement the TypeScript projector boundary**
 
 Create `src/features/entitlements/billing-entitlement-projector.ts` that accepts only `NormalizedBillingEvent`, calls the SQL function through the privileged server client, and returns a bounded entitlement snapshot. It must never accept a status from a browser request.
 

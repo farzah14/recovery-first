@@ -48,6 +48,71 @@ type PaddleProviderDependencies = Readonly<{
   hashPayload?: (payload: string) => string;
 }>;
 
+type PaddleRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is PaddleRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readRecordValue(record: PaddleRecord, snakeCase: string, camelCase: string): unknown {
+  return record[snakeCase] ?? record[camelCase];
+}
+
+async function enrichEventFromSubscription(
+  input: unknown,
+  subscriptions: PaddleSubscriptionClient,
+): Promise<unknown> {
+  if (!isRecord(input)) {
+    return input;
+  }
+
+  const eventType = readRecordValue(input, 'event_type', 'eventType');
+  if (typeof eventType !== 'string') {
+    return input;
+  }
+
+  const isTransactionOrAdjustment =
+    eventType.startsWith('transaction.') || eventType.startsWith('adjustment.');
+  if (!isTransactionOrAdjustment) {
+    return input;
+  }
+
+  const data = readRecordValue(input, 'data', 'data');
+  if (!isRecord(data)) {
+    return input;
+  }
+
+  const subscriptionId = readRecordValue(data, 'subscription_id', 'subscriptionId');
+  if (typeof subscriptionId !== 'string' || subscriptionId.trim() === '') {
+    return input;
+  }
+
+  const subscription = await subscriptions.get(subscriptionId);
+  if (!isRecord(subscription)) {
+    return input;
+  }
+
+  const mergedData: PaddleRecord = {
+    ...subscription,
+    ...data,
+    customer_id:
+      readRecordValue(data, 'customer_id', 'customerId') ??
+      readRecordValue(subscription, 'customer_id', 'customerId'),
+    custom_data:
+      readRecordValue(data, 'custom_data', 'customData') ??
+      readRecordValue(subscription, 'custom_data', 'customData'),
+    items: data.items ?? subscription.items,
+    current_billing_period:
+      readRecordValue(data, 'current_billing_period', 'currentBillingPeriod') ??
+      readRecordValue(subscription, 'current_billing_period', 'currentBillingPeriod'),
+    started_at:
+      readRecordValue(data, 'started_at', 'startedAt') ??
+      readRecordValue(subscription, 'started_at', 'startedAt'),
+  };
+
+  return { ...input, data: mergedData };
+}
+
 function sha256(payload: string): string {
   return createHash('sha256').update(payload).digest('hex');
 }
@@ -108,7 +173,9 @@ export function createPaddleProvider(dependencies?: PaddleProviderDependencies):
         throw new Error('Paddle webhook verification failed');
       }
 
-      return normalizePaddleSubscriptionEvent(event, {
+      const enrichedEvent = await enrichEventFromSubscription(event, resolved.client.subscriptions);
+
+      return normalizePaddleSubscriptionEvent(enrichedEvent, {
         priceIds: resolved.config.priceIds,
         providerPayloadHash: hashPayload(input.rawBody),
       });

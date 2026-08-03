@@ -33,6 +33,10 @@ const normalizedEventTypes: Readonly<Record<string, string>> = {
   'subscription.resumed': 'subscription_resumed',
   'subscription.canceled': 'subscription_cancelled',
   'subscription.cancelled': 'subscription_cancelled',
+  'transaction.completed': 'transaction_completed',
+  'transaction.paid': 'transaction_paid',
+  'transaction.past_due': 'transaction_past_due',
+  'transaction.payment_failed': 'transaction_payment_failed',
   'adjustment.created': 'payment_adjustment_created',
   'adjustment.updated': 'payment_adjustment_updated',
 };
@@ -140,6 +144,19 @@ function resolveStatus(
     if (action === 'refund' || action === 'refunded') {
       return { status: 'refunded', cancelAtPeriodEnd: false };
     }
+    if (action === 'chargeback') {
+      return { status: 'revoked', cancelAtPeriodEnd: false };
+    }
+    if (action === 'chargeback_warning') {
+      return { status: 'past_due', cancelAtPeriodEnd: false };
+    }
+    if (
+      action === 'chargeback_reverse' ||
+      action === 'chargeback_reversal' ||
+      action === 'chargeback_warning_reverse'
+    ) {
+      return { status: 'active', cancelAtPeriodEnd: false };
+    }
     throw new BillingNormalizationError(
       `Unsupported billing adjustment action: ${action ?? 'missing'}`,
     );
@@ -167,11 +184,20 @@ function resolveStatus(
   if (eventType === 'subscription.past_due') {
     return { status: 'past_due', cancelAtPeriodEnd: false };
   }
+  if (eventType === 'transaction.payment_failed' || eventType === 'transaction.past_due') {
+    return { status: 'past_due', cancelAtPeriodEnd: false };
+  }
+  if (eventType === 'transaction.completed' || eventType === 'transaction.paid') {
+    return { status: 'active', cancelAtPeriodEnd: false };
+  }
 
   if (rawStatus === 'trialing') {
     return { status: 'trial_active', cancelAtPeriodEnd: false };
   }
   if (rawStatus === 'active') {
+    return { status: 'active', cancelAtPeriodEnd: false };
+  }
+  if (rawStatus === 'completed' || rawStatus === 'paid') {
     return { status: 'active', cancelAtPeriodEnd: false };
   }
   if (rawStatus === 'past_due') {
@@ -201,6 +227,14 @@ function normalizeEventType(eventType: string): string {
   return normalized;
 }
 
+function resolveSubscriptionId(eventType: string, data: PaddleRecord): string {
+  const isTransactionOrAdjustment =
+    eventType.startsWith('transaction.') || eventType.startsWith('adjustment.');
+  return isTransactionOrAdjustment
+    ? requiredString(data, 'subscription_id', 'subscriptionId', 'Paddle subscription ID')
+    : requiredString(data, 'id', 'id', 'Paddle subscription ID');
+}
+
 export function normalizePaddleSubscriptionEvent(
   input: unknown,
   options: PaddleNormalizerOptions,
@@ -218,7 +252,7 @@ export function normalizePaddleSubscriptionEvent(
   const data = asRecord(readValue(event, 'data', 'data'), 'Paddle event data');
   const eventId = requiredString(event, 'event_id', 'eventId', 'Paddle event ID');
   const customerId = requiredString(data, 'customer_id', 'customerId', 'Paddle customer ID');
-  const subscriptionId = requiredString(data, 'id', 'id', 'Paddle subscription ID');
+  const subscriptionId = resolveSubscriptionId(eventType, data);
   const customData = asRecord(readValue(data, 'custom_data', 'customData'), 'Paddle custom data');
   const userId = requiredString(customData, 'user_id', 'userId', 'Account user ID');
   const productCode = resolveProductCode(resolvePriceId(data), options.priceIds);

@@ -152,4 +152,44 @@ describe('Paddle provider contract', () => {
       status: 'active',
     });
   });
+
+  it('enriches adjustment webhooks from the authoritative subscription before normalization', async () => {
+    const client: PaddleClient = {
+      transactions: { create: async () => ({ id: 'txn_01' }) },
+      customerPortalSessions: {
+        create: async () => ({
+          urls: { general: { overview: 'https://portal.example.invalid/one-time' } },
+        }),
+      },
+      subscriptions: {
+        get: async (subscriptionId) => {
+          expect(subscriptionId).toBe('sub_01');
+          return subscription;
+        },
+      },
+      webhooks: {
+        unmarshal: async () => ({
+          event_id: 'evt_chargeback_01',
+          event_type: 'adjustment.created',
+          occurred_at: '2026-08-04T00:00:00.000Z',
+          data: {
+            id: 'adj_01',
+            action: 'chargeback',
+            subscription_id: 'sub_01',
+            customer_id: 'ctm_01',
+          },
+        }),
+      },
+    };
+    const provider = createPaddleProvider({ client, config });
+
+    await expect(
+      provider.verifyWebhook({ rawBody: '{}', signature: 'valid' }),
+    ).resolves.toMatchObject({
+      eventId: 'evt_chargeback_01',
+      subscriptionId: 'sub_01',
+      status: 'revoked',
+      productCode: 'premium_monthly',
+    });
+  });
 });
