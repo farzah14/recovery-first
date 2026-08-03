@@ -15,6 +15,8 @@ import type {
   TodayRepositoryRead,
 } from '@/lib/repositories/product-repository';
 import type { RecurrenceRule } from '@/domain/habits/recurrence';
+import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
+import { isSlotConsumingHabitState } from '@/domain/habits/habit-lifecycle';
 import { generateSessionsForCommand } from '@/features/sessions/application/ensure-session-horizon';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -402,9 +404,64 @@ export class DexieProductRepository implements ProductRepository {
   }
 
   async getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead> {
-    void owner;
-    void localDate;
-    throw new ProductRepositoryError('repository_unavailable');
+    return this.database.transaction(
+      'r',
+      this.database.habits,
+      this.database.habitVersions,
+      this.database.sessions,
+      this.database.checkIns,
+      async () => {
+        const habits = await this.database.habits
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .filter((habit) => habit.deletedAt === null)
+          .toArray();
+        const activeHabits = habits.filter((habit) => isSlotConsumingHabitState(habit.lifecycleState));
+        const habitById = new Map(habits.map((habit) => [habit.id, habit]));
+        const versions = await this.database.habitVersions
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .toArray();
+        const versionById = new Map(versions.map((version) => [version.id, version]));
+        const checkIns = await this.database.checkIns
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .filter((checkIn) => checkIn.replacedAt === null)
+          .toArray();
+        const sessions = await this.database.sessions
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .filter((session) => session.scheduledLocalDate === localDate)
+          .toArray();
+
+        return {
+          localDate,
+          sessions: sessions.flatMap((session) => {
+            const habit = habitById.get(session.habitId);
+            const version = versionById.get(session.habitVersionId);
+            if (!habit || !version) return [];
+            const checkIn = checkIns.find((item) => item.sessionId === session.id);
+            return [{
+              id: session.id,
+              habitId: session.habitId,
+              habitVersionId: session.habitVersionId,
+              title: habit.title,
+              normalTarget: toHabitTarget(version.normalTarget),
+              minimumTarget: toHabitTarget(version.minimumTarget),
+              cue: toHabitCue(version.cue),
+              scheduledLocalDate: session.scheduledLocalDate,
+              scheduledLocalTime: session.scheduledLocalTime,
+              timezoneSnapshot: session.timezoneSnapshot,
+              status: checkIn?.outcome ?? session.status,
+              revision: session.revision,
+              synchronizationState: toSessionSyncState(session.synchronizationState),
+            }];
+          }),
+          activeHabitCount: activeHabits.length,
+          activeHabitLimit: activeHabitLimitFor(owner.planTier),
+        };
+      },
+    );
   }
 
   async recordCheckIn(

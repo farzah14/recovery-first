@@ -179,6 +179,10 @@ describe('habit list', () => {
     const detail = await repository.getHabitDetail(owner, 'habit-1');
     expect(detail?.currentVersion.normalTarget.action).toBe('Read 20 minutes');
     expect(detail?.sessions[0]?.status).toBe('minimum');
+    const today = await repository.getToday(owner, '2026-08-03');
+    expect(today.activeHabitCount).toBe(1);
+    expect(today.activeHabitLimit).toBe(3);
+    expect(today.sessions[0]?.status).toBe('minimum');
     await expect(repository.getHabitDetail({ ...owner, ownerId: 'guest-other' }, 'habit-1')).resolves.toBeNull();
   });
 });
