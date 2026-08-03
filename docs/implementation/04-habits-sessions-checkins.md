@@ -1803,7 +1803,7 @@ git commit -m "feat: generate deterministic bounded habit sessions"
 - Create: `tests/features/habits/create-habit.test.ts`
 - Create: `tests/features/habits/save-habit-draft.test.ts`
 
-- [ ] **Step 1: Write failing application-service tests**
+- [x] **Step 1: Write failing application-service tests**
 
 Create `tests/features/habits/create-habit.test.ts`:
 
@@ -1961,7 +1961,7 @@ describe('habit draft application service', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm failure**
+- [x] **Step 2: Run the tests and confirm failure**
 
 Run:
 
@@ -1971,7 +1971,7 @@ pnpm vitest run tests/features/habits/create-habit.test.ts tests/features/habits
 
 Expected: FAIL because the application services do not exist.
 
-- [ ] **Step 3: Implement create-habit orchestration**
+- [x] **Step 3: Implement create-habit orchestration**
 
 Create `src/features/habits/application/create-habit.ts`:
 
@@ -2010,7 +2010,7 @@ export async function createHabit(input: {
 }
 ```
 
-- [ ] **Step 4: Implement validated draft persistence**
+- [x] **Step 4: Implement validated draft persistence**
 
 Create `src/features/habits/application/save-habit-draft.ts`:
 
@@ -2051,7 +2051,7 @@ export async function loadHabitDraft(input: {
 }
 ```
 
-- [ ] **Step 5: Implement activation result mapping**
+- [x] **Step 5: Implement activation result mapping**
 
 Create `src/features/habits/application/activate-habit.ts`:
 
@@ -2073,7 +2073,7 @@ export function activeLimitOptions(planTier: 'guest' | 'free' | 'premium') {
 }
 ```
 
-- [ ] **Step 6: Run focused checks**
+- [x] **Step 6: Run focused checks**
 
 Run:
 
@@ -2085,7 +2085,7 @@ pnpm lint
 
 Expected: all habit application tests pass.
 
-- [ ] **Step 7: Commit application services**
+- [x] **Step 7: Commit application services**
 
 Run:
 
