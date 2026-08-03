@@ -1187,7 +1187,7 @@ Expected: PASS.
 - Create: `supabase/migrations/20260729061000_billing_event_processing.sql`
 - Create: `supabase/tests/00180_billing_event_ordering.test.sql`
 
-- [ ] **Step 1: Implement the processing function**
+- [x] **Step 1: Implement the processing function**
 
 Create `supabase/migrations/20260729061000_billing_event_processing.sql` with a private security-definer function:
 
@@ -1224,7 +1224,7 @@ The function must:
 11. insert a minimized audit event;
 12. return result, subscription revision, and entitlement revision.
 
-- [ ] **Step 2: Write event-ordering pgTAP tests**
+- [x] **Step 2: Write event-ordering pgTAP tests**
 
 Create `supabase/tests/00180_billing_event_ordering.test.sql` covering:
 
@@ -1238,7 +1238,7 @@ Create `supabase/tests/00180_billing_event_ordering.test.sql` covering:
 - concurrent processing produces one final revision;
 - audit metadata excludes raw payload and payment details.
 
-- [ ] **Step 3: Run database tests and commit**
+- [x] **Step 3: Run database tests and commit**
 
 ```bash
 supabase db reset
