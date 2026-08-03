@@ -10,9 +10,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { routes } from '@/lib/navigation/route-definitions';
 import { cn } from '@/lib/cn';
+import type { PaidProductCode } from '@/features/subscriptions/checkout-service';
+import { PlanSelector } from '@/features/subscriptions/components/plan-selector';
+import {
+  CheckoutConfirmation,
+  type CheckoutSession,
+} from '@/features/subscriptions/components/checkout-confirmation';
 
 export default function PricingPage(): React.JSX.Element {
   const [isAnnual, setIsAnnual] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PaidProductCode | null>(null);
   const monthlyRef = useRef<HTMLButtonElement>(null);
   const annualRef = useRef<HTMLButtonElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({
@@ -35,6 +42,42 @@ export default function PricingPage(): React.JSX.Element {
     window.addEventListener('resize', updatePill);
     return () => window.removeEventListener('resize', updatePill);
   }, [isAnnual]);
+
+  async function createCheckoutSession(): Promise<CheckoutSession | void> {
+    const response = await fetch('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        productCode: selectedPlan,
+        acceptedTerms: true,
+        idempotencyKey: crypto.randomUUID(),
+      }),
+    });
+
+    if (response.status === 401) {
+      window.location.assign('/auth/sign-in?returnTo=%2Fpricing');
+      return undefined;
+    }
+
+    if (!response.ok) {
+      throw new Error('checkout_creation_failed');
+    }
+
+    const result: unknown = await response.json();
+    if (
+      typeof result !== 'object' ||
+      result === null ||
+      typeof (result as { providerTransactionId?: unknown }).providerTransactionId !== 'string' ||
+      typeof (result as { returnUrl?: unknown }).returnUrl !== 'string'
+    ) {
+      throw new Error('checkout_response_invalid');
+    }
+
+    return {
+      providerTransactionId: (result as { providerTransactionId: string }).providerTransactionId,
+      returnUrl: (result as { returnUrl: string }).returnUrl,
+    };
+  }
 
   return (
     <ContentContainer className="flex flex-col items-center py-12 sm:py-16">
@@ -89,6 +132,16 @@ export default function PricingPage(): React.JSX.Element {
           </button>
         </div>
       </header>
+
+      <section aria-labelledby="plan-selection-title" className="mb-12 w-full max-w-3xl">
+        <h2
+          className="mb-3 text-center text-xl font-bold text-[var(--color-text-primary)]"
+          id="plan-selection-title"
+        >
+          Choose a plan to review
+        </h2>
+        <PlanSelector value={selectedPlan} onChange={setSelectedPlan} />
+      </section>
 
       {/* Pricing Cards (Free, Lite, Premium) */}
       <div className="relative z-10 mb-16 grid w-full grid-cols-1 items-stretch gap-8 md:grid-cols-3">
@@ -186,10 +239,13 @@ export default function PricingPage(): React.JSX.Element {
             </ul>
           </div>
 
-          <Button asChild fullWidth variant="primary" className="shadow-md">
-            <Link className="font-semibold !text-white" href={routes.today}>
-              Start Trial
-            </Link>
+          <Button
+            fullWidth
+            onClick={() => setSelectedPlan(isAnnual ? 'lite_annual' : 'lite_monthly')}
+            variant="primary"
+            className="shadow-md"
+          >
+            Start Trial
           </Button>
         </div>
 
@@ -236,13 +292,28 @@ export default function PricingPage(): React.JSX.Element {
             </ul>
           </div>
 
-          <Button asChild fullWidth variant="primary">
-            <Link className="font-semibold !text-white" href={routes.today}>
-              Get Premium
-            </Link>
+          <Button
+            fullWidth
+            onClick={() => setSelectedPlan(isAnnual ? 'premium_annual' : 'premium_monthly')}
+            variant="primary"
+          >
+            Get Premium
           </Button>
         </div>
       </div>
+
+      {selectedPlan ? (
+        <div className="w-full max-w-3xl">
+          <CheckoutConfirmation
+            productCode={selectedPlan}
+            now={new Date()}
+            onConfirm={createCheckoutSession}
+          />
+          <p className="mt-3 text-center text-sm text-[var(--color-text-secondary)]">
+            Sign in before confirming checkout so the subscription is attached to your account.
+          </p>
+        </div>
+      ) : null}
 
       {/* Compare Features Section */}
       <div className="mb-8 w-full max-w-4xl">
