@@ -93,7 +93,7 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:types": "supabase gen types typescript --local --schema public",
-    "db:types:write": "pnpm db:types > src/lib/supabase/database.types.ts",
+    "db:types:write": "node tool/write-generated-types.mjs",
     "db:types:check": "node tool/verify-generated-types.mjs",
     "check:env-example": "node tool/check-environment-example.mjs",
     "check:repository": "node tool/check-repository.mjs",
