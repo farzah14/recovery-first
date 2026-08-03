@@ -2555,7 +2555,7 @@ git commit -m "feat: build responsive today dashboard"
 - Create: `tests/features/check-ins/check-in-components.test.tsx`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing check-in tests**
+- [x] **Step 1: Write failing check-in tests**
 
 Prove:
 
@@ -2567,7 +2567,7 @@ Prove:
 - stale session revision is rejected;
 - friction notes are absent from analytics-facing event data.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2577,7 +2577,7 @@ pnpm test:check-ins
 
 Expected: FAIL because check-in modules do not exist.
 
-- [ ] **Step 3: Define the friction form schema**
+- [x] **Step 3: Define the friction form schema**
 
 Create `src/features/check-ins/forms/friction-form-schema.ts`:
 
@@ -2592,7 +2592,7 @@ export const frictionFormSchema = z.object({
 });
 ```
 
-- [ ] **Step 4: Define check-in command creation**
+- [x] **Step 4: Define check-in command creation**
 
 Create `src/features/check-ins/check-in-command.ts`:
 
@@ -2623,7 +2623,7 @@ export function createRecordCheckInCommand(input: {
 }
 ```
 
-- [ ] **Step 5: Implement record-check-in application orchestration**
+- [x] **Step 5: Implement record-check-in application orchestration**
 
 Create `src/features/check-ins/application/record-check-in.ts`:
 
@@ -2659,7 +2659,7 @@ export async function recordCheckIn(input: {
 }
 ```
 
-- [ ] **Step 6: Complete Guest repository `recordCheckIn` atomically**
+- [x] **Step 6: Complete Guest repository `recordCheckIn` atomically**
 
 Inside one Dexie transaction over `sessions`, `checkIns`, and `commandResults`:
 
@@ -2676,7 +2676,7 @@ Inside one Dexie transaction over `sessions`, `checkIns`, and `commandResults`:
 
 For Guest mode, set synchronization state to `local_only`, not `pending`.
 
-- [ ] **Step 7: Implement action group, friction surface, and confirmation**
+- [x] **Step 7: Implement action group, friction surface, and confirmation**
 
 - `Full` and `Minimum` save directly.
 - `Skipped` opens the responsive friction dialog.
@@ -2685,7 +2685,7 @@ For Guest mode, set synchronization state to `local_only`, not `pending`.
 - Restore controls and announce an error when the transaction fails.
 - Use `aria-live="polite"` for normal confirmations.
 
-- [ ] **Step 8: Run focused and integration checks**
+- [x] **Step 8: Run focused and integration checks**
 
 Run:
 
@@ -2700,7 +2700,7 @@ pnpm lint
 
 Expected: all commands pass; Full, Minimum, and Manual Skipped remain distinct.
 
-- [ ] **Step 9: Commit check-in creation**
+- [x] **Step 9: Commit check-in creation**
 
 Run:
 
