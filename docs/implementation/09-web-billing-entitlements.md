@@ -908,7 +908,7 @@ Expected: PASS.
 - Create: `src/app/api/billing/checkout/route.ts`
 - Create: `tests/integration/checkout-service.test.ts`
 
-- [ ] **Step 1: Write failing checkout-service tests**
+- [x] **Step 1: Write failing checkout-service tests**
 
 Create `tests/integration/checkout-service.test.ts` verifying:
 
@@ -921,7 +921,7 @@ Create `tests/integration/checkout-service.test.ts` verifying:
 - checkout metadata contains authenticated user ID rather than client-supplied ownership;
 - the return URL is allow-listed and same-origin.
 
-- [ ] **Step 2: Implement the checkout service**
+- [x] **Step 2: Implement the checkout service**
 
 Create `src/features/subscriptions/checkout-service.ts` with dependencies:
 
@@ -948,7 +948,7 @@ const checkoutInput = z.object({
 });
 ```
 
-- [ ] **Step 3: Implement server composition**
+- [x] **Step 3: Implement server composition**
 
 Create `src/server/billing/create-checkout.ts` that:
 
@@ -960,7 +960,7 @@ Create `src/server/billing/create-checkout.ts` that:
 6. records a private audit event containing plan code and attempt ID only;
 7. returns `{ attemptId, providerTransactionId }`.
 
-- [ ] **Step 4: Implement the route handler**
+- [x] **Step 4: Implement the route handler**
 
 Create `src/app/api/billing/checkout/route.ts`:
 
@@ -976,7 +976,7 @@ export async function POST(request: Request) {
 
 Apply origin validation, CSRF protection, authenticated rate limiting, and `Cache-Control: no-store` using shared Plan 01/07 utilities.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/checkout-service.test.ts
@@ -999,7 +999,7 @@ Expected: PASS.
 - Create: `tests/component/plan-selector.test.tsx`
 - Create: `tests/component/checkout-confirmation.test.tsx`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Verify:
 
@@ -1011,7 +1011,7 @@ Verify:
 - unauthenticated confirmation redirects to sign-in with a safe return path;
 - keyboard users can select plans and confirm.
 
-- [ ] **Step 2: Implement the plan selector**
+- [x] **Step 2: Implement the plan selector**
 
 Use radio semantics, not clickable cards alone:
 
@@ -1025,7 +1025,7 @@ Use radio semantics, not clickable cards alone:
 
 No `defaultValue` is allowed.
 
-- [ ] **Step 3: Implement explicit confirmation**
+- [x] **Step 3: Implement explicit confirmation**
 
 The confirmation view must include:
 
@@ -1038,11 +1038,11 @@ The confirmation view must include:
 - connectivity requirement;
 - checkbox text explicitly authorizing the trial and recurring charge.
 
-- [ ] **Step 4: Integrate the public Pricing page**
+- [x] **Step 4: Integrate the public Pricing page**
 
 The page may display illustrative values `$5.99/month` and `$47.99/year` only when returned by the server catalog. Provider-localized pricing replaces hypotheses once available. Do not hardcode a client-authoritative charge amount.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/plan-selector.test.tsx tests/component/checkout-confirmation.test.tsx
@@ -1062,7 +1062,7 @@ Expected: PASS.
 - Modify: `src/features/subscriptions/components/checkout-confirmation.tsx`
 - Create: `tests/component/billing-processing-state.test.tsx`
 
-- [ ] **Step 1: Write a failing launcher test**
+- [x] **Step 1: Write a failing launcher test**
 
 Verify that:
 
@@ -1073,7 +1073,7 @@ Verify that:
 - `checkout.completed` navigates to `/billing/return?attempt=<uuid>` but does not set Premium state;
 - close or error leaves the user Free and displays retry guidance.
 
-- [ ] **Step 2: Implement the launcher**
+- [x] **Step 2: Implement the launcher**
 
 Create a client component using `initializePaddle` and keep one shared initialization promise. Open checkout with:
 
@@ -1088,7 +1088,7 @@ paddle.Checkout.open({
 });
 ```
 
-- [ ] **Step 3: Preserve state honesty**
+- [x] **Step 3: Preserve state honesty**
 
 The client callback may update only local presentation:
 
@@ -1098,7 +1098,7 @@ type CheckoutPresentationState = 'opening' | 'open' | 'processing' | 'closed' | 
 
 It must not call the capability provider with an optimistic Premium grant.
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/billing-processing-state.test.tsx
