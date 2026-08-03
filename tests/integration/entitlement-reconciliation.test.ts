@@ -63,4 +63,19 @@ describe('billing entitlement projector', () => {
 
     await expect(projector.project(event)).rejects.toThrow('Invalid entitlement projection');
   });
+
+  it('rejects checkout-return or browser-shaped input before any SQL projection', async () => {
+    const project = vi.fn();
+    const projector = createBillingEntitlementProjector({ project });
+
+    await expect(
+      projector.project({
+        attempt: 'attempt_01',
+        premium: true,
+        status: 'active',
+      } as unknown as NormalizedBillingEvent),
+    ).rejects.toThrow('Invalid normalized billing event');
+
+    expect(project).not.toHaveBeenCalled();
+  });
 });

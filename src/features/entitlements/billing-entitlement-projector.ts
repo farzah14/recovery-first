@@ -16,6 +16,24 @@ const entitlementSnapshotSchema = z
   })
   .strict();
 
+const normalizedBillingEventSchema = z
+  .object({
+    provider: z.literal('paddle'),
+    eventId: z.string().min(1),
+    eventType: z.string().min(1),
+    occurredAt: z.coerce.date(),
+    customerId: z.string().min(1),
+    subscriptionId: z.string().min(1),
+    userId: z.string().uuid(),
+    productCode: z.enum(billingProductCodes),
+    status: z.enum(entitlementStatuses),
+    validFrom: z.coerce.date(),
+    validUntil: z.coerce.date().nullable(),
+    cancelAtPeriodEnd: z.boolean(),
+    providerPayloadHash: z.string().min(1),
+  })
+  .strict();
+
 export type EntitlementSnapshot = Readonly<{
   userId: string;
   subscriptionId: string;
@@ -35,7 +53,14 @@ export function createBillingEntitlementProjector(
 ) {
   return {
     async project(event: NormalizedBillingEvent): Promise<EntitlementSnapshot> {
-      const parsed = entitlementSnapshotSchema.safeParse(await dependencies.project(event));
+      const normalized = normalizedBillingEventSchema.safeParse(event);
+      if (!normalized.success) {
+        throw new Error('Invalid normalized billing event');
+      }
+
+      const parsed = entitlementSnapshotSchema.safeParse(
+        await dependencies.project(normalized.data),
+      );
       if (!parsed.success) {
         throw new Error('Invalid entitlement projection');
       }

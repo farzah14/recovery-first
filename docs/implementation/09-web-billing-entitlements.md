@@ -1295,7 +1295,7 @@ Cover all nine internal statuses, valid-window boundaries, cancellation at perio
 
 Create `src/features/entitlements/billing-entitlement-projector.ts` that accepts only `NormalizedBillingEvent`, calls the SQL function through the privileged server client, and returns a bounded entitlement snapshot. It must never accept a status from a browser request.
 
-- [ ] **Step 4: Write integration tests**
+- [x] **Step 4: Write integration tests**
 
 Verify that:
 
@@ -1305,7 +1305,7 @@ Verify that:
 - expired access blocks Plan 08 Premium actions;
 - historical Premium data remains queryable according to Plan 08 policy.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 supabase db reset
