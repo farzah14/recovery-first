@@ -2912,7 +2912,7 @@ git commit -m "feat: resolve expired unrecorded sessions"
 - Create: `src/lib/repositories/signed-in/supabase-product-repository.test.ts`
 - Create: `tests/integration/signed-in-product-repository.test.ts`
 
-- [ ] **Step 1: Write failing adapter tests with a typed Supabase mock**
+- [x] **Step 1: Write failing adapter tests with a typed Supabase mock**
 
 Prove:
 
@@ -2923,7 +2923,7 @@ Prove:
 - database error codes map to `ProductRepositoryError` codes;
 - no browser service-role client is accepted.
 
-- [ ] **Step 2: Run adapter tests and confirm failure**
+- [x] **Step 2: Run adapter tests and confirm failure**
 
 Run:
 
@@ -2933,11 +2933,11 @@ pnpm vitest run src/lib/repositories/signed-in/supabase-product-repository.test.
 
 Expected: FAIL because the adapter does not exist.
 
-- [ ] **Step 3: Implement a dependency-injected adapter**
+- [x] **Step 3: Implement a dependency-injected adapter**
 
 The constructor accepts only an authenticated, typed Supabase client and an explicit user ID. It must implement the same `ProductRepository` interface. Mutations call Plan 03 RPCs; reads call security-invoker views or owner-scoped tables. The adapter must never infer Premium entitlement from browser storage.
 
-- [ ] **Step 4: Map database errors centrally**
+- [x] **Step 4: Map database errors centrally**
 
 Map:
 
@@ -2951,7 +2951,7 @@ row_not_found or RLS denial -> habit_not_found/session_not_found as operation ap
 
 Unknown errors map to `repository_unavailable` while retaining a privacy-safe internal cause for monitoring adapters introduced later.
 
-- [ ] **Step 5: Verify RLS and typed database contracts**
+- [x] **Step 5: Verify RLS and typed database contracts**
 
 Run:
 
