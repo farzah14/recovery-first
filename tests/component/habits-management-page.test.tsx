@@ -80,6 +80,38 @@ describe('HabitsManagement', () => {
     expect(screen.getByText('Read Tech Documentation')).toBeVisible();
   }, 30000);
 
+  it('filters habits lists by date preset and custom range', async () => {
+    render(<HabitsManagement />);
+
+    // Date filter defaults to All Dates
+    expect(screen.getByRole('combobox', { name: 'Filter by date' })).toHaveTextContent('All Dates');
+
+    // This month hides the older seed habits entirely
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
+    fireEvent.click(screen.getByRole('option', { name: 'This Month' }));
+    expect(screen.getByText('No active habits found.')).toBeVisible();
+    expect(screen.queryByText('Daily Meditation')).not.toBeInTheDocument();
+
+    // A custom range covering 2023 shows only 2023 habits
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Custom' }));
+    fireEvent.change(screen.getByLabelText('Custom date from'), {
+      target: { value: '2023-01-01' },
+    });
+    fireEvent.change(screen.getByLabelText('Custom date to'), {
+      target: { value: '2023-12-31' },
+    });
+    expect(screen.getByText('Daily Meditation')).toBeVisible();
+    expect(screen.getByText('Read Tech Documentation')).toBeVisible();
+    expect(screen.queryByText('Hydration & Water')).not.toBeInTheDocument();
+
+    // Reset to All Dates restores the full lists
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
+    fireEvent.click(screen.getByRole('option', { name: 'All Dates' }));
+    expect(screen.getByText('Daily Meditation')).toBeVisible();
+    expect(screen.getByText('Hydration & Water')).toBeVisible();
+  }, 30000);
+
   it('navigates to Habit Detail view when View Details is clicked and returns back to Habits Library when Back to Habits is clicked', () => {
     render(<HabitsManagement />);
 

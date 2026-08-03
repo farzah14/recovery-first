@@ -34,7 +34,12 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { matchesTimeBucket, type TimeFilterValue } from '@/domain/habits/habit-filters';
+import {
+  matchesDatePreset,
+  matchesTimeBucket,
+  type DateFilterPreset,
+  type TimeFilterValue,
+} from '@/domain/habits/habit-filters';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -179,6 +184,35 @@ function TimeFilterIcon({
   );
 }
 
+const DATE_FILTER_OPTIONS: { value: DateFilterPreset; label: string; icon: LucideIcon }[] = [
+  { value: 'all', label: 'All Dates', icon: Calendar },
+  { value: 'today', label: 'Today', icon: Sun },
+  { value: 'last7', label: 'Last 7 Days', icon: Clock },
+  { value: 'last30', label: 'Last 30 Days', icon: Calendar },
+  { value: 'thisMonth', label: 'This Month', icon: Calendar },
+  { value: 'custom', label: 'Custom', icon: Calendar },
+];
+
+const DATE_FILTER_COLORS: Record<DateFilterPreset, string> = {
+  all: '#3f4940',
+  today: '#004e27',
+  last7: '#2563EB',
+  last30: '#7C3AED',
+  thisMonth: '#DB2777',
+  custom: '#B45309',
+};
+
+function DateFilterIcon({
+  preset,
+  className,
+}: Readonly<{ preset: DateFilterPreset; className?: string }>): React.JSX.Element {
+  const option = DATE_FILTER_OPTIONS.find((item) => item.value === preset);
+  const Icon = option?.icon ?? Calendar;
+  return (
+    <Icon aria-hidden="true" className={className} style={{ color: DATE_FILTER_COLORS[preset] }} />
+  );
+}
+
 function getTodayDateStr(): string {
   const d = new Date();
   return d.toISOString().split('T')[0] ?? '';
@@ -297,6 +331,9 @@ export function HabitsManagement(): React.JSX.Element {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilterValue>('all');
+  const [selectedDateFilter, setSelectedDateFilter] = useState<DateFilterPreset>('all');
+  const [customFrom, setCustomFrom] = useState<string>('');
+  const [customTo, setCustomTo] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Selected Habit for Detail View
@@ -329,6 +366,20 @@ export function HabitsManagement(): React.JSX.Element {
       value === 'night'
     ) {
       setSelectedTimeFilter(value);
+      setVisibleActiveCount(4);
+    }
+  }
+
+  function handleDateFilterChange(value: string): void {
+    if (
+      value === 'all' ||
+      value === 'today' ||
+      value === 'last7' ||
+      value === 'last30' ||
+      value === 'thisMonth' ||
+      value === 'custom'
+    ) {
+      setSelectedDateFilter(value);
       setVisibleActiveCount(4);
     }
   }
@@ -462,7 +513,16 @@ export function HabitsManagement(): React.JSX.Element {
       h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       h.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTime = matchesTimeBucket(h, selectedTimeFilter);
-    return matchesCategory && matchesStatus && matchesSearch && matchesTime;
+    const matchesDate = matchesDatePreset(
+      h.createdDate,
+      selectedDateFilter,
+      {
+        from: customFrom,
+        to: customTo,
+      },
+      new Date(),
+    );
+    return matchesCategory && matchesStatus && matchesSearch && matchesTime && matchesDate;
   });
 
   const [visibleActiveCount, setVisibleActiveCount] = useState<number>(4);
@@ -611,6 +671,77 @@ export function HabitsManagement(): React.JSX.Element {
                   })}
                 </SelectContent>
               </Select>
+
+              <Select value={selectedDateFilter} onValueChange={handleDateFilterChange}>
+                <SelectTrigger
+                  aria-label="Filter by date"
+                  className={cn(
+                    'group h-11 min-h-11 w-full items-center justify-between gap-2.5 rounded-xl border bg-white px-3.5 text-xs shadow-2xs transition-colors duration-150 focus-visible:border-[#004e27] focus-visible:ring-4 focus-visible:ring-[#004e27]/10 sm:w-fit',
+                    selectedDateFilter !== 'all'
+                      ? 'border-[#004e27]/50 bg-[#f7fbf8] font-semibold text-[#004e27]'
+                      : 'border-[var(--color-border-standard,#DDE5E1)] text-[#161A17] hover:border-[#004e27]/70 hover:bg-[#f4f9f6] hover:text-[#004e27]',
+                  )}
+                >
+                  <span className="flex items-center gap-2 overflow-hidden py-0.5">
+                    <DateFilterIcon
+                      preset={selectedDateFilter}
+                      className="size-4 shrink-0 text-[#004e27]"
+                    />
+                    <SelectValue className="font-semibold">
+                      <span className="text-xs font-semibold text-[#161A17]">
+                        {DATE_FILTER_OPTIONS.find((o) => o.value === selectedDateFilter)?.label ??
+                          'All Dates'}
+                      </span>
+                    </SelectValue>
+                  </span>
+                </SelectTrigger>
+                <SelectContent className="animate-in fade-in-0 zoom-in-95 w-52 rounded-2xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-1.5 shadow-xl shadow-emerald-950/10 backdrop-blur-md transition-all duration-150">
+                  {DATE_FILTER_OPTIONS.map((option) => {
+                    const Icon = option.icon;
+                    const color = DATE_FILTER_COLORS[option.value];
+                    return (
+                      <SelectItem
+                        key={option.value}
+                        value={option.value}
+                        showIndicator={true}
+                        className="group flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-xs text-[#3f4940] transition-colors duration-150 outline-none hover:bg-[#f0f8f4] hover:text-[#004e27] data-[highlighted]:bg-[#f0f8f4] data-[highlighted]:text-[#004e27] data-[state=checked]:bg-[#e7f3ed] data-[state=checked]:font-semibold data-[state=checked]:text-[#004e27]"
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2.5">
+                          <Icon aria-hidden="true" className="size-4 shrink-0" style={{ color }} />
+                          <span className="truncate text-xs font-semibold text-[#161A17] group-hover:text-[#004e27] group-data-[highlighted]:text-[#004e27]">
+                            {option.label}
+                          </span>
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+
+              {selectedDateFilter === 'custom' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    aria-label="Custom date from"
+                    type="date"
+                    value={customFrom}
+                    onChange={(e) => {
+                      setCustomFrom(e.target.value);
+                      setVisibleActiveCount(4);
+                    }}
+                    className="h-11 w-36 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs font-semibold text-[#161A17] focus:border-[#004e27] focus:outline-none"
+                  />
+                  <input
+                    aria-label="Custom date to"
+                    type="date"
+                    value={customTo}
+                    onChange={(e) => {
+                      setCustomTo(e.target.value);
+                      setVisibleActiveCount(4);
+                    }}
+                    className="h-11 w-36 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs font-semibold text-[#161A17] focus:border-[#004e27] focus:outline-none"
+                  />
+                </div>
+              )}
 
               <Select value={selectedCategory} onValueChange={handleCategoryFilterChange}>
                 <SelectTrigger
