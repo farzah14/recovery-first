@@ -18,7 +18,7 @@ export function HabitList({
   return (
     <section className="grid gap-6">
       <PageHeader
-        title="Habits"
+        title="Habits Library"
         description="Keep each habit adaptable with a Normal action and a Minimum option."
         actions={
           <Button asChild>
