@@ -39,6 +39,49 @@ type PrivateBillingDatabase = {
         Update: Record<string, Json>;
         Relationships: [];
       };
+      checkout_attempts: {
+        Row: {
+          id: string;
+          user_id: string;
+          plan_code: string;
+          provider: string;
+          provider_transaction_id: string | null;
+          idempotency_key: string;
+          status: string;
+          expires_at: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          user_id: string;
+          plan_code: string;
+          provider: string;
+          provider_transaction_id?: string | null;
+          idempotency_key: string;
+          status: string;
+          expires_at: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          provider_transaction_id?: string | null;
+          status?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      billing_subscriptions: {
+        Row: {
+          user_id: string;
+          provider_subscription_id: string;
+          normalized_status: Database['public']['Enums']['entitlement_status'];
+          current_period_end: string | null;
+        };
+        Insert: Record<string, Json>;
+        Update: Record<string, Json>;
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
