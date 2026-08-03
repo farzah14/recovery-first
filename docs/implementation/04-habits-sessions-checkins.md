@@ -2458,7 +2458,7 @@ git commit -m "feat: build deterministic today read model"
 - Create: `src/app/(application)/today/loading.tsx`
 - Create: `src/app/(application)/today/error.tsx`
 
-- [ ] **Step 1: Write failing Today component tests**
+- [x] **Step 1: Write failing Today component tests**
 
 Prove:
 
@@ -2471,7 +2471,7 @@ Prove:
 - no-eligible state reports the next session when available;
 - all-recorded state says `Full and Minimum both support continuity.`
 
-- [ ] **Step 2: Run component tests and confirm failure**
+- [x] **Step 2: Run component tests and confirm failure**
 
 Run:
 
@@ -2481,11 +2481,11 @@ pnpm vitest run tests/features/today/today-page.test.tsx tests/features/today/to
 
 Expected: FAIL because Today components do not exist.
 
-- [ ] **Step 3: Implement the daily progress card**
+- [x] **Step 3: Implement the daily progress card**
 
 Display completed count, Minimum count, remaining count, and a text summary. The circular progress must expose an accessible name and cannot use a punitive missed count as the dominant metric.
 
-- [ ] **Step 4: Implement stable session-card anatomy**
+- [x] **Step 4: Implement stable session-card anatomy**
 
 `TodaySessionCard` must preserve the same layout across states:
 
@@ -2500,19 +2500,19 @@ Action group or Edit action
 
 Use the shared UI tokens from Plan 02. State changes may replace the action row but must not move the title, targets, or schedule.
 
-- [ ] **Step 5: Implement first check-in guidance**
+- [x] **Step 5: Implement first check-in guidance**
 
 The guide must be non-blocking, dismissible, and stored as a browser-local setting. It explains Full, Minimum, and Skipped without covering the action buttons. Help remains available from the session-card overflow menu.
 
-- [ ] **Step 6: Implement route loading and error surfaces**
+- [x] **Step 6: Implement route loading and error surfaces**
 
 `loading.tsx` must use skeletons matching the final card dimensions. `error.tsx` must preserve the application shell, display an icon, heading, explanation, and Retry action, and must not rely on red alone.
 
-- [ ] **Step 7: Wire the Today route with a narrow Client Component boundary**
+- [x] **Step 7: Wire the Today route with a narrow Client Component boundary**
 
 The Server Component renders page metadata and shell framing. `TodayPageClient` initializes the Guest repository, ensures the horizon, resolves eligible expired local records, reads Today, and subscribes to Dexie live changes. It must not claim cloud synchronization in Guest mode.
 
-- [ ] **Step 8: Run component, accessibility, visual, and build checks**
+- [x] **Step 8: Run component, accessibility, visual, and build checks**
 
 Run:
 
@@ -2528,7 +2528,7 @@ pnpm build
 
 Expected: all commands pass and card layout remains stable in tested states.
 
-- [ ] **Step 9: Commit Today UI**
+- [x] **Step 9: Commit Today UI**
 
 Run:
 
