@@ -159,6 +159,8 @@
 
 The checkout service boundary is now implemented and tested; provider price IDs and authenticated server ownership are injected by the future server route.
 
+Provider-neutral billing configuration, server-only Paddle client construction, Paddle event normalization, and the dependency-injected Paddle adapter are now implemented and covered by focused contract tests. Webhook route processing, authoritative entitlement reconciliation, cancellation/refund/downgrade mutations, and production observability remain open.
+
 **Files:**
 
 - Modify: `docs/implementation/08-premium-programs-insights.md`

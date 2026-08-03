@@ -1,6 +1,6 @@
 begin;
 
-select plan(11);
+select plan(12);
 
 select results_eq(
   $$select enum_range(null::public.plan_tier)::text[]$$,
@@ -98,6 +98,16 @@ select is(
   private.effective_plan_tier('12000000-0000-4000-8000-000000000001'),
   'premium'::public.plan_tier,
   'a cancelled Premium entitlement remains active until its expiry'
+);
+
+update public.entitlements
+set status = 'trial_cancelled'
+where id = '52000000-0000-4000-8000-000000000002';
+
+select is(
+  private.effective_plan_tier('12000000-0000-4000-8000-000000000001'),
+  'premium'::public.plan_tier,
+  'a cancelled trial entitlement remains active until its expiry'
 );
 
 update public.entitlements

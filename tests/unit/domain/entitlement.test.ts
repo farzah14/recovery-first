@@ -28,3 +28,7 @@ it.each<EntitlementStatus>(['trial_active', 'active', 'grace_period', 'past_due'
     expect(grantsPaidTierAccess(status)).toBe(true);
   },
 );
+
+it('keeps paid-tier access for a cancelled trial until the authoritative expiry', () => {
+  expect(grantsPaidTierAccess('trial_cancelled')).toBe(true);
+});

@@ -1,5 +1,6 @@
 export const entitlementStatuses = [
   'trial_active',
+  'trial_cancelled',
   'active',
   'grace_period',
   'past_due',
@@ -13,6 +14,7 @@ export type EntitlementStatus = (typeof entitlementStatuses)[number];
 
 const paidTierAccessStatuses: ReadonlySet<EntitlementStatus> = new Set([
   'trial_active',
+  'trial_cancelled',
   'active',
   'grace_period',
   'past_due',

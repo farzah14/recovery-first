@@ -32,6 +32,7 @@ const billingProducts: Readonly<Record<BillingProductCode, BillingProduct>> = {
 
 const activeEntitlementStatuses: ReadonlySet<EntitlementStatus> = new Set([
   'trial_active',
+  'trial_cancelled',
   'active',
   'grace_period',
   'cancelled',

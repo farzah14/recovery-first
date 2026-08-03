@@ -38,6 +38,13 @@ describe('billing product catalog', () => {
       resolveTierFromEntitlement({ productCode: 'premium_monthly', status: 'cancelled', now }),
     ).toBe('premium');
     expect(
+      resolveTierFromEntitlement({
+        productCode: 'premium_monthly',
+        status: 'trial_cancelled',
+        now,
+      }),
+    ).toBe('premium');
+    expect(
       resolveTierFromEntitlement({ productCode: 'premium_monthly', status: 'past_due', now }),
     ).toBe('premium');
     expect(

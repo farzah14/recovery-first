@@ -15,6 +15,7 @@ export default defineConfig({
       'tests/component/**/*.test.tsx',
       'tests/integration/**/*.test.ts',
       'tests/integration/**/*.test.tsx',
+      'tests/contract/**/*.test.ts',
       'tests/accessibility/**/*.test.ts',
       'tests/accessibility/**/*.test.tsx',
     ],
