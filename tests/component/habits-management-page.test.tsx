@@ -8,23 +8,22 @@ describe('HabitsManagement', () => {
     window.localStorage.clear();
   });
 
-  it('renders Habits Library header, search bar, status and category dropdowns, active habits cards, and paused habits section', () => {
+  it('renders Habits Library header, search bar, status and date and time dropdowns, active habits cards, and paused habits section', () => {
     render(<HabitsManagement />);
 
     // Header title
     expect(screen.getByRole('heading', { level: 1, name: 'Habits Library' })).toBeVisible();
     expect(screen.getAllByRole('button', { name: /Add Habit/i }).length).toBeGreaterThan(0);
 
-    // Status and category filter dropdowns
+    // Status, time and date filter dropdowns
     expect(screen.getByRole('combobox', { name: 'Filter by status' })).toHaveTextContent(
       'All Status',
-    );
-    expect(screen.getByRole('combobox', { name: 'Filter by category' })).toHaveTextContent(
-      'All Categories',
     );
     expect(screen.getByRole('combobox', { name: 'Filter by time of day' })).toHaveTextContent(
       'Any Time',
     );
+    expect(screen.getByRole('combobox', { name: 'Filter by date' })).toHaveTextContent('All Dates');
+    expect(screen.queryByRole('combobox', { name: 'Filter by category' })).not.toBeInTheDocument();
 
     // Active habit cards
     expect(screen.getByText('Daily Meditation')).toBeVisible();
@@ -35,24 +34,19 @@ describe('HabitsManagement', () => {
     expect(screen.getByText('Read Tech Documentation')).toBeVisible();
   }, 15000);
 
-  it('filters habits list by category and status dropdowns', async () => {
+  it('filters habits list by status dropdown', async () => {
     render(<HabitsManagement />);
-
-    // Select Mindfulness from the category dropdown
-    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by category' }));
-    fireEvent.click(screen.getByRole('option', { name: 'Mindfulness' }));
-    expect(screen.getByText('Daily Meditation')).toBeVisible();
-    expect(screen.queryByText('Hydration & Water')).not.toBeInTheDocument();
-
-    // Reset to all categories
-    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by category' }));
-    fireEvent.click(screen.getByRole('option', { name: 'All Categories' }));
-    expect(screen.getByText('Hydration & Water')).toBeVisible();
 
     // Filter by Paused status
     fireEvent.click(screen.getByRole('combobox', { name: 'Filter by status' }));
     fireEvent.click(screen.getByRole('option', { name: 'Paused' }));
     expect(screen.getByText('Read Tech Documentation')).toBeVisible();
+    expect(screen.queryByText('Daily Meditation')).not.toBeInTheDocument();
+
+    // Reset to All Status
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by status' }));
+    fireEvent.click(screen.getByRole('option', { name: 'All Status' }));
+    expect(screen.getByText('Daily Meditation')).toBeVisible();
   }, 30000);
 
   it('filters habits lists by time-of-day bucket', async () => {

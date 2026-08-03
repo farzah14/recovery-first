@@ -3,13 +3,9 @@
 import React, { useRef, useState } from 'react';
 import {
   ArrowLeft,
-  BookOpen,
-  Brain,
   CheckCircle2,
-  HeartPulse,
   Leaf,
   Sun,
-  LayoutGrid,
   ListFilter,
   Pencil,
   Pause,
@@ -23,7 +19,6 @@ import {
   AlertTriangle,
   Search,
   Eye,
-  Users,
   RotateCcw,
   Clock,
   ChevronDown,
@@ -125,9 +120,7 @@ const INITIAL_HABITS: HabitItem[] = [
 ];
 
 const STATUS_FILTER_OPTIONS = ['All', 'Active', 'Paused'] as const;
-const CATEGORY_FILTER_OPTIONS = ['All', 'Mindfulness', 'Health', 'Learning', 'Social'] as const;
 type StatusFilter = (typeof STATUS_FILTER_OPTIONS)[number];
-type CategoryFilter = (typeof CATEGORY_FILTER_OPTIONS)[number];
 
 const STATUS_FILTER_ICONS: Record<StatusFilter, LucideIcon> = {
   All: ListFilter,
@@ -135,26 +128,10 @@ const STATUS_FILTER_ICONS: Record<StatusFilter, LucideIcon> = {
   Paused: Pause,
 };
 
-const CATEGORY_FILTER_ICONS: Record<CategoryFilter, LucideIcon> = {
-  All: LayoutGrid,
-  Mindfulness: Brain,
-  Health: HeartPulse,
-  Learning: BookOpen,
-  Social: Users,
-};
-
 const STATUS_FILTER_COLORS: Record<StatusFilter, string> = {
   All: '#3f4940',
   Active: '#004e27',
   Paused: '#92400E',
-};
-
-const CATEGORY_FILTER_COLORS: Record<CategoryFilter, string> = {
-  All: '#004e27',
-  Mindfulness: '#004e27',
-  Health: '#2563EB',
-  Learning: '#7C3AED',
-  Social: '#DB2777',
 };
 
 const TIME_FILTER_OPTIONS: { value: TimeFilterValue; label: string; icon: LucideIcon }[] = [
@@ -247,20 +224,6 @@ function StatusFilterIcon({
   );
 }
 
-function CategoryFilterIcon({
-  category,
-  className,
-}: Readonly<{ category: CategoryFilter; className?: string }>): React.JSX.Element {
-  const Icon = CATEGORY_FILTER_ICONS[category];
-  return (
-    <Icon
-      aria-hidden="true"
-      className={className}
-      style={{ color: CATEGORY_FILTER_COLORS[category] }}
-    />
-  );
-}
-
 function mergeStoredHabits(stored: ReturnType<typeof getStoredHabits>): HabitItem[] {
   const storedIds = new Set(stored.map((habit) => habit.id));
   return [
@@ -328,7 +291,6 @@ export function HabitsManagement(): React.JSX.Element {
   };
 
   // Filters & Search State
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('All');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('All');
   const [selectedTimeFilter, setSelectedTimeFilter] = useState<TimeFilterValue>('all');
   const [selectedDateFilter, setSelectedDateFilter] = useState<DateFilterPreset>('all');
@@ -342,18 +304,6 @@ export function HabitsManagement(): React.JSX.Element {
   function handleStatusFilterChange(value: string): void {
     if (value === 'All' || value === 'Active' || value === 'Paused') {
       setSelectedStatus(value);
-    }
-  }
-
-  function handleCategoryFilterChange(value: string): void {
-    if (
-      value === 'All' ||
-      value === 'Mindfulness' ||
-      value === 'Health' ||
-      value === 'Learning' ||
-      value === 'Social'
-    ) {
-      setSelectedCategory(value);
     }
   }
 
@@ -506,7 +456,6 @@ export function HabitsManagement(): React.JSX.Element {
 
   // Filtered Habits Logic (Search retrieves habits regardless of whether active or paused)
   const filteredHabits = habitsList.filter((h) => {
-    const matchesCategory = selectedCategory === 'All' || h.category === selectedCategory;
     const matchesStatus = selectedStatus === 'All' || h.status === selectedStatus;
     const matchesSearch =
       !searchQuery.trim() ||
@@ -522,7 +471,7 @@ export function HabitsManagement(): React.JSX.Element {
       },
       new Date(),
     );
-    return matchesCategory && matchesStatus && matchesSearch && matchesTime && matchesDate;
+    return matchesStatus && matchesSearch && matchesTime && matchesDate;
   });
 
   const [visibleActiveCount, setVisibleActiveCount] = useState<number>(4);
@@ -564,7 +513,7 @@ export function HabitsManagement(): React.JSX.Element {
             </p>
           </div>
 
-          {/* Search, Status & Category Filter Controls Bar */}
+          {/* Search, Status, Time & Date Filter Controls Bar */}
           <div className="flex flex-col items-stretch justify-between gap-3 md:flex-row md:items-center">
             {/* Search Input (Retrieves habits across both Active and Paused) */}
             <div className="relative min-w-0 flex-1 md:max-w-[420px]">
@@ -579,7 +528,7 @@ export function HabitsManagement(): React.JSX.Element {
               />
             </div>
 
-            {/* Status & Category Dropdown Filters - Clean Uncovered Icons & Borderless Hover */}
+            {/* Status, Time & Date Dropdown Filters - Clean Uncovered Icons & Borderless Hover */}
             <div className="flex w-full items-center justify-center gap-2.5 py-1 sm:w-auto md:shrink-0">
               <Select value={selectedStatus} onValueChange={handleStatusFilterChange}>
                 <SelectTrigger
@@ -742,51 +691,6 @@ export function HabitsManagement(): React.JSX.Element {
                   />
                 </div>
               )}
-
-              <Select value={selectedCategory} onValueChange={handleCategoryFilterChange}>
-                <SelectTrigger
-                  aria-label="Filter by category"
-                  className={cn(
-                    'group h-11 min-h-11 w-full items-center justify-between gap-2.5 rounded-xl border bg-white px-3.5 text-xs shadow-2xs transition-colors duration-150 focus-visible:border-[#004e27] focus-visible:ring-4 focus-visible:ring-[#004e27]/10 sm:w-fit',
-                    selectedCategory !== 'All'
-                      ? 'border-[#004e27]/50 bg-[#f7fbf8] font-semibold text-[#004e27]'
-                      : 'border-[var(--color-border-standard,#DDE5E1)] text-[#161A17] hover:border-[#004e27]/70 hover:bg-[#f4f9f6] hover:text-[#004e27]',
-                  )}
-                >
-                  <span className="flex items-center gap-2 overflow-hidden py-0.5">
-                    <CategoryFilterIcon
-                      category={selectedCategory}
-                      className="size-4 shrink-0 text-[#004e27]"
-                    />
-                    <SelectValue className="font-semibold">
-                      <span className="text-xs font-semibold text-[#161A17]">
-                        {selectedCategory === 'All' ? 'All Categories' : selectedCategory}
-                      </span>
-                    </SelectValue>
-                  </span>
-                </SelectTrigger>
-                <SelectContent className="animate-in fade-in-0 zoom-in-95 w-56 rounded-2xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-1.5 shadow-xl shadow-emerald-950/10 backdrop-blur-md transition-all duration-150">
-                  {CATEGORY_FILTER_OPTIONS.map((category) => {
-                    const Icon = CATEGORY_FILTER_ICONS[category];
-                    const color = CATEGORY_FILTER_COLORS[category];
-                    return (
-                      <SelectItem
-                        key={category}
-                        value={category}
-                        showIndicator={true}
-                        className="group flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-xs text-[#3f4940] transition-colors duration-150 outline-none hover:bg-[#f0f8f4] hover:text-[#004e27] data-[highlighted]:bg-[#f0f8f4] data-[highlighted]:text-[#004e27] data-[state=checked]:bg-[#e7f3ed] data-[state=checked]:font-semibold data-[state=checked]:text-[#004e27]"
-                      >
-                        <span className="flex min-w-0 flex-1 items-center gap-2.5">
-                          <Icon aria-hidden="true" className="size-4 shrink-0" style={{ color }} />
-                          <span className="truncate text-xs font-semibold text-[#161A17] group-hover:text-[#004e27] group-data-[highlighted]:text-[#004e27]">
-                            {category === 'All' ? 'All Categories' : category}
-                          </span>
-                        </span>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
