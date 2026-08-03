@@ -2221,7 +2221,7 @@ git commit -m "feat: build accessible habit creation wizard"
 - Modify: `src/app/(application)/habits/[habitId]/page.tsx`
 - Create: `src/app/(application)/habits/[habitId]/history/page.tsx`
 
-- [ ] **Step 1: Write failing repository and component tests**
+- [x] **Step 1: Write failing repository and component tests**
 
 Add tests that prove:
 
@@ -2231,7 +2231,7 @@ Add tests that prove:
 - Versions list is ordered descending and cannot edit historical rows;
 - History labels Full, Minimum, Manual Skipped, Automatic Skipped, and Unrecorded with text and icon, not color alone.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2241,17 +2241,17 @@ pnpm vitest run tests/features/habits/habit-list.test.tsx tests/features/habits/
 
 Expected: FAIL because list/detail reads and components are not implemented.
 
-- [ ] **Step 3: Complete Guest repository list and detail methods**
+- [x] **Step 3: Complete Guest repository list and detail methods**
 
 Implement `listHabits` with the compound owner index and filter `deletedAt === null`.
 
 Implement `getHabitDetail` in a single Dexie read transaction over `habits`, `habitVersions`, `sessions`, and `checkIns`. Map JSON targets and cues through narrow runtime validators. Return `null` when the habit does not belong to the owner.
 
-- [ ] **Step 4: Implement application read services**
+- [x] **Step 4: Implement application read services**
 
 `listHabits.ts` and `get-habit-detail.ts` must accept a `ProductRepository` and `ProductOwner`, then return repository reads without React dependencies. They may add display-safe derived labels but may not recalculate domain metrics differently from shared domain functions.
 
-- [ ] **Step 5: Implement responsive list and detail components**
+- [x] **Step 5: Implement responsive list and detail components**
 
 Follow `UI-SPEC.md`:
 
@@ -2262,11 +2262,11 @@ Follow `UI-SPEC.md`:
 - status always includes a visible text label;
 - no history row is deleted or mutated from the list UI.
 
-- [ ] **Step 6: Wire routes and not-found behavior**
+- [x] **Step 6: Wire routes and not-found behavior**
 
 `/app/habits/[habitId]` must render `notFound()` only after the client repository reports a missing owner-scoped habit. While Guest IndexedDB initializes, show the approved loading structure rather than a false not-found state.
 
-- [ ] **Step 7: Run feature and route checks**
+- [x] **Step 7: Run feature and route checks**
 
 Run:
 
@@ -2281,7 +2281,7 @@ pnpm build
 
 Expected: all commands pass.
 
-- [ ] **Step 8: Commit habit read surfaces**
+- [x] **Step 8: Commit habit read surfaces**
 
 Run:
 
