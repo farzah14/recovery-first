@@ -1522,7 +1522,7 @@ git commit -m "feat: add atomic guest habit repository"
 - Create: `tests/features/sessions/ensure-session-horizon.test.ts`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing session horizon tests**
+- [x] **Step 1: Write failing session horizon tests**
 
 Create `tests/features/sessions/ensure-session-horizon.test.ts`:
 
@@ -1576,7 +1576,7 @@ describe('session horizon', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+- [x] **Step 2: Run the focused test and confirm failure**
 
 Run:
 
@@ -1586,7 +1586,7 @@ pnpm test:sessions
 
 Expected: FAIL because the session modules do not exist.
 
-- [ ] **Step 3: Define horizon constants and date helpers**
+- [x] **Step 3: Define horizon constants and date helpers**
 
 Create `src/features/sessions/session-horizon.ts`:
 
@@ -1666,7 +1666,7 @@ export function zonedLocalDateTimeToUtc(
 }
 ```
 
-- [ ] **Step 4: Implement deterministic session generation**
+- [x] **Step 4: Implement deterministic session generation**
 
 Create `src/features/sessions/application/ensure-session-horizon.ts`:
 
@@ -1750,7 +1750,7 @@ export function generateSessionsForCommand(
 }
 ```
 
-- [ ] **Step 5: Implement repository horizon extension with duplicate-safe bulk insert**
+- [x] **Step 5: Implement repository horizon extension with duplicate-safe bulk insert**
 
 Extend `DexieProductRepository.ensureSessionHorizon` to:
 
@@ -1763,11 +1763,11 @@ Extend `DexieProductRepository.ensureSessionHorizon` to:
 
 The method must use `bulkGet` by deterministic IDs and must never delete or move existing sessions.
 
-- [ ] **Step 6: Add timezone regression cases**
+- [x] **Step 6: Add timezone regression cases**
 
 Add tests for `Asia/Jakarta`, a daylight-saving transition in `America/New_York`, an invalid IANA timezone, and a finite-date recurrence. Document the deterministic policy for ambiguous local times as the earliest matching instant and reject nonexistent local times with `local_datetime_cannot_be_resolved`.
 
-- [ ] **Step 7: Run session and Guest integration tests**
+- [x] **Step 7: Run session and Guest integration tests**
 
 Run:
 
@@ -1781,7 +1781,7 @@ pnpm lint
 
 Expected: all commands pass and rerunning the generator inserts zero duplicates.
 
-- [ ] **Step 8: Commit deterministic generation**
+- [x] **Step 8: Commit deterministic generation**
 
 Run:
 
