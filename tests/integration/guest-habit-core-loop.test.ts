@@ -81,4 +81,13 @@ describe('DexieProductRepository', () => {
     expect(replay).toEqual(first);
     expect(await database.habits.count()).toBe(1);
   });
+
+  it('extends the session horizon without inserting deterministic duplicates', async () => {
+    await repository.createHabit(command(1));
+    const firstExtension = await repository.ensureSessionHorizon(owner, '2026-09-15');
+    const secondExtension = await repository.ensureSessionHorizon(owner, '2026-09-15');
+
+    expect(firstExtension).toBeGreaterThan(0);
+    expect(secondExtension).toBe(0);
+  });
 });
