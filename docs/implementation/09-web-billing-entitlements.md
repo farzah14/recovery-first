@@ -1398,7 +1398,7 @@ Expected: PASS.
 - Create: `tests/integration/customer-portal.test.ts`
 - Create: `tests/component/subscription-status-card.test.tsx`
 
-- [ ] **Step 1: Write failing management tests**
+- [x] **Step 1: Write failing management tests**
 
 Verify:
 
@@ -1411,19 +1411,19 @@ Verify:
 - `Past Due` links to payment management and does not threaten data loss;
 - `Expired`, `Refunded`, and `Revoked` explain access changes without deleting history.
 
-- [ ] **Step 2: Implement portal creation**
+- [x] **Step 2: Implement portal creation**
 
 Create `src/server/billing/create-portal-session.ts` that loads the authenticated user's private provider IDs and calls `provider.createCustomerPortal()`.
 
-- [ ] **Step 3: Implement the portal route**
+- [x] **Step 3: Implement the portal route**
 
 `POST /api/billing/portal` must validate origin/CSRF, require authentication, apply rate limiting, and return a same-provider HTTPS URL. Set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
 
-- [ ] **Step 4: Implement the subscription status card**
+- [x] **Step 4: Implement the subscription status card**
 
 Render status with icon, text label, dates, explanation, and action. Do not rely on color alone.
 
-- [ ] **Step 5: Integrate the Subscription page**
+- [x] **Step 5: Integrate the Subscription page**
 
 The page includes:
 
@@ -1435,7 +1435,7 @@ The page includes:
 - downgrade-resolution link when required;
 - no display of payment instrument details from local storage.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/customer-portal.test.ts tests/component/subscription-status-card.test.tsx

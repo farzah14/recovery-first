@@ -28,6 +28,7 @@ export const routes = {
   insights: '/app/insights',
   reminders: '/app/reminders',
   settings: '/app/settings',
+  subscriptionSettings: '/app/settings/subscription',
 } as const;
 
 export type AppRoute = (typeof routes)[keyof typeof routes];
