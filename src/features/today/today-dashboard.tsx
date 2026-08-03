@@ -125,6 +125,16 @@ export function extractTime24FromContext(context: string): string {
   return extractTimeRange24FromContext(context).from;
 }
 
+export function sortHabitSessionsByStartTime(sessions: HabitSession[]): HabitSession[] {
+  return [...sessions].sort((a, b) => {
+    const aTime = extractTime24FromContext(a.timingContext);
+    const bTime = extractTime24FromContext(b.timingContext);
+    if (aTime < bTime) return -1;
+    if (aTime > bTime) return 1;
+    return 0;
+  });
+}
+
 export const ICON_OPTIONS = [
   { id: 'meditation', label: 'Meditation', Icon: HeartPulse },
   { id: 'water', label: 'Water', Icon: Droplets },
@@ -427,6 +437,8 @@ export function TodayDashboard(): React.JSX.Element {
   const totalCount = habits.length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
+  const sortedHabits = sortHabitSessionsByStartTime(habits);
+
   // SVG Circle Progress parameters
   const circumference = 2 * Math.PI * 52; // r=52 => ~326.72
   const strokeOffset = circumference * (1 - completedCount / Math.max(totalCount, 1));
@@ -585,7 +597,7 @@ export function TodayDashboard(): React.JSX.Element {
 
         {/* Habit Session Cards List */}
         <div className="space-y-4">
-          {habits.map((habit) => {
+          {sortedHabits.map((habit) => {
             const isFull = habit.outcome === 'full';
             const isMinimum = habit.outcome === 'minimum';
             const isSkipped = habit.outcome === 'skipped';

@@ -1,9 +1,13 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, expect, it, beforeEach } from 'vitest';
 
 import { TodayDashboard } from '@/features/today/today-dashboard';
 
 describe('TodayDashboard', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it('renders supportive time-based greeting, animated circular progress ring, scheduled habits list, and action buttons', () => {
     render(<TodayDashboard />);
 
@@ -23,7 +27,7 @@ describe('TodayDashboard', () => {
 
     // Recovery Available indication
     expect(screen.getByText('Recovery Available')).toBeVisible();
-  }, 15000);
+  });
 
   it('records Full, Minimum, and Skipped outcomes correctly morphing control button and excluding Skipped from Today Progress', () => {
     render(<TodayDashboard />);
@@ -50,7 +54,7 @@ describe('TodayDashboard', () => {
     // Check that Full displays Completed! and increases completed count to 3
     expect(screen.getAllByRole('button', { name: /Completed!/i }).length).toBe(3);
     expect(screen.getByText(/3 of 3 habits completed today/i)).toBeVisible();
-  }, 15000);
+  });
 
   it('allows editing a habit name and target parameters via Edit Habit dialog', () => {
     render(<TodayDashboard />);
@@ -62,7 +66,7 @@ describe('TodayDashboard', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Edit Habit' })).toBeVisible();
     expect(screen.getByDisplayValue('Daily Meditation')).toBeVisible();
-  }, 15000);
+  });
 
   it('opens Create Habit dialog when requested from sidebar', () => {
     render(<TodayDashboard />);
@@ -73,7 +77,7 @@ describe('TodayDashboard', () => {
     }
 
     expect(screen.getByRole('heading', { level: 2, name: 'Create New Habit' })).toBeVisible();
-  }, 15000);
+  });
 
   it('allows choosing an icon when creating a new habit', () => {
     render(<TodayDashboard />);
@@ -97,7 +101,7 @@ describe('TodayDashboard', () => {
     fireEvent.click(saveButton);
 
     expect(screen.getByRole('button', { name: 'Gym Workout' })).toBeVisible();
-  }, 15000);
+  });
 
   it('allows choosing From and Until clock times for habit schedule range', () => {
     render(<TodayDashboard />);
@@ -125,7 +129,7 @@ describe('TodayDashboard', () => {
 
     expect(screen.getByRole('button', { name: 'Late Morning Walk' })).toBeVisible();
     expect(screen.getByText(/11:00 AM - 12:00 PM/i)).toBeVisible();
-  }, 15000);
+  });
 
   it('preserves existing From and Until timing context when opening Edit Habit dialog', () => {
     render(<TodayDashboard />);
@@ -139,7 +143,7 @@ describe('TodayDashboard', () => {
     // Check timing input retains existing range value '08:00 AM - 09:00 AM'
     const timingInput = screen.getByDisplayValue('08:00 AM - 09:00 AM');
     expect(timingInput).toBeVisible();
-  }, 15000);
+  });
 
   it('renders Recovery Available and green Adjust Plan with matching text-[11px] font size, and Min/Full list prefixes', () => {
     render(<TodayDashboard />);
@@ -168,7 +172,7 @@ describe('TodayDashboard', () => {
     const completedButtons = screen.getAllByRole('button', { name: /Completed!/i });
     expect(completedButtons[0]).toBeVisible();
     expect(completedButtons[0]).not.toHaveClass('border');
-  }, 15000);
+  });
 
   it('hides Adjust Plan button when the habit is completed', () => {
     render(<TodayDashboard />);
@@ -181,7 +185,7 @@ describe('TodayDashboard', () => {
 
     // Adjust Plan button should be hidden / removed
     expect(screen.queryByRole('button', { name: /Adjust Plan/i })).toBeNull();
-  }, 15000);
+  });
 
   it('renders Daily Reflection card with default ..... text and updates to Edit Reflection Note when note is saved', () => {
     render(<TodayDashboard />);
@@ -220,7 +224,7 @@ describe('TodayDashboard', () => {
 
     // Verify button in rail changed to Edit Reflection Note
     expect(screen.getByRole('button', { name: /Edit Reflection Note/i })).toBeVisible();
-  }, 15000);
+  });
 
   it('renders toast notification at center bottom position with animation classes when action occurs', () => {
     render(<TodayDashboard />);
@@ -239,7 +243,7 @@ describe('TodayDashboard', () => {
     expect(toastElement.className).toContain('bottom-8');
     expect(toastElement.className).toContain('left-1/2');
     expect(toastElement.className).toContain('-translate-x-1/2');
-  }, 15000);
+  });
 
   it('renders pure From-Until clock time range for habit timing contexts', () => {
     render(<TodayDashboard />);
@@ -254,5 +258,53 @@ describe('TodayDashboard', () => {
     expect(screen.queryByText(/Morning\s*•/i)).toBeNull();
     expect(screen.queryByText(/Evening\s*•/i)).toBeNull();
     expect(screen.queryByText(/Night\s*•/i)).toBeNull();
-  }, 15000);
+  });
+
+  it('sorts the scheduled habits list ascending by start time when stored habits are out of order', async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    window.localStorage.setItem(
+      'recovery-first.habits-list',
+      JSON.stringify([
+        {
+          id: 'h-night',
+          name: 'Night Wind Down',
+          category: 'Health',
+          normalTarget: 'Full 30 mins',
+          minimumTarget: 'Minimum 5 mins',
+          schedule: '09:00 PM - 10:00 PM',
+          status: 'Active',
+          createdDate: todayStr,
+          iconName: 'moon',
+        },
+        {
+          id: 'h-dawn',
+          name: 'Dawn Stretch',
+          category: 'Health',
+          normalTarget: 'Full 15 mins',
+          minimumTarget: 'Minimum 2 mins',
+          schedule: '05:00 AM - 05:30 AM',
+          status: 'Active',
+          createdDate: todayStr,
+          iconName: 'exercise',
+        },
+      ]),
+    );
+
+    render(<TodayDashboard />);
+
+    await waitFor(() => {
+      const timingTexts = screen
+        .getAllByText(/\d{2}:\d{2} [AP]M - \d{2}:\d{2} [AP]M/)
+        .map((el) => el.textContent);
+
+      expect(timingTexts).toEqual([
+        '05:00 AM - 05:30 AM',
+        '08:00 AM - 09:00 AM',
+        '09:00 AM - 10:00 AM',
+        '05:00 PM - 06:00 PM',
+        '09:00 PM - 10:00 PM',
+      ]);
+    });
+  });
 });
