@@ -2722,7 +2722,7 @@ git commit -m "feat: record full minimum and skipped check-ins"
 - Modify: `src/features/today/components/today-session-card.tsx`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing edit and history tests**
+- [x] **Step 1: Write failing edit and history tests**
 
 Prove:
 
@@ -2733,7 +2733,7 @@ Prove:
 - edits after the owner-local same-day cutoff return `same_day_edit_closed`;
 - the UI explains that today’s record changes while prior history remains preserved.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2743,7 +2743,7 @@ pnpm vitest run tests/features/check-ins/edit-check-in.test.ts
 
 Expected: FAIL because edit orchestration is not implemented.
 
-- [ ] **Step 3: Implement edit orchestration**
+- [x] **Step 3: Implement edit orchestration**
 
 Create `src/features/check-ins/application/edit-check-in.ts`:
 
@@ -2780,11 +2780,11 @@ export async function editCheckIn(input: {
 }
 ```
 
-- [ ] **Step 4: Complete Guest repository `editCheckIn`**
+- [x] **Step 4: Complete Guest repository `editCheckIn`**
 
 Use one Dexie transaction. Never update the prior check-in row in place. Add a new check-in record, update the session projection, preserve both records for history, and store the idempotent replay result. Verify the local date using the session’s timezone snapshot and a deterministic clock helper.
 
-- [ ] **Step 5: Implement the edit dialog and entry points**
+- [x] **Step 5: Implement the edit dialog and entry points**
 
 Entry points:
 
@@ -2794,7 +2794,7 @@ Entry points:
 
 The dialog must show the current outcome, all alternatives, optional friction when Skipped, metric-impact text, Cancel, and explicit Save Changes.
 
-- [ ] **Step 6: Run edit, history, and regression checks**
+- [x] **Step 6: Run edit, history, and regression checks**
 
 Run:
 

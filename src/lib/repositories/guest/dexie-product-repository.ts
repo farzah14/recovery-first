@@ -86,6 +86,17 @@ function toSessionSyncState(value: LocalSessionRecord['synchronizationState']): 
   return value;
 }
 
+function localDateForTime(isoTime: string, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date(isoTime));
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  return `${values.get('year')}-${values.get('month')}-${values.get('day')}`;
+}
+
 export class DexieProductRepository implements ProductRepository {
   constructor(private readonly database: RecoveryFirstDatabase) {}
 
@@ -553,7 +564,101 @@ export class DexieProductRepository implements ProductRepository {
   }
 
   async editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult> {
-    void command;
-    throw new ProductRepositoryError('repository_unavailable');
+    return this.database.transaction(
+      'rw',
+      this.database.sessions,
+      this.database.checkIns,
+      this.database.commandResults,
+      async () => {
+        const requestHash = JSON.stringify(command);
+        const replay = await this.database.commandResults.get(command.commandId);
+        if (replay) {
+          if (replay.requestHash !== requestHash) {
+            throw new ProductRepositoryError('idempotency_conflict');
+          }
+          return replay.result as RecordCheckInResult;
+        }
+
+        const session = await this.database.sessions.get(command.sessionId);
+        if (
+          !session ||
+          session.ownerType !== command.owner.identityMode ||
+          session.ownerId !== command.owner.ownerId
+        ) {
+          throw new ProductRepositoryError('session_not_found');
+        }
+
+        if (localDateForTime(command.clientRecordedAt, session.timezoneSnapshot) !== session.scheduledLocalDate) {
+          throw new ProductRepositoryError('same_day_edit_closed');
+        }
+        if (session.revision !== command.expectedSessionRevision) {
+          throw new ProductRepositoryError('stale_revision');
+        }
+        if (!['full', 'minimum', 'manual_skipped', 'excused'].includes(command.outcome)) {
+          throw new ProductRepositoryError('invalid_outcome');
+        }
+
+        const currentCheckIn = await this.database.checkIns.get(command.currentCheckInId);
+        if (
+          !currentCheckIn ||
+          currentCheckIn.ownerType !== command.owner.identityMode ||
+          currentCheckIn.ownerId !== command.owner.ownerId ||
+          currentCheckIn.sessionId !== command.sessionId ||
+          currentCheckIn.replacedAt !== null
+        ) {
+          throw new ProductRepositoryError('stale_revision');
+        }
+        if (currentCheckIn.revision !== command.expectedCheckInRevision) {
+          throw new ProductRepositoryError('stale_revision');
+        }
+
+        const newCheckInId = crypto.randomUUID();
+        await this.database.checkIns.update(currentCheckIn.id, {
+          replacedAt: command.clientRecordedAt,
+          replacedById: newCheckInId,
+        });
+        await this.database.checkIns.add({
+          id: newCheckInId,
+          ownerType: command.owner.identityMode,
+          ownerId: command.owner.ownerId,
+          sessionId: command.sessionId,
+          outcome: command.outcome,
+          frictionCode: command.frictionCode,
+          frictionNote: command.frictionNote,
+          recordedLocalAt: command.clientRecordedAt,
+          timezoneSnapshot: session.timezoneSnapshot,
+          revision: currentCheckIn.revision + 1,
+          synchronizationState: 'local_only',
+          replacedAt: null,
+          replacedById: null,
+        });
+
+        const sessionRevision = session.revision + 1;
+        await this.database.sessions.update(command.sessionId, {
+          status: command.outcome,
+          revision: sessionRevision,
+          synchronizationState: 'local_only',
+        });
+
+        const result: RecordCheckInResult = {
+          checkInId: newCheckInId,
+          sessionId: command.sessionId,
+          outcome: command.outcome,
+          sessionRevision,
+          synchronizationState: 'local_only',
+        };
+        await this.database.commandResults.put({
+          id: command.commandId,
+          ownerType: command.owner.identityMode,
+          ownerId: command.owner.ownerId,
+          operationType: 'edit_check_in',
+          requestHash,
+          result,
+          createdAt: command.clientRecordedAt,
+          expiresAt: new Date(Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+        return result;
+      },
+    );
   }
 }

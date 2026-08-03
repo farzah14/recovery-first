@@ -6,10 +6,16 @@ import { CircleAlert, CircleCheck, CircleDashed, Clock3, HelpCircle, PauseCircle
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckInActionGroup } from '@/features/check-ins/components/check-in-action-group';
+import { EditCheckInDialog } from '@/features/check-ins/components/edit-check-in-dialog';
 import { FrictionDialog } from '@/features/check-ins/components/friction-dialog';
+import type { FrictionReason, UserRecordableCheckInOutcome } from '@/domain/check-ins/check-in';
 import type { SessionSummary } from '@/lib/repositories/product-repository';
 
 type Action = 'full' | 'minimum' | 'manual_skipped';
+type EditChange = {
+  outcome: UserRecordableCheckInOutcome;
+  friction: { frictionCode: FrictionReason | null; frictionNote: string | null };
+};
 
 const syncLabels = {
   local_only: 'Saved in this browser',
@@ -29,13 +35,15 @@ export function TodaySessionCard({
 }: {
   session: SessionSummary;
   onAction: (action: Action, session: SessionSummary, friction?: { frictionCode: string | null; frictionNote: string | null }) => void;
-  onEdit?: (session: SessionSummary) => void;
+  onEdit?: (session: SessionSummary, change: EditChange) => void;
   isSameDay?: boolean;
   habitState?: 'paused' | 'active';
   isRecovery?: boolean;
 }): React.JSX.Element {
   const [frictionOpen, setFrictionOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const recorded = session.status !== 'unrecorded';
+  const editableOutcome: UserRecordableCheckInOutcome | null = session.status === 'full' || session.status === 'minimum' || session.status === 'manual_skipped' || session.status === 'excused' ? session.status : null;
   const statusLabel = session.status === 'manual_skipped' ? 'Manual Skipped' : session.status === 'automatic_skipped' ? 'Automatic Skipped' : session.status === 'full' ? 'Full' : session.status === 'minimum' ? 'Minimum' : session.status === 'excused' ? 'Excused' : 'Unrecorded';
   const StatusIcon = session.status === 'full' ? CircleCheck : session.status === 'minimum' ? ShieldCheck : session.status === 'unrecorded' ? CircleDashed : CircleAlert;
 
@@ -58,7 +66,7 @@ export function TodaySessionCard({
           {isRecovery ? <span className="inline-flex items-center gap-2"><ShieldCheck aria-hidden="true" className="size-4" />Recovery</span> : null}
         </div>
         {recorded ? (
-          isSameDay ? <Button type="button" variant="secondary" onClick={() => onEdit?.(session)}>Edit</Button> : null
+          isSameDay && editableOutcome ? <Button type="button" variant="secondary" onClick={() => setEditOpen(true)}>Edit</Button> : null
         ) : (
           <CheckInActionGroup
             onFull={() => onAction('full', session)}
@@ -75,6 +83,18 @@ export function TodaySessionCard({
             onAction('manual_skipped', session, friction);
           }}
         />
+        {editOpen && editableOutcome ? (
+          <EditCheckInDialog
+            open
+            currentOutcome={editableOutcome}
+            onOpenChange={setEditOpen}
+            onCancel={() => setEditOpen(false)}
+            onSave={(outcome, friction) => {
+              setEditOpen(false);
+              onEdit?.(session, { outcome, friction });
+            }}
+          />
+        ) : null}
       </CardContent>
     </Card>
   );
