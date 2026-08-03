@@ -849,7 +849,7 @@ git commit -m "feat: add editable basic habit templates"
 - Create: `src/features/habits/mappers/habit-form-mapper.ts`
 - Create: `tests/features/habits/habit-form-schema.test.ts`
 
-- [ ] **Step 1: Write failing schema and mapping tests**
+- [x] **Step 1: Write failing schema and mapping tests**
 
 Create `tests/features/habits/habit-form-schema.test.ts`:
 
@@ -915,7 +915,7 @@ describe('habitFormSchema', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+- [x] **Step 2: Run the focused test and confirm failure**
 
 Run:
 
@@ -925,7 +925,7 @@ pnpm vitest run tests/features/habits/habit-form-schema.test.ts
 
 Expected: FAIL because the form modules do not exist.
 
-- [ ] **Step 3: Implement the form schema**
+- [x] **Step 3: Implement the form schema**
 
 Create `src/features/habits/forms/habit-form-schema.ts`:
 
@@ -1000,7 +1000,7 @@ export const habitFormSchema = z
   });
 ```
 
-- [ ] **Step 4: Export inferred form types and deterministic defaults**
+- [x] **Step 4: Export inferred form types and deterministic defaults**
 
 Create `src/features/habits/forms/habit-form-types.ts`:
 
@@ -1064,7 +1064,7 @@ export function createHabitFormDefaults(input: {
 }
 ```
 
-- [ ] **Step 5: Map validated values to the repository command**
+- [x] **Step 5: Map validated values to the repository command**
 
 Create `src/features/habits/mappers/habit-form-mapper.ts`:
 
@@ -1126,7 +1126,7 @@ export function mapHabitFormToCreateCommand(
 }
 ```
 
-- [ ] **Step 6: Run focused, domain, and static checks**
+- [x] **Step 6: Run focused, domain, and static checks**
 
 Run:
 
@@ -1139,7 +1139,7 @@ pnpm lint
 
 Expected: all commands pass.
 
-- [ ] **Step 7: Commit form contracts**
+- [x] **Step 7: Commit form contracts**
 
 Run:
 
