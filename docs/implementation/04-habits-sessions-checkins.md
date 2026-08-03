@@ -2108,7 +2108,7 @@ git commit -m "feat: orchestrate habit creation and drafts"
 - Create: `tests/features/habits/active-limit-dialog.test.tsx`
 - Modify: `src/app/(application)/habits/new/page.tsx`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Create `tests/features/habits/habit-wizard.test.tsx` and verify:
 
@@ -2121,7 +2121,7 @@ Create `tests/features/habits/habit-wizard.test.tsx` and verify:
 
 Create `tests/features/habits/active-limit-dialog.test.tsx` and verify Guest options are `Pause an Active Habit`, `Create Account`, `Keep as Draft`, and `Cancel`.
 
-- [ ] **Step 2: Run tests and confirm failure**
+- [x] **Step 2: Run tests and confirm failure**
 
 Run:
 
@@ -2131,7 +2131,7 @@ pnpm vitest run tests/features/habits/habit-wizard.test.tsx tests/features/habit
 
 Expected: FAIL because the components do not exist.
 
-- [ ] **Step 3: Implement the wizard with React Hook Form and Zod**
+- [x] **Step 3: Implement the wizard with React Hook Form and Zod**
 
 The root component must use:
 
@@ -2154,7 +2154,7 @@ Implement these steps in order:
 
 Each step must use semantic fieldsets, visible labels, inline errors linked with `aria-describedby`, and a stable progress indicator. The Review step must display the exact values held by React Hook Form, not duplicated component state.
 
-- [ ] **Step 4: Implement save/discard/continue behavior**
+- [x] **Step 4: Implement save/discard/continue behavior**
 
 `LeaveDraftDialog` must:
 
@@ -2164,7 +2164,7 @@ Each step must use semantic fieldsets, visible labels, inline errors linked with
 - close without navigation on `Continue editing`;
 - keep focus trapped while open and return focus to the triggering control.
 
-- [ ] **Step 5: Implement active-limit resolution without destructive defaults**
+- [x] **Step 5: Implement active-limit resolution without destructive defaults**
 
 `ActiveLimitDialog` must:
 
@@ -2174,11 +2174,11 @@ Each step must use semantic fieldsets, visible labels, inline errors linked with
 - never delete or archive a habit automatically;
 - keep `Cancel` visually available and initially focused for destructive choices.
 
-- [ ] **Step 6: Wire `/app/habits/new`**
+- [x] **Step 6: Wire `/app/habits/new`**
 
 Create `src/app/(application)/habits/new/page.tsx` as a Server Component that renders page metadata and a narrow Client Component boundary for `HabitWizard`. It must not import Dexie from the Server Component.
 
-- [ ] **Step 7: Run component, accessibility, and static checks**
+- [x] **Step 7: Run component, accessibility, and static checks**
 
 Run:
 
@@ -2192,7 +2192,7 @@ pnpm build
 
 Expected: all commands pass; the route builds as a responsive web page.
 
-- [ ] **Step 8: Commit the habit wizard**
+- [x] **Step 8: Commit the habit wizard**
 
 Run:
 
