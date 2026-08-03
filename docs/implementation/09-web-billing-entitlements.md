@@ -1121,7 +1121,7 @@ Expected: PASS.
 - Create: `supabase/functions/payment-webhook/index.ts`
 - Create: `tests/integration/webhook-processing.test.ts`
 
-- [ ] **Step 1: Write failing webhook tests**
+- [x] **Step 1: Write failing webhook tests**
 
 Verify:
 
@@ -1133,7 +1133,7 @@ Verify:
 - the route never uses browser cookies or CSRF tokens;
 - the response does not expose parser, SQL, or provider secrets.
 
-- [ ] **Step 2: Implement the raw webhook envelope**
+- [x] **Step 2: Implement the raw webhook envelope**
 
 Create `src/lib/payments/webhook-envelope.ts`:
 
@@ -1146,7 +1146,7 @@ export const readRawWebhook = async (request: Request) => ({
 
 Do not call `request.json()` before verification.
 
-- [ ] **Step 3: Implement processing orchestration**
+- [x] **Step 3: Implement processing orchestration**
 
 Create `src/server/billing/process-webhook.ts` that:
 
@@ -1159,15 +1159,15 @@ Create `src/server/billing/process-webhook.ts` that:
 7. returns success for a valid duplicate event;
 8. emits only redacted logs.
 
-- [ ] **Step 4: Implement the Next.js route**
+- [x] **Step 4: Implement the Next.js route**
 
 Create `src/app/api/billing/webhook/route.ts` with Node.js runtime and no session dependency.
 
-- [ ] **Step 5: Implement the Supabase Edge Function entrypoint**
+- [x] **Step 5: Implement the Supabase Edge Function entrypoint**
 
 Create `supabase/functions/payment-webhook/index.ts` as an alternative deployment target that delegates to the same normalized contract. Keep one authoritative public webhook URL per environment; do not activate both simultaneously.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/webhook-processing.test.ts
