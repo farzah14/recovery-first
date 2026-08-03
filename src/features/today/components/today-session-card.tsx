@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { CircleAlert, CircleCheck, CircleDashed, Clock3, HelpCircle, PauseCircle, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { CheckInActionGroup } from '@/features/check-ins/components/check-in-action-group';
+import { FrictionDialog } from '@/features/check-ins/components/friction-dialog';
 import type { SessionSummary } from '@/lib/repositories/product-repository';
 
 type Action = 'full' | 'minimum' | 'manual_skipped';
@@ -25,12 +28,13 @@ export function TodaySessionCard({
   isRecovery = false,
 }: {
   session: SessionSummary;
-  onAction: (action: Action, session: SessionSummary) => void;
+  onAction: (action: Action, session: SessionSummary, friction?: { frictionCode: string | null; frictionNote: string | null }) => void;
   onEdit?: (session: SessionSummary) => void;
   isSameDay?: boolean;
   habitState?: 'paused' | 'active';
   isRecovery?: boolean;
 }): React.JSX.Element {
+  const [frictionOpen, setFrictionOpen] = useState(false);
   const recorded = session.status !== 'unrecorded';
   const statusLabel = session.status === 'manual_skipped' ? 'Manual Skipped' : session.status === 'automatic_skipped' ? 'Automatic Skipped' : session.status === 'full' ? 'Full' : session.status === 'minimum' ? 'Minimum' : session.status === 'excused' ? 'Excused' : 'Unrecorded';
   const StatusIcon = session.status === 'full' ? CircleCheck : session.status === 'minimum' ? ShieldCheck : session.status === 'unrecorded' ? CircleDashed : CircleAlert;
@@ -56,12 +60,21 @@ export function TodaySessionCard({
         {recorded ? (
           isSameDay ? <Button type="button" variant="secondary" onClick={() => onEdit?.(session)}>Edit</Button> : null
         ) : (
-          <div className="flex flex-wrap gap-2" aria-label="Check-in actions">
-            <Button type="button" onClick={() => onAction('full', session)}>Full</Button>
-            <Button type="button" variant="secondary" onClick={() => onAction('minimum', session)}>Minimum</Button>
-            <Button type="button" variant="ghost" onClick={() => onAction('manual_skipped', session)}>Skipped</Button>
-          </div>
+          <CheckInActionGroup
+            onFull={() => onAction('full', session)}
+            onMinimum={() => onAction('minimum', session)}
+            onSkipped={() => setFrictionOpen(true)}
+          />
         )}
+        <FrictionDialog
+          open={frictionOpen}
+          onOpenChange={setFrictionOpen}
+          onCancel={() => setFrictionOpen(false)}
+          onSubmit={(friction) => {
+            setFrictionOpen(false);
+            onAction('manual_skipped', session, friction);
+          }}
+        />
       </CardContent>
     </Card>
   );

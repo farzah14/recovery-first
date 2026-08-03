@@ -4,6 +4,8 @@ export const repositoryErrorCodes = [
   'habit_not_found',
   'session_not_found',
   'session_not_eligible',
+  'check_in_already_recorded',
+  'invalid_outcome',
   'same_day_edit_closed',
   'stale_revision',
   'idempotency_conflict',

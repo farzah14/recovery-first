@@ -467,8 +467,89 @@ export class DexieProductRepository implements ProductRepository {
   async recordCheckIn(
     command: RecordCheckInRepositoryCommand,
   ): Promise<RecordCheckInResult> {
-    void command;
-    throw new ProductRepositoryError('repository_unavailable');
+    return this.database.transaction(
+      'rw',
+      this.database.sessions,
+      this.database.checkIns,
+      this.database.commandResults,
+      async () => {
+        const requestHash = JSON.stringify(command);
+        const replay = await this.database.commandResults.get(command.commandId);
+        if (replay) {
+          if (replay.requestHash !== requestHash) {
+            throw new ProductRepositoryError('idempotency_conflict');
+          }
+          return replay.result as RecordCheckInResult;
+        }
+
+        const session = await this.database.sessions.get(command.sessionId);
+        if (
+          !session ||
+          session.ownerType !== command.owner.identityMode ||
+          session.ownerId !== command.owner.ownerId
+        ) {
+          throw new ProductRepositoryError('session_not_found');
+        }
+        if (session.revision !== command.expectedSessionRevision) {
+          throw new ProductRepositoryError('stale_revision');
+        }
+        if (!['full', 'minimum', 'manual_skipped', 'excused'].includes(command.outcome)) {
+          throw new ProductRepositoryError('invalid_outcome');
+        }
+
+        const currentCheckIns = await this.database.checkIns
+          .where('[ownerType+ownerId]')
+          .equals([command.owner.identityMode, command.owner.ownerId])
+          .filter((checkIn) => checkIn.sessionId === command.sessionId && checkIn.replacedAt === null)
+          .toArray();
+        if (currentCheckIns.length > 0) {
+          throw new ProductRepositoryError('check_in_already_recorded');
+        }
+
+        const checkInId = crypto.randomUUID();
+        await this.database.checkIns.add({
+          id: checkInId,
+          ownerType: command.owner.identityMode,
+          ownerId: command.owner.ownerId,
+          sessionId: command.sessionId,
+          outcome: command.outcome,
+          frictionCode: command.frictionCode,
+          frictionNote: command.frictionNote,
+          recordedLocalAt: command.clientRecordedAt,
+          timezoneSnapshot: command.owner.timezone,
+          revision: 1,
+          synchronizationState: 'local_only',
+          replacedAt: null,
+          replacedById: null,
+        });
+
+        const sessionRevision = session.revision + 1;
+        await this.database.sessions.update(command.sessionId, {
+          status: command.outcome,
+          revision: sessionRevision,
+          synchronizationState: 'local_only',
+        });
+
+        const result: RecordCheckInResult = {
+          checkInId,
+          sessionId: command.sessionId,
+          outcome: command.outcome,
+          sessionRevision,
+          synchronizationState: 'local_only',
+        };
+        await this.database.commandResults.put({
+          id: command.commandId,
+          ownerType: command.owner.identityMode,
+          ownerId: command.owner.ownerId,
+          operationType: 'record_check_in',
+          requestHash,
+          result,
+          createdAt: command.clientRecordedAt,
+          expiresAt: new Date(Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+        return result;
+      },
+    );
   }
 
   async editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult> {
