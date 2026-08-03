@@ -1,5 +1,5 @@
 import type { RecoveryFirstDatabase } from '@/lib/indexed-db/database';
-import type { LocalCommandResultRecord } from '@/lib/indexed-db/types';
+import type { LocalCommandResultRecord, LocalSessionRecord } from '@/lib/indexed-db/types';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import type {
   CreateHabitCommand,
@@ -11,29 +11,77 @@ import type {
   ProductRepository,
   RecordCheckInRepositoryCommand,
   RecordCheckInResult,
+  SessionSummary,
   TodayRepositoryRead,
 } from '@/lib/repositories/product-repository';
+import type { RecurrenceRule } from '@/domain/habits/recurrence';
 import { generateSessionsForCommand } from '@/features/sessions/application/ensure-session-horizon';
 
-function toHabitTarget(value: Record<string, unknown>): CreateHabitCommand['normalTarget'] {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function toHabitTarget(value: unknown): CreateHabitCommand['normalTarget'] {
+  const record = isRecord(value) ? value : {};
   return {
-    action: typeof value.action === 'string' ? value.action : '',
-    quantity: typeof value.quantity === 'number' ? value.quantity : null,
-    unit: typeof value.unit === 'string' ? value.unit : null,
+    action: typeof record.action === 'string' ? record.action : '',
+    quantity: typeof record.quantity === 'number' ? record.quantity : null,
+    unit: typeof record.unit === 'string' ? record.unit : null,
     estimatedMinutes:
-      typeof value.estimatedMinutes === 'number' ? value.estimatedMinutes : null,
+      typeof record.estimatedMinutes === 'number' ? record.estimatedMinutes : null,
   };
 }
 
-function toHabitCue(value: Record<string, unknown> | null): CreateHabitCommand['cue'] {
-  const type = value?.type;
+function toHabitCue(value: unknown): CreateHabitCommand['cue'] {
+  const record = isRecord(value) ? value : null;
+  const type = record?.type;
   if (type !== 'time' && type !== 'after_activity' && type !== 'location' && type !== 'none') {
     return { type: 'none', value: null };
   }
   return {
     type,
-    value: typeof value?.value === 'string' ? value.value : null,
+    value: typeof record?.value === 'string' ? record.value : null,
   };
+}
+
+function toRecurrence(value: unknown): RecurrenceRule {
+  if (!isRecord(value)) return { kind: 'daily' };
+  if (value.kind === 'daily') return { kind: 'daily' };
+  if (
+    value.kind === 'weekdays' &&
+    Array.isArray(value.weekdays) &&
+    value.weekdays.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    )
+  ) {
+    return { kind: 'weekdays', weekdays: value.weekdays };
+  }
+  if (
+    value.kind === 'times_per_week' &&
+    typeof value.count === 'number' &&
+    Number.isInteger(value.count) &&
+    value.count >= 1 &&
+    value.count <= 7 &&
+    Array.isArray(value.placement) &&
+    value.placement.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    )
+  ) {
+    return { kind: 'times_per_week', count: value.count, placement: value.placement };
+  }
+  return { kind: 'daily' };
+}
+
+function toVersionSource(value: unknown): HabitDetailRead['versions'][number]['source'] {
+  return value === 'redesign' || value === 'recommendation' || value === 'restore'
+    ? value
+    : 'creation';
+}
+
+function toSessionSyncState(value: LocalSessionRecord['synchronizationState']): SessionSummary['synchronizationState'] {
+  if (value === 'synchronized') return 'synced';
+  if (value === 'blocked') return 'conflict';
+  return value;
 }
 
 export class DexieProductRepository implements ProductRepository {
@@ -230,14 +278,121 @@ export class DexieProductRepository implements ProductRepository {
   }
 
   async listHabits(owner: ProductOwner): Promise<HabitListItem[]> {
-    void owner;
-    throw new ProductRepositoryError('repository_unavailable');
+    const habits = await this.database.habits
+      .where('[ownerType+ownerId]')
+      .equals([owner.identityMode, owner.ownerId])
+      .filter((habit) => habit.deletedAt === null)
+      .toArray();
+
+    return habits
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .map((habit) => ({
+        id: habit.id,
+        title: habit.title,
+        lifecycleState: habit.lifecycleState,
+        currentVersionId: habit.currentVersionId,
+        updatedAt: habit.updatedAt,
+      }));
   }
 
   async getHabitDetail(owner: ProductOwner, habitId: string): Promise<HabitDetailRead | null> {
-    void owner;
-    void habitId;
-    throw new ProductRepositoryError('repository_unavailable');
+    return this.database.transaction(
+      'r',
+      this.database.habits,
+      this.database.habitVersions,
+      this.database.sessions,
+      this.database.checkIns,
+      async () => {
+        const habit = await this.database.habits.get(habitId);
+        if (
+          !habit ||
+          habit.ownerType !== owner.identityMode ||
+          habit.ownerId !== owner.ownerId ||
+          habit.deletedAt !== null ||
+          !habit.currentVersionId
+        ) {
+          return null;
+        }
+
+        const versions = await this.database.habitVersions
+          .where('habitId')
+          .equals(habitId)
+          .filter(
+            (version) =>
+              version.ownerType === owner.identityMode && version.ownerId === owner.ownerId,
+          )
+          .toArray();
+        const currentVersion = versions.find((version) => version.id === habit.currentVersionId);
+        if (!currentVersion) return null;
+
+        const sessions = await this.database.sessions
+          .where('habitId')
+          .equals(habitId)
+          .filter(
+            (session) =>
+              session.ownerType === owner.identityMode && session.ownerId === owner.ownerId,
+          )
+          .toArray();
+        const checkIns = await this.database.checkIns
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .filter((checkIn) => checkIn.replacedAt === null)
+          .toArray();
+        const versionById = new Map(versions.map((version) => [version.id, version]));
+
+        return {
+          habit: {
+            id: habit.id,
+            title: habit.title,
+            lifecycleState: habit.lifecycleState,
+            currentVersionId: habit.currentVersionId,
+            updatedAt: habit.updatedAt,
+          },
+          currentVersion: {
+            id: currentVersion.id,
+            versionNumber: currentVersion.versionNumber,
+            normalTarget: toHabitTarget(currentVersion.normalTarget),
+            minimumTarget: toHabitTarget(currentVersion.minimumTarget),
+            recurrence: toRecurrence(currentVersion.scheduleRule),
+            cue: toHabitCue(currentVersion.cue),
+            createdAt: currentVersion.createdAt,
+          },
+          versions: versions
+            .sort((left, right) => right.versionNumber - left.versionNumber)
+            .map((version) => ({
+              id: version.id,
+              versionNumber: version.versionNumber,
+              createdAt: version.createdAt,
+              source: toVersionSource(version.source),
+            })),
+          sessions: sessions
+            .sort((left, right) =>
+              `${right.scheduledLocalDate}T${right.scheduledLocalTime ?? ''}`.localeCompare(
+                `${left.scheduledLocalDate}T${left.scheduledLocalTime ?? ''}`,
+              ),
+            )
+            .map((session) => {
+              const version = versionById.get(session.habitVersionId) ?? currentVersion;
+              const checkIn = checkIns.find((item) => item.sessionId === session.id);
+              return {
+                id: session.id,
+                habitId: session.habitId,
+                habitVersionId: session.habitVersionId,
+                title: habit.title,
+                normalTarget: toHabitTarget(version.normalTarget),
+                minimumTarget: toHabitTarget(version.minimumTarget),
+                cue: toHabitCue(version.cue),
+                scheduledLocalDate: session.scheduledLocalDate,
+                scheduledLocalTime: session.scheduledLocalTime,
+                timezoneSnapshot: session.timezoneSnapshot,
+                status: checkIn?.outcome ?? session.status,
+                revision: session.revision,
+                synchronizationState: toSessionSyncState(session.synchronizationState),
+              };
+            }),
+        };
+      },
+    );
   }
 
   async resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number> {

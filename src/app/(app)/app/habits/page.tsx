@@ -1,10 +1,12 @@
-import { HabitsManagement } from '@/features/habits/habits-management';
+import type { Metadata } from 'next';
 
-export const metadata = {
+import { HabitListClient } from '@/features/habits/components/habit-list-client';
+
+export const metadata: Metadata = {
   title: 'Habits Library | RecoveryFirst',
   description: 'Manage habit definitions, minimum baselines, categories, and lifecycle routines.',
 };
 
 export default function ApplicationHabitsPage(): React.JSX.Element {
-  return <HabitsManagement />;
+  return <HabitListClient />;
 }
