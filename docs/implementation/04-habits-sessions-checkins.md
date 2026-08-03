@@ -604,7 +604,7 @@ git commit -m "feat: define account neutral product repository"
 - Create: `src/features/templates/template-picker.tsx`
 - Create: `tests/features/templates/catalog.test.ts`
 
-- [ ] **Step 1: Write failing catalog tests**
+- [x] **Step 1: Write failing catalog tests**
 
 Create `tests/features/templates/catalog.test.ts`:
 
@@ -635,7 +635,7 @@ describe('basicHabitTemplates', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and confirm the expected failure**
+- [x] **Step 2: Run the test and confirm the expected failure**
 
 Run:
 
@@ -645,7 +645,7 @@ pnpm test:templates
 
 Expected: FAIL because the catalog module does not exist.
 
-- [ ] **Step 3: Implement deterministic, local template data**
+- [x] **Step 3: Implement deterministic, local template data**
 
 Create `src/features/templates/catalog.ts`:
 
@@ -742,7 +742,7 @@ export function findHabitTemplates(query: string): readonly BasicHabitTemplate[]
 }
 ```
 
-- [ ] **Step 4: Implement reusable template presentation components**
+- [x] **Step 4: Implement reusable template presentation components**
 
 Create `src/features/templates/template-card.tsx`:
 
@@ -815,7 +815,7 @@ export function TemplatePicker({ onSelect }: { onSelect: (templateId: string) =>
 }
 ```
 
-- [ ] **Step 5: Run focused and component checks**
+- [x] **Step 5: Run focused and component checks**
 
 Run:
 
@@ -828,7 +828,7 @@ pnpm lint
 
 Expected: all tests and static checks pass.
 
-- [ ] **Step 6: Commit the template catalog**
+- [x] **Step 6: Commit the template catalog**
 
 Run:
 
