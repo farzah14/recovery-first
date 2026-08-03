@@ -53,11 +53,7 @@ export function TodayPageClient({
     const load = async () => {
       try {
         await repository.ensureSessionHorizon(owner, localDate);
-        try {
-          await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
-        } catch {
-          // Expiry reconciliation is unavailable until its write boundary is implemented.
-        }
+        await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
         const next = await getTodayReadModel({ repository, owner, localDate });
         if (!cancelled) setReadModel(next);
       } catch (reason) {

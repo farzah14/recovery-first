@@ -61,6 +61,7 @@ export function HabitHistory({
             <div>
               <p className="text-sm font-semibold">{session.scheduledLocalDate}</p>
               <p className="text-xs text-[var(--color-text-secondary)]">{session.title}</p>
+              {session.status === 'automatic_skipped' ? <p className="mt-1 text-xs text-[var(--color-text-secondary)]">Automatically marked skipped after the check-in window closed</p> : null}
             </div>
             <div className="flex flex-wrap items-center justify-end gap-3">
               <span className="inline-flex items-center gap-2 text-sm font-semibold" aria-label={label}>

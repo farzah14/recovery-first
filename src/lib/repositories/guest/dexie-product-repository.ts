@@ -409,9 +409,25 @@ export class DexieProductRepository implements ProductRepository {
   }
 
   async resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number> {
-    void owner;
-    void now;
-    throw new ProductRepositoryError('repository_unavailable');
+    return this.database.transaction('rw', this.database.sessions, async () => {
+      const nowMs = Date.parse(now);
+      const expired = await this.database.sessions
+        .where('[ownerType+ownerId]')
+        .equals([owner.identityMode, owner.ownerId])
+        .filter(
+          (session) =>
+            session.status === 'unrecorded' && Date.parse(session.resolutionDueAt) < nowMs,
+        )
+        .toArray();
+
+      for (const session of expired) {
+        await this.database.sessions.update(session.id, {
+          status: 'automatic_skipped',
+          revision: session.revision + 1,
+        });
+      }
+      return expired.length;
+    });
   }
 
   async getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead> {

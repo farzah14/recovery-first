@@ -2830,7 +2830,7 @@ git commit -m "feat: preserve history during same day check-in edits"
 - Modify: `src/features/today/components/today-page-client.tsx`
 - Modify: `src/features/habits/components/habit-history.tsx`
 
-- [ ] **Step 1: Write failing resolution tests**
+- [x] **Step 1: Write failing resolution tests**
 
 Prove:
 
@@ -2841,7 +2841,7 @@ Prove:
 - a resolved Full, Minimum, or Manual Skipped session is never reclassified;
 - rerunning resolution is idempotent.
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 Run:
 
@@ -2851,7 +2851,7 @@ pnpm vitest run tests/features/sessions/resolve-expired-unrecorded.test.ts
 
 Expected: FAIL because resolution application logic is not implemented.
 
-- [ ] **Step 3: Implement the resolution application service**
+- [x] **Step 3: Implement the resolution application service**
 
 Create `src/features/sessions/application/resolve-expired-unrecorded.ts`:
 
@@ -2867,19 +2867,19 @@ export async function resolveExpiredUnrecorded(input: {
 }
 ```
 
-- [ ] **Step 4: Complete the Guest repository resolution transaction**
+- [x] **Step 4: Complete the Guest repository resolution transaction**
 
 Query owner-scoped sessions with `status === 'unrecorded'` and `resolutionDueAt < now`. Update only those sessions to `automatic_skipped`, increment revision, and preserve synchronization state. Do not create a check-in row and do not call Manual Skipped counter logic.
 
-- [ ] **Step 5: Invoke safe catch-up before Today reads**
+- [x] **Step 5: Invoke safe catch-up before Today reads**
 
 `TodayPageClient` calls resolution once after local repository initialization and before its first Today read. The operation must be safe to rerun on reload.
 
-- [ ] **Step 6: Display Automatic Skipped distinctly in history**
+- [x] **Step 6: Display Automatic Skipped distinctly in history**
 
 Use text `Automatically marked skipped after the check-in window closed` with a clock-related icon. Do not offer friction editing for an Automatic Skipped record.
 
-- [ ] **Step 7: Run session, domain, and full core-loop tests**
+- [x] **Step 7: Run session, domain, and full core-loop tests**
 
 Run:
 
