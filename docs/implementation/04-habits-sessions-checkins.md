@@ -215,7 +215,7 @@ tests/e2e/
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 
-- [ ] **Step 1: Verify the Plan 03 baseline**
+- [x] **Step 1: Verify the Plan 03 baseline**
 
 Run:
 
@@ -234,7 +234,7 @@ git status --short
 
 Expected: every command exits with status `0` and the working tree is clean.
 
-- [ ] **Step 2: Install the form and query dependencies required by this plan**
+- [x] **Step 2: Install the form and query dependencies required by this plan**
 
 Run:
 
@@ -244,7 +244,7 @@ pnpm add react-hook-form zod @hookform/resolvers @tanstack/react-query
 
 Expected: `package.json` and `pnpm-lock.yaml` contain the four dependencies and no unrelated package changes.
 
-- [ ] **Step 3: Add focused scripts without replacing existing scripts**
+- [x] **Step 3: Add focused scripts without replacing existing scripts**
 
 Run:
 
@@ -268,7 +268,7 @@ pnpm install --lockfile-only
 
 Expected: all six scripts exist and `pnpm-lock.yaml` remains synchronized.
 
-- [ ] **Step 4: Run package and repository checks**
+- [x] **Step 4: Run package and repository checks**
 
 Run:
 
@@ -282,7 +282,7 @@ pnpm check:repository
 
 Expected: every command exits with status `0`.
 
-- [ ] **Step 5: Commit dependency and script changes**
+- [x] **Step 5: Commit dependency and script changes**
 
 Run:
 
