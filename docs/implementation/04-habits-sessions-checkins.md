@@ -2303,7 +2303,7 @@ git commit -m "feat: add habit list detail versions and history"
 - Create: `tests/features/today/get-today-read-model.test.ts`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing Today read-model tests**
+- [x] **Step 1: Write failing Today read-model tests**
 
 Create `tests/features/today/get-today-read-model.test.ts` and prove:
 
@@ -2314,7 +2314,7 @@ Create `tests/features/today/get-today-read-model.test.ts` and prove:
 - no-habits, no-eligible-sessions, and all-recorded are distinct states;
 - an Automatic Skipped historical row never appears as a user action.
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 Run:
 
@@ -2324,7 +2324,7 @@ pnpm test:today
 
 Expected: FAIL because Today modules do not exist.
 
-- [ ] **Step 3: Define Today view types**
+- [x] **Step 3: Define Today view types**
 
 Create `src/features/today/today-types.ts`:
 
@@ -2345,7 +2345,7 @@ export type TodayReadModel = {
 };
 ```
 
-- [ ] **Step 4: Implement deterministic ordering**
+- [x] **Step 4: Implement deterministic ordering**
 
 Create `src/features/today/today-ordering.ts`:
 
@@ -2372,7 +2372,7 @@ export function orderTodaySessions(sessions: SessionSummary[]): SessionSummary[]
 }
 ```
 
-- [ ] **Step 5: Implement the Today application read model**
+- [x] **Step 5: Implement the Today application read model**
 
 Create `src/features/today/application/get-today-read-model.ts`:
 
@@ -2414,11 +2414,11 @@ export async function getTodayReadModel(input: {
 }
 ```
 
-- [ ] **Step 6: Complete Guest repository `getToday`**
+- [x] **Step 6: Complete Guest repository `getToday`**
 
 Read owner-scoped sessions for `localDate`, join current habit and Habit Version values in one Dexie transaction, map targets and cues, count slot-consuming habits, and return the Guest limit from `activeHabitLimitFor('guest')`.
 
-- [ ] **Step 7: Run Today, domain, and IndexedDB tests**
+- [x] **Step 7: Run Today, domain, and IndexedDB tests**
 
 Run:
 
@@ -2432,7 +2432,7 @@ pnpm lint
 
 Expected: all commands pass.
 
-- [ ] **Step 8: Commit Today read models**
+- [x] **Step 8: Commit Today read models**
 
 Run:
 
