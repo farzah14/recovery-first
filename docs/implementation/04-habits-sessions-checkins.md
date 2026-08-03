@@ -302,7 +302,7 @@ git commit -m "chore: add core loop form and query tooling"
 - Create: `src/lib/repositories/repository-provider.tsx`
 - Create: `tests/features/habits/product-repository-contract.test.ts`
 
-- [ ] **Step 1: Write a failing repository contract test**
+- [x] **Step 1: Write a failing repository contract test**
 
 Create `tests/features/habits/product-repository-contract.test.ts`:
 
@@ -334,7 +334,7 @@ describe('ProductRepository contract', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -344,7 +344,7 @@ pnpm vitest run tests/features/habits/product-repository-contract.test.ts
 
 Expected: FAIL because `product-repository.ts` does not exist.
 
-- [ ] **Step 3: Define repository commands, results, and reads**
+- [x] **Step 3: Define repository commands, results, and reads**
 
 Create `src/lib/repositories/product-repository.ts`:
 
@@ -505,7 +505,7 @@ export interface ProductRepository {
 }
 ```
 
-- [ ] **Step 4: Define repository error codes**
+- [x] **Step 4: Define repository error codes**
 
 Create `src/lib/repositories/repository-errors.ts`:
 
@@ -536,7 +536,7 @@ export class ProductRepositoryError extends Error {
 }
 ```
 
-- [ ] **Step 5: Add the client repository provider**
+- [x] **Step 5: Add the client repository provider**
 
 Create `src/lib/repositories/repository-provider.tsx`:
 
@@ -572,7 +572,7 @@ export function useProductRepository(): ProductRepository {
 }
 ```
 
-- [ ] **Step 6: Run focused and static checks**
+- [x] **Step 6: Run focused and static checks**
 
 Run:
 
@@ -584,7 +584,7 @@ pnpm lint
 
 Expected: the focused test passes and static checks exit with status `0`.
 
-- [ ] **Step 7: Commit repository contracts**
+- [x] **Step 7: Commit repository contracts**
 
 Run:
 
