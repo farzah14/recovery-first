@@ -14,6 +14,7 @@ const nextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   devIndicators: false,
+  turbopack: { root: process.cwd() },
   async headers() {
     return [
       {

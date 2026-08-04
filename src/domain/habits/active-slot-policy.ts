@@ -1,9 +1,9 @@
 import type { PlanTier } from '@/domain/shared/plan-tier';
 
 const activeHabitLimits: Readonly<Record<PlanTier, number>> = {
-  guest: 3,
   free: 5,
-  premium: 20,
+  lite: 10,
+  premium: 30,
 };
 
 export type ActivationDecision =

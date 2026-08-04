@@ -18,6 +18,7 @@ const metadataByRoute: Partial<Record<AppRoute, Metadata>> = {
   [routes.insights]: { title: 'Insights' },
   [routes.reminders]: { title: 'Reminders' },
   [routes.settings]: { title: 'Settings' },
+  [routes.subscriptionSettings]: { title: 'Subscription Settings' },
 };
 
 export function metadataFor(route: AppRoute): Metadata {

@@ -10,7 +10,7 @@ test('public route presents landing page hero and start free link', async ({ pag
 
   await page.getByRole('link', { name: 'Start Free' }).first().click();
 
-  await expect(page).toHaveURL('/app/today');
+  await expect(page).toHaveURL('/auth/sign-in?returnTo=%2Fapp');
 });
 
 test('pricing route presents bento cards and feature comparison', async ({ page }) => {

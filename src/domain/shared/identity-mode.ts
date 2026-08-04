@@ -1,4 +1,4 @@
-export const identityModes = ['guest', 'account'] as const;
+export const identityModes = ['account'] as const;
 
 export type IdentityMode = (typeof identityModes)[number];
 

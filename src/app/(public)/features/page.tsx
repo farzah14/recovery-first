@@ -115,8 +115,8 @@ export default function FeaturesPage(): React.JSX.Element {
                   Privacy &amp; Control
                 </h3>
                 <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-                  Guest-first mode with browser-local storage and safe account sync. Your habits are
-                  yours alone.
+                  Account-first mode with secure cloud storage and explicit recovery for legacy
+                  browser-local data. Your habits are yours alone.
                 </p>
               </div>
             </div>

@@ -4,9 +4,9 @@ import { activeHabitLimitFor, evaluateActivation } from '@/domain/habits/active-
 
 describe('active slot policy', () => {
   it('returns fixed limits for every plan tier', () => {
-    expect(activeHabitLimitFor('guest')).toBe(3);
     expect(activeHabitLimitFor('free')).toBe(5);
-    expect(activeHabitLimitFor('premium')).toBe(20);
+    expect(activeHabitLimitFor('lite')).toBe(10);
+    expect(activeHabitLimitFor('premium')).toBe(30);
   });
 
   it('permits activation while capacity remains', () => {
@@ -18,9 +18,9 @@ describe('active slot policy', () => {
   });
 
   it('rejects activation when the limit is reached', () => {
-    expect(evaluateActivation({ planTier: 'guest', activeCount: 3 })).toEqual({
+    expect(evaluateActivation({ planTier: 'free', activeCount: 5 })).toEqual({
       allowed: false,
-      limit: 3,
+      limit: 5,
       reason: 'active_limit_reached',
     });
   });

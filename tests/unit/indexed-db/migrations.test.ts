@@ -23,7 +23,7 @@ afterEach(async () => {
 });
 
 describe('IndexedDB migrations', () => {
-  it('upgrades version 1 Guest data without deleting canonical records', async () => {
+  it('upgrades version 1 legacy local data without deleting canonical records', async () => {
     const name = `migration-test-${crypto.randomUUID()}`;
     databaseNames.push(name);
 
@@ -49,7 +49,13 @@ describe('IndexedDB migrations', () => {
 
     await expect(current.habits.get('habit-1')).resolves.toMatchObject({
       title: 'Preserved Habit',
+      ownerType: 'legacy',
       synchronizationState: 'local_only',
+    });
+    await expect(current.legacyLocalData.get('guest:guest-1')).resolves.toMatchObject({
+      sourceOwnerType: 'guest',
+      sourceOwnerId: 'guest-1',
+      status: 'pending_recovery',
     });
     expect(await current.syncMetadata.count()).toBe(0);
     expect(await current.queryCache.count()).toBe(0);

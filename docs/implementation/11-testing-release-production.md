@@ -8,6 +8,8 @@
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Tailwind CSS, Supabase Auth and PostgreSQL, Dexie, service workers and Web Push, Paddle Billing adapter, Vitest, React Testing Library, Playwright, axe-core, pgTAP, Lighthouse CI, GitHub Actions, Vercel, Sentry-compatible monitoring, PostHog-compatible analytics, pnpm.
 
+**03A amendment:** The release matrix covers authenticated Free, Lite, and Premium accounts plus the legacy-local-data recovery path. Guest is not a supported runtime identity. Historical Guest journey and limit examples below must be treated as migration notes, not release requirements. Active-habit limits are Free `5`, Lite `10`, and Premium `30`.
+
 ---
 
 # 1. Prerequisites and Boundaries
@@ -19,8 +21,8 @@ Begin only after Plans 01-10 are verified complete. The repository must already 
 - deterministic clocks, UUIDs, test fixtures, environment validation, structured errors, and stable command IDs;
 - responsive public and authenticated shells using the approved emerald design system;
 - PostgreSQL schema, functions, constraints, RLS, immutable habit versions, sessions, check-ins, lifecycle, Recovery, Weekly Review, Premium programs, Insights, billing, retention, export, and deletion;
-- Guest IndexedDB persistence, durable pending operations, retry, conflicts, multi-tab coordination, service-worker behavior, Web Push, and email reminder adapters;
-- secure SSR authentication, Guest conversion, entitlement projection, verified billing webhooks, and downgrade preservation;
+- account IndexedDB cache/draft/outbox persistence, legacy-data recovery, durable pending operations, retry, conflicts, multi-tab coordination, service-worker behavior, Web Push, and email reminder adapters;
+- secure SSR authentication, legacy-local-data recovery, entitlement projection, verified billing webhooks, and downgrade preservation;
 - CSP, security headers, origin protection, request limits, rate limits, privacy-safe observability, dependency controls, and incident runbooks;
 - local, preview, staging, and production environment definitions where preview and staging never use production data;
 - all verification evidence required by the preceding plans.
@@ -45,11 +47,11 @@ This plan does not add:
 - A requirement is not complete because a screen exists; the required state, behavior, error path, responsive behavior, accessibility behavior, and authorization path must also be verified.
 - Automated tests use deterministic fixtures and isolated environments.
 - Manual evidence is allowed only where browser or assistive-technology behavior cannot be fully asserted automatically.
-- Guest, Free, Trial, Premium, payment-failed, canceled, expired, refunded, and chargeback states are independently exercised.
+- Free, Lite, Premium, trial, payment-failed, canceled, expired, refunded, chargeback, and legacy-data-recovery states are independently exercised.
 - Automatic Skipped never triggers Recovery.
 - Recovery begins only after three consecutive scheduled Manual Skipped sessions.
 - Two failed Recovery Plans result in Needs Review.
-- Guest, Free, and Premium active-habit limits remain 3, 5, and 20.
+- Free, Lite, and Premium active-habit limits remain 5, 10, and 30.
 - Premium is granted only from verified backend entitlement.
 - No supported journey loses data during reload, temporary network loss, retry, duplicate command replay, service-worker update, or safe rollback.
 - Cross-user access fails at both application and database boundaries.
@@ -2185,11 +2187,11 @@ Plan 11 is complete only when fresh evidence proves:
 - all required automated suites pass from a clean isolated checkout;
 - production build succeeds with validated environment boundaries;
 - database reset, migration, upgrade, RLS, rollback-compatibility, and restore rehearsals pass;
-- Guest, Free, Trial, Premium, payment failure, cancellation, expiration, refund, and chargeback scenarios pass;
+- Free, Lite, Premium, trial, payment failure, cancellation, expiration, refund, chargeback, and legacy-data-recovery scenarios pass;
 - Full, Minimum, Manual Skipped, Automatic Skipped, Recovery, Needs Review, and Weekly Review behavior matches the specifications;
-- Guest limits, account limits, conversion, offline queue, conflict, duplicate replay, multi-tab behavior, and service-worker updates preserve data;
+- tier limits, legacy-data recovery, offline queue, conflict, duplicate replay, multi-tab behavior, and service-worker updates preserve data;
 - cross-user reads and writes fail at application and database boundaries;
-- Premium is never granted from browser redirect or unverified state;
+- Lite or Premium is never granted from browser redirect or unverified state;
 - export, Trash retention, permanent deletion, and account deletion pass authorization and lifecycle tests;
 - critical routes pass keyboard, screen-reader contract, reduced-motion, 200 percent zoom, contrast, and non-color communication checks;
 - supported browser and responsive matrices pass critical journeys;

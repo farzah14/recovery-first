@@ -35,7 +35,7 @@
 6. Runtime boundaries
 7. Routing and rendering strategy
 8. Identity, authentication, and authorization
-9. Browser-local data and Guest mode
+9. Browser-local cache and legacy data
 10. PostgreSQL data model
 11. Row Level Security and database authorization
 12. Domain rules and state machines
@@ -44,7 +44,7 @@
 15. Recommendation, Recovery, and Review engines
 16. Reminder architecture
 17. Offline resilience and synchronization
-18. Guest-to-account conversion
+18. Legacy local data recovery
 19. Subscription, payment, and entitlement architecture
 20. Application interfaces and server operations
 21. Security architecture
@@ -73,7 +73,7 @@ It does not replace the PRD or UX specification. Product behavior remains author
 
 ### Local responsiveness, cloud authority
 
-- Guest data is browser-local and has no cloud authority.
+- Account data is cloud-authoritative; IndexedDB is a cache, draft store, and pending-operation store.
 - Signed-in account data is canonically stored in Supabase PostgreSQL.
 - The browser keeps a structured cache and durable pending-operation queue for fast interaction and temporary connectivity loss.
 - Product actions confirm locally first when safe, then synchronize using stable identifiers and idempotency keys.
@@ -102,7 +102,7 @@ The following are always server-authoritative:
 
 - Browser capabilities are detected rather than assumed.
 - Web Push is optional and capability-dependent.
-- Guest data loss risks are disclosed accurately.
+- Legacy browser-local data loss risks are disclosed accurately.
 - Offline support is limited to explicitly supported actions.
 - The UI never claims that a reminder was delivered merely because it was scheduled.
 
@@ -111,7 +111,7 @@ The following are always server-authoritative:
 - Session generation is deterministic and safe to rerun.
 - Check-in writes use stable IDs and idempotency keys.
 - Payment events are processed exactly once from the product perspective.
-- Guest conversion can be retried without creating duplicate habits, versions, sessions, or check-ins.
+- Legacy local-data recovery can be retried without creating duplicate habits, versions, sessions, or check-ins.
 
 ### Explicit boundaries
 
@@ -131,7 +131,7 @@ The following are always server-authoritative:
 flowchart LR
     User[User Browser]
     Public[Public Website]
-    App[Authenticated / Guest Web Application]
+    App[Authenticated Web Application]
     Local[IndexedDB + Cache Storage]
     SW[Service Worker]
     Next[Next.js Runtime]
@@ -169,7 +169,7 @@ Browser
 ├── Next.js application shell
 ├── React Client Components for interactive workflows
 ├── TanStack Query for server-state coordination
-├── IndexedDB for Guest data, durable cache, and pending operations
+├── IndexedDB for account cache, legacy local data recovery, durable cache, and pending operations
 ├── Service Worker for application-shell caching and Web Push
 └── BroadcastChannel for same-origin tab coordination
 
@@ -214,17 +214,17 @@ flowchart TD
 
 ## 2.4 Canonical source ownership
 
-| Data category | Guest | Signed-in account |
-|---|---|---|
-| Habits and versions | IndexedDB | PostgreSQL |
-| Sessions and check-ins | IndexedDB | PostgreSQL |
-| Drafts | IndexedDB | IndexedDB, optionally synchronized when explicitly supported |
-| UI preferences | IndexedDB | PostgreSQL with local cache |
-| Authentication session | Not applicable | Secure Supabase SSR cookies |
-| Pending operations | IndexedDB | IndexedDB until acknowledged |
-| Subscription entitlement | Not available | PostgreSQL, derived from verified provider events |
-| Push subscription | Browser installation record | PostgreSQL for signed-in users; local-only for Guest until conversion |
-| Analytics consent | IndexedDB | PostgreSQL plus local cache |
+| Data category | Signed-in account |
+|---|---|
+| Habits and versions | PostgreSQL with IndexedDB cache |
+| Sessions and check-ins | PostgreSQL with IndexedDB cache |
+| Drafts | IndexedDB, optionally synchronized when explicitly supported |
+| UI preferences | PostgreSQL with local cache |
+| Authentication session | Secure Supabase SSR cookies |
+| Pending operations | IndexedDB until acknowledged |
+| Subscription entitlement | PostgreSQL, derived from verified provider events |
+| Push subscription | PostgreSQL for signed-in users |
+| Analytics consent | PostgreSQL plus local cache |
 
 ---
 
@@ -244,7 +244,7 @@ flowchart TD
 | Local UI state | Zustand, limited use | Cross-component ephemeral UI state only |
 | Forms | React Hook Form | Form state and accessible validation |
 | Validation | Zod | Shared input and environment validation |
-| Browser database | IndexedDB through Dexie | Guest data, durable cache, queue, drafts |
+| Browser database | IndexedDB through Dexie | Account cache, queue, drafts, and local resilience |
 | Backend | Supabase | Auth, PostgreSQL, RLS, storage, scheduled jobs, Edge Functions |
 | Hosting | Vercel | Web runtime, preview deployments, production delivery |
 | Unit tests | Vitest | Domain and utility tests |
@@ -517,7 +517,7 @@ Use Client Components for:
 
 - check-in controls;
 - habit creation wizard;
-- browser-local Guest mode;
+- signed-in account cache and pending-operation state;
 - offline queue state;
 - responsive dialogs and drawers;
 - Web Push permission;
@@ -621,7 +621,7 @@ Public content uses static generation or cached server rendering where practical
 - Proxy is not the final authorization layer.
 - Every server read and mutation verifies the authenticated user and resource ownership.
 - PostgreSQL RLS remains the final data-authorization boundary.
-- Guest application routes remain accessible without an account and initialize the local Guest context.
+- Application routes require a valid account session before initializing account cache and pending-operation state.
 
 ## 7.4 Rendering rules
 
@@ -630,8 +630,8 @@ Public content uses static generation or cached server rendering where practical
 | Marketing and legal | Static or revalidated server rendering |
 | Pricing | Server-rendered with cached approved plan configuration |
 | Auth callback | Dynamic Route Handler |
-| Guest app | Client-initialized local database with server-delivered shell |
 | Signed-in Today | Server-prefetched account summary plus client synchronization |
+| Account application | Server-delivered shell with authenticated account cache |
 | Insights | Server-authorized query with client chart rendering |
 | Subscription | Dynamic server-authorized rendering |
 | Processing payment | Dynamic polling of backend entitlement state |
@@ -651,12 +651,12 @@ Public content uses static generation or cached server rendering where practical
 ## 8.1 Identity modes
 
 ```text
-Guest
 Free Account
+Lite Account
 Premium Account
 ```
 
-Guest is a browser-local product identity, not an anonymous Supabase Auth user.
+All normal product identities are authenticated Supabase accounts. Legacy browser-local data is a recoverable dataset, not an account or entitlement.
 
 ## 8.2 Authentication methods
 
@@ -688,7 +688,7 @@ src/lib/supabase/admin.ts    → privileged server-only client
 4. The application ensures an internal `profiles` row exists.
 5. The server loads plan and entitlement state.
 6. The browser initializes the signed-in local cache.
-7. If Guest data exists, the conversion flow is offered contextually.
+7. If legacy local data exists, the recovery or export flow is offered contextually.
 
 ## 8.5 Authorization layers
 
@@ -712,7 +712,7 @@ No client-side check is considered authorization.
 
 ---
 
-# 9. Browser-Local Data and Guest Mode
+# 9. Browser-Local Cache and Legacy Data
 
 ## 9.1 IndexedDB databases
 
@@ -726,9 +726,9 @@ Core local tables:
 
 | Table | Purpose |
 |---|---|
-| `local_profiles` | Guest identity and cached account identity |
+| `local_profiles` | Cached authenticated account identity and plan |
 | `browser_installations` | Installation ID and capability state |
-| `habits` | Guest source data or signed-in cached habits |
+| `habits` | Signed-in cached habits |
 | `habit_versions` | Immutable configuration snapshots |
 | `sessions` | Scheduled occurrences |
 | `check_ins` | Outcomes and friction references |
@@ -742,11 +742,11 @@ Core local tables:
 | `query_cache` | Selected persisted read models |
 | `settings` | Locale, timezone, UI, and consent preferences |
 
-## 9.2 Guest identity
+## 9.2 Account-local identity
 
-- A Guest profile receives a UUID generated in the browser.
-- The UUID identifies local ownership only and grants no server authorization.
-- Guest data remains scoped to the browser profile and origin.
+- The account identity comes from the validated Supabase session.
+- The browser installation ID identifies local cache ownership and grants no server authorization.
+- Account-local cache remains scoped to the authenticated account and browser installation.
 - The application must function after a browser restart when storage remains available.
 - Private browsing is detected where practical but not relied upon; clear disclosure is always shown.
 
@@ -761,13 +761,13 @@ Core local tables:
 
 - The application requests persistent storage where supported after the user demonstrates value, not during first visit.
 - Storage usage is monitored through available browser APIs.
-- Large derived caches are evictable; canonical Guest records are not deliberately evicted.
+- Large derived caches are evictable; canonical PostgreSQL records are not deliberately evicted by browser storage pressure.
 - Query cache and image cache are cleared before domain records when space pressure is detected.
 
-## 9.5 Guest active limit
+## 9.5 Account active limits
 
-- Guest active limit is three.
-- Activation is evaluated in one IndexedDB transaction.
+- Free, Lite, and Premium active limits are five, ten, and thirty.
+- Activation is evaluated in the authoritative account transaction.
 - Multiple tabs coordinate activation through BroadcastChannel and a local mutex record.
 - If two tabs temporarily activate beyond the limit, deterministic reconciliation returns the later activation to Draft and displays a recoverable explanation.
 
@@ -964,7 +964,7 @@ Stores verified email eligibility, reminder opt-in, frequency, and unsubscribe s
 |---|---|---|
 | `id` | uuid | Internal entitlement ID |
 | `user_id` | uuid | Owner |
-| `product_code` | text | Premium product |
+| `product_code` | text | Lite or Premium product |
 | `status` | text | trial_active, active, grace_period, past_due, cancelled, expired, refunded, revoked |
 | `valid_from` | timestamptz | Authority window |
 | `valid_until` | timestamptz | Nullable for open active interval |
@@ -1017,7 +1017,7 @@ apply_recommendation
 start_recovery_plan
 complete_recovery_plan
 resolve_unrecorded_sessions
-convert_guest_dataset
+recover_legacy_local_dataset
 apply_subscription_downgrade
 soft_delete_habit
 restore_habit_from_trash
@@ -1085,9 +1085,9 @@ Views must preserve RLS behavior and exclude provider secrets, internal risk fla
 Active limits are enforced in the database transaction, not only in the UI:
 
 ```text
-Guest: local transaction, limit 3
 Free account: database transaction, limit 5
-Premium account: database transaction, limit 20
+Lite account: database transaction, limit 10
+Premium account: database transaction, limit 30
 ```
 
 The database determines effective plan from authoritative entitlement and counts only slot-consuming lifecycle states.
@@ -1510,8 +1510,8 @@ sequenceDiagram
 
 - view previously cached application shell;
 - view locally cached Today, Habits, Review summaries, and settings;
-- create or edit a Guest habit;
-- record supported Guest check-ins;
+- create or edit a signed-in account habit;
+- record supported signed-in check-ins;
 - record signed-in check-ins into the pending queue;
 - edit same-day pending check-ins before server acknowledgement;
 - preserve habit wizard drafts;
@@ -1520,7 +1520,7 @@ sequenceDiagram
 ## 17.2 Online-required actions
 
 - sign in or complete authentication callback;
-- convert Guest data to an account;
+- recover legacy local data into an account;
 - start checkout;
 - refresh entitlement;
 - send email;
@@ -1535,7 +1535,7 @@ sequenceDiagram
 ```ts
 type PendingOperation = {
   id: string
-  ownerType: 'guest' | 'account'
+  ownerType: 'account'
   ownerId: string
   operationType: string
   entityType: string
@@ -1595,13 +1595,13 @@ Tombstones are included until all supported clients have had sufficient opportun
 
 ---
 
-# 18. Guest-to-Account Conversion
+# 18. Legacy Local Data Recovery
 
-## 18.1 Conversion package
+## 18.1 Recovery package
 
 The browser prepares a bounded, validated conversion manifest containing:
 
-- Guest profile ID;
+- legacy local dataset ID;
 - browser installation ID;
 - habits;
 - versions;
@@ -1615,7 +1615,7 @@ The browser prepares a bounded, validated conversion manifest containing:
 - manifest hash;
 - conversion idempotency key.
 
-## 18.2 Conversion sequence
+## 18.2 Recovery sequence
 
 ```mermaid
 sequenceDiagram
@@ -1623,25 +1623,25 @@ sequenceDiagram
     participant W as Next.js Server
     participant D as PostgreSQL
 
-    B->>B: Freeze Guest mutation queue briefly
-    B->>B: Validate and hash conversion manifest
-    B->>W: Submit authenticated conversion command
-    W->>D: Execute transactional conversion
+    B->>B: Freeze legacy local mutation queue briefly
+    B->>B: Validate and hash recovery manifest
+    B->>W: Submit authenticated recovery command
+    W->>D: Execute transactional import
     D-->>W: Return source-to-account ID mapping
-    W-->>B: Confirm committed conversion
+    W-->>B: Confirm committed import
     B->>B: Rebind local cache to account owner
-    B->>B: Preserve Guest snapshot until verification completes
-    B->>B: Remove converted Guest source after success
+    B->>B: Preserve legacy snapshot until verification completes
+    B->>B: Remove legacy source only after explicit success
 ```
 
-## 18.3 Conversion guarantees
+## 18.3 Recovery guarantees
 
 - Retrying the same manifest creates no duplicates.
 - Existing account data is not overwritten silently.
 - Stable source IDs and manifest ID map imported records.
 - Account active limits are evaluated after merge.
 - Excess active habits require explicit user resolution; no history is deleted.
-- Local Guest data remains intact until server confirmation and local verification.
+- Legacy local data remains intact until server confirmation and local verification.
 - Push permission remains installation-specific.
 
 ---
@@ -1733,16 +1733,17 @@ sequenceDiagram
 
 ## 19.6 Downgrade workflow
 
-When Premium expires:
+When a paid tier expires:
 
 1. Reconcile authoritative entitlement.
-2. If active habits are five or fewer, continue normally.
-3. If more than five are active, create a downgrade resolution item.
-4. User selects up to five habits to remain active.
-5. Remaining active habits become Paused in one transaction.
-6. Premium adaptive programs enter Decision Required.
-7. User chooses Continue as Static or Pause Program.
-8. No habit, version, session, check-in, or history is deleted.
+2. Resolve the new tier: Lite when the user remains subscribed to Lite, otherwise Free.
+3. If active habits are within the new tier limit, continue normally.
+4. If more than the new tier limit are active, create a downgrade resolution item.
+5. User selects up to the new tier limit (10 for Lite or 5 for Free) to remain active.
+6. Remaining active habits become Paused in one transaction.
+7. Premium adaptive programs enter Decision Required.
+8. User chooses Continue as Static or Pause Program.
+9. No habit, version, session, check-in, or history is deleted.
 
 ---
 
@@ -1981,9 +1982,9 @@ It excludes:
 
 Exports are generated asynchronously, encrypted at rest, delivered through short-lived signed URLs, and automatically expired.
 
-## 22.3 Guest export
+## 22.3 Legacy local data export
 
-Guest export is generated entirely in the browser from IndexedDB where possible. It does not require account creation.
+Legacy local data export is generated entirely in the browser from IndexedDB where possible and is offered before transfer or clearing.
 
 ## 22.4 Trash retention
 
@@ -2259,7 +2260,7 @@ Use local Supabase to verify:
 - duplicate session generation is impossible;
 - duplicate payment event processing is idempotent;
 - Trash purge and restore rules;
-- guest conversion retry behavior;
+- legacy local data recovery retry behavior;
 - entitlement transitions;
 - account deletion boundaries.
 
@@ -2282,11 +2283,11 @@ Test:
 
 Critical E2E scenarios:
 
-1. Guest creates first habit and completes Full check-in.
-2. Guest refreshes browser and data remains.
-3. Guest reaches three-active-habit limit.
-4. Guest exports local data.
-5. Guest converts to an account without duplication.
+1. A Free account creates the first habit and completes Full check-in.
+2. The account refreshes the browser and cached data remains available.
+3. A Free account reaches the five-active-habit limit.
+4. A legacy local dataset is exported.
+5. Legacy local data is recovered into an account without duplication.
 6. Signed-in user synchronizes across two browser contexts.
 7. Offline check-in survives restart and later synchronizes.
 8. Three Manual Skipped outcomes trigger Recovery.
@@ -2438,7 +2439,7 @@ docs/operations/SECURITY-INCIDENT-RESPONSE.md
 - Restore procedures are tested on a non-production project.
 - Backup access is restricted.
 - Retention aligns with privacy and legal policy.
-- Browser-local Guest data is not included in server backups.
+- Browser-local cache and legacy local data are not included in server backups.
 
 ## 29.3 Dependency degradation
 
@@ -2470,8 +2471,8 @@ Highest priority:
 
 - Website-only responsive implementation.
 - No native Android or iOS dependency.
-- Guest-first entry without account requirement.
-- Guest data remains browser-local.
+- Account-first entry with authentication required for private application routes.
+- Legacy local data remains explicitly local until transfer or export.
 - Signed-in cloud data uses Supabase PostgreSQL as canonical source.
 - RLS enabled for every account-owned table.
 - Full, Minimum, Manual Skipped, Automatic Skipped, Excused, and Unrecorded remain distinct.
@@ -2493,7 +2494,7 @@ The architecture is ready for implementation planning only when:
 - PRD behaviors map to a technical subsystem;
 - route inventory matches UX flows;
 - component requirements have clear runtime boundaries;
-- Guest and signed-in ownership are unambiguous;
+- Authenticated account ownership and legacy-data ownership are unambiguous;
 - database tables support all required history and state transitions;
 - RLS strategy covers every account-owned table;
 - offline operations identify supported and unsupported actions;
@@ -2511,7 +2512,7 @@ The architecture is ready for implementation planning only when:
 |---|---|---|
 | ADR-001 | Next.js App Router with TypeScript | Server and client rendering in one web architecture with typed routing conventions |
 | ADR-002 | Supabase PostgreSQL as signed-in canonical store | Auth, relational data, RLS, and transactional functions in one managed backend |
-| ADR-003 | IndexedDB through Dexie for Guest and offline resilience | Durable structured browser storage with schema migrations and transactions |
+| ADR-003 | IndexedDB through Dexie for account cache and offline resilience | Durable structured browser storage with schema migrations and transactions |
 | ADR-004 | Cloud-backed, browser-resilient model | Reliable cross-device account data without claiming unlimited offline parity |
 | ADR-005 | Immutable Habit Versions | Redesign and restore preserve historical meaning |
 | ADR-006 | Stable client-generated UUIDs and command idempotency | Safe retries, offline writes, conversion, and duplicate prevention |
@@ -2528,4 +2529,4 @@ The architecture is ready for implementation planning only when:
 
 # Final Technical Contract
 
-The Recovery-First Habit Tracker is implemented as a responsive, website-only SaaS and installable PWA. Guest users receive a complete browser-local core loop. Signed-in users receive server-authorized cloud backup and synchronization. IndexedDB provides durable local responsiveness and an explicit pending-operation queue, while Supabase PostgreSQL remains authoritative for account data. Domain rules are deterministic, versioned, and testable. Recovery, review, reminder, billing, export, and deletion workflows use idempotent server operations and preserve user history. Premium access is derived only from verified backend entitlement. Security, accessibility, privacy, observability, and rollback are required release properties rather than deferred enhancements.
+The Recovery-First Habit Tracker is implemented as a responsive, website-only SaaS and installable PWA. Free, Lite, and Premium users receive authenticated, server-authorized account data with IndexedDB cache and pending-operation support. Legacy browser-local data remains recoverable or exportable but is never treated as an entitlement or cloud account. Supabase PostgreSQL remains authoritative for account data. Domain rules are deterministic, versioned, and testable. Recovery, review, reminder, billing, export, and deletion workflows use idempotent server operations and preserve user history. Paid-tier access is derived only from verified backend entitlement. Security, accessibility, privacy, observability, and rollback are required release properties rather than deferred enhancements.

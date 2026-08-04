@@ -2,9 +2,9 @@
 
 > **Execution mode:** Single-agent sequential execution. Use the `executing-plans` workflow. Do not create, delegate to, or dispatch subagents. Complete one task, run its fresh verification commands, commit it, and only then continue. Steps use checkbox (`- [ ]`) syntax for progress tracking.
 
-**Goal:** Establish deterministic Recovery-First domain rules, the complete PostgreSQL/RLS foundation, generated Supabase types, and versioned browser-local schemas before user-facing product workflows are implemented.
+**Goal:** Establish deterministic Recovery-First domain rules, the complete PostgreSQL/RLS foundation, generated Supabase types, and versioned account-cache schemas before user-facing product workflows are implemented.
 
-**Architecture:** Product rules live in framework-independent TypeScript modules under `src/domain/`. PostgreSQL is authoritative for signed-in account data and enforces ownership, active-plan limits, revisions, and idempotent commands transactionally. Dexie stores Guest canonical data plus signed-in cache/draft/outbox records in a versioned IndexedDB database; Plan 03 defines schema and migrations only, while live synchronization remains deferred to Plan 05.
+**Architecture:** Product rules live in framework-independent TypeScript modules under `src/domain/`. PostgreSQL is authoritative for authenticated account data and enforces ownership, Free/Lite/Premium limits, revisions, and idempotent commands transactionally. Dexie stores account cache/draft/outbox records in a versioned IndexedDB database; legacy browser-local records are recoverable or exportable only and are never treated as an account entitlement.
 
 **Tech Stack:** TypeScript, Vitest, Supabase CLI, PostgreSQL, pgTAP, `@supabase/supabase-js`, Dexie, `fake-indexeddb`, Node.js 24, pnpm.
 
@@ -27,7 +27,9 @@
 - The repository is on a dedicated implementation branch or worktree.
 - `pnpm verify`, `pnpm db:reset`, `pnpm db:test`, and `pnpm build` pass before Task 1.
 
-**Explicitly excluded:** User-facing habit forms, check-in buttons, Today data loading, authentication UI, Guest conversion, queue processing, reminder delivery, Recovery UI, billing-provider integration, and analytics dashboards.
+**Explicitly excluded:** User-facing habit forms, check-in buttons, Today data loading, authentication UI, legacy-local recovery UI, queue processing, reminder delivery, Recovery UI, billing-provider integration, and analytics dashboards.
+
+**03A amendment:** The original Guest-first task examples in this document are historical implementation notes and must not be re-run as the active contract. The active contract is authenticated Free, Lite, and Premium accounts with active-habit limits of 5, 10, and 30. A later append-only migration adds Lite to the database enum and legacy browser-local data is handled only through explicit recovery or export.
 
 ---
 
@@ -35,9 +37,9 @@
 
 Plan 03 must encode these rules exactly:
 
-- Guest active-habit limit: `3`.
 - Free account active-habit limit: `5`.
-- Premium active-habit limit: `20`.
+- Lite account active-habit limit: `10`.
+- Premium active-habit limit: `30`.
 - Slot-consuming states: `starting`, `building`, `active`, `stable`, `at_risk`, `recovery`, `rebuilding`, `needs_review`.
 - Check-in outcomes: `full`, `minimum`, `manual_skipped`, `automatic_skipped`, `excused`, `unrecorded`.
 - `full` and `minimum` are successful outcomes.
@@ -49,7 +51,7 @@ Plan 03 must encode these rules exactly:
 - Habit versions are immutable after publication.
 - Signed-in writes use UUID command IDs, optimistic revisions, and idempotency records.
 - Every account-owned table is protected by RLS.
-- Guest canonical records remain browser-local.
+- Authenticated account records are canonical in PostgreSQL; IndexedDB stores cache, drafts, and pending operations.
 - Database and IndexedDB migrations are append-only.
 
 ---

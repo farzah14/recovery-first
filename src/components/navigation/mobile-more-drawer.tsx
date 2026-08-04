@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Bell, Settings, HelpCircle, User, X } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { routes } from '@/lib/navigation/route-definitions';
+import { planTierLabel, useAccountState } from '@/components/account/account-state';
 
 interface MobileMoreDrawerProps {
   readonly open: boolean;
@@ -12,6 +13,9 @@ interface MobileMoreDrawerProps {
 }
 
 export function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawerProps): React.JSX.Element {
+  const account = useAccountState();
+  const tierLabel = planTierLabel(account.planTier);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="space-y-4 rounded-t-2xl bg-[var(--color-surface)] p-6">
@@ -62,9 +66,9 @@ export function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawerProps):
           <div className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-3 text-xs">
             <User className="size-5 shrink-0 text-[var(--color-primary)]" />
             <div>
-              <p className="font-bold text-[var(--color-text-primary)]">Alex (Guest Mode)</p>
+              <p className="font-bold text-[var(--color-text-primary)]">{account.displayName}</p>
               <p className="text-[11px] text-[var(--color-text-muted)]">
-                Data saved locally in browser IndexedDB
+                {tierLabel} Plan · Account data is securely synced
               </p>
             </div>
           </div>

@@ -1018,6 +1018,7 @@ export type Database = {
       check_in_outcome: "full" | "minimum" | "manual_skipped" | "excused"
       entitlement_status:
         | "trial_active"
+        | "trial_cancelled"
         | "active"
         | "grace_period"
         | "past_due"
@@ -1041,7 +1042,7 @@ export type Database = {
         | "archived"
         | "trash"
         | "decision_required"
-      plan_tier: "free" | "premium"
+      plan_tier: "free" | "lite" | "premium"
       recommendation_status:
         | "pending"
         | "applied"
@@ -1192,6 +1193,7 @@ export const Constants = {
       check_in_outcome: ["full", "minimum", "manual_skipped", "excused"],
       entitlement_status: [
         "trial_active",
+        "trial_cancelled",
         "active",
         "grace_period",
         "past_due",
@@ -1217,7 +1219,7 @@ export const Constants = {
         "trash",
         "decision_required",
       ],
-      plan_tier: ["free", "premium"],
+      plan_tier: ["free", "lite", "premium"],
       recommendation_status: [
         "pending",
         "applied",
@@ -1244,4 +1246,3 @@ export const Constants = {
     },
   },
 } as const
-

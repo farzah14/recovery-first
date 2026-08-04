@@ -22,17 +22,17 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'Do I need to create an account to start using the app?',
     answer:
-      'No! You can start instantly in Guest Mode. All your habits, check-ins, and data are stored 100% locally in your browser using IndexedDB. You can convert to a free or premium cloud account anytime.',
+      'Your account keeps habits, check-ins, and recovery history in your secure cloud workspace. Existing browser-local data can be reviewed and transferred explicitly after sign-in.',
   },
   {
-    question: 'Is my habit data private in Guest mode?',
+    question: 'Is my habit data private?',
     answer:
-      'Yes. In Guest mode, your data never leaves your device. We do not track, profile, or sell your habit information. You retain total ownership and can export your entire dataset as JSON at any time.',
+      'Yes. Your account data is protected by authenticated access and database ownership policies. You retain control and can export your dataset through the approved account workflow.',
   },
   {
     question: 'Can I upgrade to Premium later to sync across multiple devices?',
     answer:
-      'Absolutely. You can seamlessly convert your Guest data to a cloud account whenever you choose, enabling secure multi-device synchronization and automatic cloud backups.',
+      'Absolutely. Lite adds cloud sync, enhanced recovery, and weekly capacity analysis; Premium adds advanced friction analysis, analytics/export, and email reminders.',
   },
 ];
 
