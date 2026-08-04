@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { routes } from '@/lib/navigation/route-definitions';
 import { cn } from '@/lib/cn';
 import type { PaidProductCode } from '@/features/subscriptions/checkout-service';
+import type { BillingPriceMap } from '@/domain/billing/billing-price';
+import { formatBillingPrice } from '@/domain/billing/billing-price';
 import { PlanSelector } from '@/features/subscriptions/components/plan-selector';
 import {
   CheckoutConfirmation,
@@ -20,6 +22,7 @@ import {
 export default function PricingPage(): React.JSX.Element {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PaidProductCode | null>(null);
+  const [prices, setPrices] = useState<BillingPriceMap | null>(null);
   const monthlyRef = useRef<HTMLButtonElement>(null);
   const annualRef = useRef<HTMLButtonElement>(null);
   const [pillStyle, setPillStyle] = useState<{ left: number; width: number }>({
@@ -42,6 +45,24 @@ export default function PricingPage(): React.JSX.Element {
     window.addEventListener('resize', updatePill);
     return () => window.removeEventListener('resize', updatePill);
   }, [isAnnual]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/billing/pricing', { cache: 'no-store' })
+      .then((response) =>
+        response.ok ? response.json() : Promise.reject(new Error('pricing_unavailable')),
+      )
+      .then((result: { amounts?: BillingPriceMap }) => {
+        if (!cancelled && result.amounts) {
+          setPrices(result.amounts);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function createCheckoutSession(): Promise<CheckoutSession | void> {
     const response = await fetch('/api/billing/checkout', {
@@ -68,6 +89,7 @@ export default function PricingPage(): React.JSX.Element {
       typeof result !== 'object' ||
       result === null ||
       typeof (result as { providerTransactionId?: unknown }).providerTransactionId !== 'string' ||
+      typeof (result as { checkoutUrl?: unknown }).checkoutUrl !== 'string' ||
       typeof (result as { returnUrl?: unknown }).returnUrl !== 'string'
     ) {
       throw new Error('checkout_response_invalid');
@@ -75,6 +97,7 @@ export default function PricingPage(): React.JSX.Element {
 
     return {
       providerTransactionId: (result as { providerTransactionId: string }).providerTransactionId,
+      checkoutUrl: (result as { checkoutUrl: string }).checkoutUrl,
       returnUrl: (result as { returnUrl: string }).returnUrl,
     };
   }
@@ -140,7 +163,7 @@ export default function PricingPage(): React.JSX.Element {
         >
           Choose a plan to review
         </h2>
-        <PlanSelector value={selectedPlan} onChange={setSelectedPlan} />
+        <PlanSelector prices={prices} value={selectedPlan} onChange={setSelectedPlan} />
       </section>
 
       {/* Pricing Cards (Free, Lite, Premium) */}
@@ -159,7 +182,7 @@ export default function PricingPage(): React.JSX.Element {
             </div>
             <div className="my-4">
               <span className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
-                $0
+                Rp0
               </span>
               <span className="text-sm text-[var(--color-text-secondary)]"> /forever</span>
             </div>
@@ -208,7 +231,7 @@ export default function PricingPage(): React.JSX.Element {
 
             <div className="my-4">
               <span className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
-                {isAnnual ? '$48' : '$5'}
+                {formatBillingPrice(prices?.[isAnnual ? 'lite_annual' : 'lite_monthly'])}
               </span>
               <span className="text-sm text-[var(--color-text-secondary)]">
                 {isAnnual ? ' /yr' : ' /mo'}
@@ -261,7 +284,7 @@ export default function PricingPage(): React.JSX.Element {
 
             <div className="my-4">
               <span className="text-4xl font-bold tracking-tight text-[var(--color-text-primary)]">
-                {isAnnual ? '$96' : '$10'}
+                {formatBillingPrice(prices?.[isAnnual ? 'premium_annual' : 'premium_monthly'])}
               </span>
               <span className="text-sm text-[var(--color-text-secondary)]">
                 {isAnnual ? ' /yr' : ' /mo'}
@@ -307,6 +330,7 @@ export default function PricingPage(): React.JSX.Element {
           <CheckoutConfirmation
             productCode={selectedPlan}
             now={new Date()}
+            prices={prices}
             onConfirm={createCheckoutSession}
           />
           <p className="mt-3 text-center text-sm text-[var(--color-text-secondary)]">
@@ -331,10 +355,10 @@ export default function PricingPage(): React.JSX.Element {
                       Free
                     </th>
                     <th className="w-1/4 p-4 text-sm font-bold text-[var(--color-primary)]">
-                      Lite ($5)
+                      Lite (IDR)
                     </th>
                     <th className="w-1/4 p-4 text-sm font-semibold text-[var(--color-text-secondary)]">
-                      Premium ($10)
+                      Premium (IDR)
                     </th>
                   </tr>
                 </thead>

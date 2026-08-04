@@ -1,13 +1,13 @@
 import 'server-only';
 
 import { getAuthenticatedUser } from '@/lib/supabase/server';
-import { createPaddleProvider } from '@/lib/payments/paddle-provider';
+import { createDokuProvider } from '@/lib/payments/doku-provider';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createSubscriptionManagementService } from '@/features/subscriptions/subscription-management-service';
 
 export function createProductionPortalService() {
   const admin = createSupabaseAdminClient();
-  const provider = createPaddleProvider();
+  const provider = createDokuProvider();
   const service = createSubscriptionManagementService({
     readProviderIdentity: async (userId) => {
       const { data, error } = await admin

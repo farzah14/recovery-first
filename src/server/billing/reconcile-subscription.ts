@@ -1,13 +1,13 @@
 import 'server-only';
 
 import { createEntitlementRefreshService } from '@/features/subscriptions/entitlement-refresh-service';
-import { createPaddleProvider } from '@/lib/payments/paddle-provider';
+import { createDokuProvider } from '@/lib/payments/doku-provider';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
 import { createProductionNormalizedBillingEventProcessor } from '@/server/billing/process-normalized-billing-event';
 
 export function createProductionEntitlementRefreshService() {
   const admin = createSupabaseAdminClient();
-  const provider = createPaddleProvider();
+  const provider = createDokuProvider();
   const processEvent = createProductionNormalizedBillingEventProcessor();
 
   return createEntitlementRefreshService({
@@ -50,7 +50,7 @@ export function createProductionEntitlementRefreshService() {
           event_type: 'billing_reconciliation_requested',
           entity_type: 'subscription',
           entity_id: providerSubscriptionId,
-          metadata: { provider: 'paddle', result },
+          metadata: { provider: 'doku', result },
         });
 
       if (error) {

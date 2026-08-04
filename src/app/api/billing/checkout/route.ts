@@ -14,6 +14,7 @@ type CheckoutService = Readonly<{
   createCheckout: (input: z.infer<typeof checkoutInputSchema>) => Promise<{
     attemptId: string;
     providerTransactionId: string;
+    checkoutUrl?: string;
   }>;
 }>;
 

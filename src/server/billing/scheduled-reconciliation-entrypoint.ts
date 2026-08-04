@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getBillingConfig } from '@/server/billing/billing-config';
+import { getDokuBillingConfig } from '@/server/billing/billing-config';
 import { createProductionEntitlementRefreshService } from '@/server/billing/reconcile-subscription';
 import { runScheduledSubscriptionReconciliation } from '@/server/billing/scheduled-reconciliation';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
@@ -15,7 +15,7 @@ const eligibleStatuses = [
 ] as const;
 
 export async function runProductionScheduledSubscriptionReconciliation(cursor?: string | null) {
-  const config = getBillingConfig();
+  const config = getDokuBillingConfig();
   const admin = createSupabaseAdminClient();
   const refreshService = createProductionEntitlementRefreshService();
 

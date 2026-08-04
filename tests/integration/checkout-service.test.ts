@@ -63,6 +63,20 @@ describe('checkout service', () => {
     });
   });
 
+  it('returns the server-created DOKU hosted checkout URL without accepting a browser URL', async () => {
+    const dependencies = createDependencies();
+    dependencies.createProviderCheckout.mockResolvedValue({
+      providerTransactionId: 'session_123',
+      checkoutUrl: 'https://sandbox.doku.com/checkout-link/session_123',
+    });
+    const service = createCheckoutService(dependencies);
+
+    await expect(service.createCheckout(baseInput)).resolves.toMatchObject({
+      providerTransactionId: 'session_123',
+      checkoutUrl: 'https://sandbox.doku.com/checkout-link/session_123',
+    });
+  });
+
   it('replays the same provider transaction for a repeated idempotency key', async () => {
     const existing: CheckoutAttemptRecord = {
       id: 'attempt_existing',

@@ -2,8 +2,8 @@ import 'server-only';
 
 import type { NormalizedBillingEvent } from '@/domain/billing/normalized-event';
 import { createSupabaseAdminClient } from '@/lib/supabase/admin';
-import { createPaddleProvider } from '@/lib/payments/paddle-provider';
-import { getBillingConfig } from '@/server/billing/billing-config';
+import { createDokuProvider } from '@/lib/payments/doku-provider';
+import { getDokuBillingConfig } from '@/server/billing/billing-config';
 import { createProductionNormalizedBillingEventProcessor } from '@/server/billing/process-normalized-billing-event';
 import {
   createWebhookProcessor,
@@ -37,12 +37,12 @@ function serializeNormalizedEvent(event: NormalizedBillingEvent) {
 }
 
 export function createProductionWebhookProcessor() {
-  const billingConfig = getBillingConfig();
+  const billingConfig = getDokuBillingConfig();
   const admin = createSupabaseAdminClient();
   const processNormalizedBillingEvent = createProductionNormalizedBillingEventProcessor();
 
   return createWebhookProcessor({
-    provider: createPaddleProvider(),
+    provider: createDokuProvider(),
     rawRetentionDays: billingConfig.webhookRawRetentionDays,
     insertEvent: async ({ event, rawBody, receivedAt, rawPayloadExpiresAt }) => {
       const { error } = await admin
@@ -97,7 +97,7 @@ export function createProductionWebhookProcessor() {
           error_code: errorCode,
           processed_at: new Date().toISOString(),
         })
-        .eq('provider', 'paddle')
+        .eq('provider', 'doku')
         .eq('provider_event_id', eventId);
 
       if (error) {
@@ -106,7 +106,7 @@ export function createProductionWebhookProcessor() {
     },
     recordFailure: async ({ reason, message }) => {
       await admin.schema('private').from('billing_webhook_failures').insert({
-        provider: 'paddle',
+        provider: 'doku',
         reason,
         error_message: message,
       });

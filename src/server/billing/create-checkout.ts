@@ -2,8 +2,8 @@ import 'server-only';
 
 import { getAuthenticatedUser } from '@/lib/supabase/server';
 import { serverEnv } from '@/lib/env/server-env';
-import { createPaddleProvider } from '@/lib/payments/paddle-provider';
-import { getBillingConfig } from '@/server/billing/billing-config';
+import { createDokuProvider } from '@/lib/payments/doku-provider';
+import { getDokuBillingConfig } from '@/server/billing/billing-config';
 import {
   createCheckoutService,
   type CheckoutAttemptRecord,
@@ -52,18 +52,18 @@ function asCheckoutAttemptStatus(value: string): CheckoutAttemptStatus {
 
 export function createProductionCheckoutService() {
   const admin = createSupabaseAdminClient();
-  const billingConfig = getBillingConfig();
-  const provider = createPaddleProvider();
+  const billingConfig = getDokuBillingConfig();
+  const provider = createDokuProvider();
 
   const service = createCheckoutService({
     appOrigin: serverEnv.NEXT_PUBLIC_APP_URL,
-    resolveProviderPriceId: (productCode) => billingConfig.priceIds[productCode],
+    resolveProviderPriceId: (productCode) => String(billingConfig.amounts[productCode]),
     findAttempt: async (userId, idempotencyKey): Promise<CheckoutAttemptRecord | null> => {
       const { data, error } = await admin
         .schema('private')
         .from('checkout_attempts')
         .select(
-          'id,user_id,plan_code,idempotency_key,status,provider_transaction_id,expires_at,created_at,updated_at',
+          'id,user_id,plan_code,idempotency_key,status,provider_transaction_id,provider_checkout_url,expires_at,created_at,updated_at',
         )
         .eq('user_id', userId)
         .eq('idempotency_key', idempotencyKey)
@@ -84,6 +84,7 @@ export function createProductionCheckoutService() {
         idempotencyKey: data.idempotency_key,
         status: asCheckoutAttemptStatus(data.status),
         providerTransactionId: data.provider_transaction_id,
+        providerCheckoutUrl: data.provider_checkout_url,
       };
     },
     hasActivePaidEntitlement: async (userId) => {
@@ -113,7 +114,7 @@ export function createProductionCheckoutService() {
           id: attempt.id,
           user_id: attempt.userId,
           plan_code: attempt.productCode,
-          provider: 'paddle',
+          provider: 'doku',
           idempotency_key: attempt.idempotencyKey,
           status: attempt.status,
           expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
@@ -130,6 +131,9 @@ export function createProductionCheckoutService() {
         .update({
           status: update.status,
           provider_transaction_id: update.providerTransactionId,
+          ...(update.providerCheckoutUrl !== undefined
+            ? { provider_checkout_url: update.providerCheckoutUrl }
+            : {}),
         })
         .eq('id', attemptId);
 

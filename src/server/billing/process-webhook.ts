@@ -41,6 +41,7 @@ export type WebhookProcessorDependencies = Readonly<{
 export type WebhookEnvelope = Readonly<{
   rawBody: string;
   signature: string;
+  headers?: Readonly<Record<string, string>>;
 }>;
 
 export function createWebhookProcessor(dependencies: WebhookProcessorDependencies) {

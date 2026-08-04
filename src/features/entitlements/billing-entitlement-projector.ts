@@ -18,7 +18,7 @@ const entitlementSnapshotSchema = z
 
 const normalizedBillingEventSchema = z
   .object({
-    provider: z.literal('paddle'),
+    provider: z.enum(['paddle', 'doku']),
     eventId: z.string().min(1),
     eventType: z.string().min(1),
     occurredAt: z.coerce.date(),

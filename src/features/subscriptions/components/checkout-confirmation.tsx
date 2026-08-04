@@ -4,10 +4,13 @@ import { useMemo, useState } from 'react';
 
 import type { PaidProductCode } from '@/features/subscriptions/checkout-service';
 import { Button } from '@/components/ui/button';
-import { PaddleCheckoutLauncher } from '@/features/subscriptions/components/paddle-checkout-launcher';
+import type { BillingPriceMap } from '@/domain/billing/billing-price';
+import { formatBillingPrice } from '@/domain/billing/billing-price';
+import { DokuCheckoutLauncher } from '@/features/subscriptions/components/doku-checkout-launcher';
 
 export type CheckoutSession = Readonly<{
   providerTransactionId: string;
+  checkoutUrl: string;
   returnUrl: string;
 }>;
 
@@ -15,6 +18,7 @@ type CheckoutConfirmationProps = Readonly<{
   productCode: PaidProductCode;
   now: Date;
   onConfirm: () => Promise<CheckoutSession | void> | CheckoutSession | void;
+  prices?: BillingPriceMap | null;
 }>;
 
 const trialDays = 14;
@@ -30,20 +34,11 @@ function cadence(productCode: PaidProductCode): string {
   return productCode.endsWith('_annual') ? 'annually' : 'monthly';
 }
 
-function displayPrice(productCode: PaidProductCode): string {
-  return productCode.startsWith('lite')
-    ? productCode.endsWith('_annual')
-      ? '$48/year'
-      : '$5/month'
-    : productCode.endsWith('_annual')
-      ? '$96/year'
-      : '$10/month';
-}
-
 export function CheckoutConfirmation({
   productCode,
   now,
   onConfirm,
+  prices,
 }: CheckoutConfirmationProps): React.JSX.Element {
   const [accepted, setAccepted] = useState(false);
   const [pending, setPending] = useState(false);
@@ -78,10 +73,7 @@ export function CheckoutConfirmation({
         >
           Continue securely
         </h2>
-        <PaddleCheckoutLauncher
-          providerTransactionId={session.providerTransactionId}
-          returnUrl={session.returnUrl}
-        />
+        <DokuCheckoutLauncher checkoutUrl={session.checkoutUrl} />
       </section>
     );
   }
@@ -105,8 +97,8 @@ export function CheckoutConfirmation({
       </div>
       <ul className="space-y-2 text-sm text-[var(--color-text-secondary)]">
         <li>
-          After the trial, {displayPrice(productCode)} renews {cadence(productCode)} until
-          cancelled.
+          After the trial, {formatBillingPrice(prices?.[productCode])} renews {cadence(productCode)}{' '}
+          until cancelled.
         </li>
         <li>You can cancel before renewal; access follows the authoritative expiry date.</li>
         <li>Refund requests follow the published refund policy.</li>

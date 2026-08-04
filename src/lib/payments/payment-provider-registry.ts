@@ -1,8 +1,8 @@
 import 'server-only';
 
 import type { PaymentProvider } from './payment-provider';
-import { createPaddleProvider } from './paddle-provider';
+import { createDokuProvider } from './doku-provider';
 
 export function getPaymentProvider(): PaymentProvider {
-  return createPaddleProvider();
+  return createDokuProvider();
 }

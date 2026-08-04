@@ -46,6 +46,7 @@ type PrivateBillingDatabase = {
           plan_code: string;
           provider: string;
           provider_transaction_id: string | null;
+          provider_checkout_url: string | null;
           idempotency_key: string;
           status: string;
           expires_at: string;
@@ -58,6 +59,7 @@ type PrivateBillingDatabase = {
           plan_code: string;
           provider: string;
           provider_transaction_id?: string | null;
+          provider_checkout_url?: string | null;
           idempotency_key: string;
           status: string;
           expires_at: string;
@@ -66,6 +68,7 @@ type PrivateBillingDatabase = {
         };
         Update: {
           provider_transaction_id?: string | null;
+          provider_checkout_url?: string | null;
           status?: string;
           updated_at?: string;
         };
@@ -74,7 +77,7 @@ type PrivateBillingDatabase = {
       billing_subscriptions: {
         Row: {
           user_id: string;
-          provider: 'paddle';
+          provider: 'paddle' | 'doku';
           provider_customer_id: string;
           provider_subscription_id: string;
           plan_code: string;

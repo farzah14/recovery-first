@@ -2,7 +2,7 @@ import type { BillingProductCode } from '@/domain/billing/product-catalog';
 import type { EntitlementStatus } from '@/domain/subscriptions/entitlement';
 
 export type NormalizedBillingEvent = Readonly<{
-  provider: 'paddle';
+  provider: 'paddle' | 'doku';
   eventId: string;
   eventType: string;
   occurredAt: Date;

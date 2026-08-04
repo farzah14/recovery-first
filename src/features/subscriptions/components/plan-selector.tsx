@@ -1,20 +1,23 @@
 'use client';
 
 import type { PaidProductCode } from '@/features/subscriptions/checkout-service';
+import type { BillingPriceMap } from '@/domain/billing/billing-price';
+import { formatBillingPrice } from '@/domain/billing/billing-price';
 
 type PlanSelectorProps = Readonly<{
   value: PaidProductCode | null;
   onChange: (value: PaidProductCode) => void;
+  prices?: BillingPriceMap | null;
 }>;
 
 const plans: ReadonlyArray<Readonly<{ code: PaidProductCode; label: string; detail: string }>> = [
-  { code: 'lite_monthly', label: 'Lite monthly', detail: '$5/month · 10 active habits' },
-  { code: 'lite_annual', label: 'Lite annual', detail: '$48/year · 10 active habits' },
-  { code: 'premium_monthly', label: 'Premium monthly', detail: '$10/month · 30 active habits' },
-  { code: 'premium_annual', label: 'Premium annual', detail: '$96/year · 30 active habits' },
+  { code: 'lite_monthly', label: 'Lite monthly', detail: '10 active habits' },
+  { code: 'lite_annual', label: 'Lite annual', detail: '10 active habits' },
+  { code: 'premium_monthly', label: 'Premium monthly', detail: '30 active habits' },
+  { code: 'premium_annual', label: 'Premium annual', detail: '30 active habits' },
 ];
 
-export function PlanSelector({ value, onChange }: PlanSelectorProps): React.JSX.Element {
+export function PlanSelector({ value, onChange, prices }: PlanSelectorProps): React.JSX.Element {
   return (
     <div aria-label="Choose a plan" className="grid gap-3 sm:grid-cols-2" role="radiogroup">
       {plans.map((plan) => (
@@ -35,7 +38,7 @@ export function PlanSelector({ value, onChange }: PlanSelectorProps): React.JSX.
               {plan.label}
             </span>
             <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
-              {plan.detail}
+              {formatBillingPrice(prices?.[plan.code])} · {plan.detail}
             </span>
           </span>
         </label>

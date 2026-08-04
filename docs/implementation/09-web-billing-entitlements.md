@@ -1,5 +1,11 @@
 # Web Billing and Entitlements Implementation Plan
 
+## DOKU provider amendment
+
+The active provider for this application is DOKU, not Paddle or Xendit. The product uses IDR prices, DOKU Checkout for hosted payment, DOKU Account Billing for subscription scheduling, and recurring capability paths for Direct Debit BRI, OVO, and Credit Card. The original provider-specific Paddle sections below are historical implementation context and must be interpreted through the active DOKU adapter and ADR-014.
+
+The DOKU Account Billing scheduler and activated SNAP channel contracts are merchant-specific. Do not mark recurring, refund, cancellation, or production release tasks complete until sandbox credentials, notification verification, and the DOKU merchant configuration have been tested.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `executing-plans` to implement this plan task-by-task. This project uses one agent only; do not dispatch subagents. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement monthly and annual Lite and Premium website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative entitlement, subscription management, and non-destructive downgrade handling.

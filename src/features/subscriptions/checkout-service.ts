@@ -15,6 +15,7 @@ export type CheckoutAttemptRecord = Readonly<{
   idempotencyKey: string;
   status: CheckoutAttemptStatus;
   providerTransactionId: string | null;
+  providerCheckoutUrl?: string | null;
 }>;
 
 type ProviderCheckoutInput = Readonly<{
@@ -45,11 +46,12 @@ type CheckoutServiceDependencies = Readonly<{
     update: Readonly<{
       status: CheckoutAttemptStatus;
       providerTransactionId: string | null;
+      providerCheckoutUrl?: string | null;
     }>,
   ) => Promise<void>;
   createProviderCheckout: (
     input: ProviderCheckoutInput,
-  ) => Promise<{ providerTransactionId: string }>;
+  ) => Promise<{ providerTransactionId: string; checkoutUrl?: string }>;
   createAttemptId: () => string;
 }>;
 
@@ -97,6 +99,7 @@ export function createCheckoutService(dependencies: CheckoutServiceDependencies)
           return {
             attemptId: existing.id,
             providerTransactionId: existing.providerTransactionId,
+            ...(existing.providerCheckoutUrl ? { checkoutUrl: existing.providerCheckoutUrl } : {}),
             returnUrl: new URL(
               `/billing/return?attempt=${existing.id}`,
               dependencies.appOrigin,
@@ -134,11 +137,13 @@ export function createCheckoutService(dependencies: CheckoutServiceDependencies)
         await dependencies.updateAttempt(attemptId, {
           status: 'opened',
           providerTransactionId: checkout.providerTransactionId,
+          ...(checkout.checkoutUrl ? { providerCheckoutUrl: checkout.checkoutUrl } : {}),
         });
 
         return {
           attemptId,
           providerTransactionId: checkout.providerTransactionId,
+          ...(checkout.checkoutUrl ? { checkoutUrl: checkout.checkoutUrl } : {}),
           returnUrl: returnUrl.toString(),
         } as const;
       } catch {

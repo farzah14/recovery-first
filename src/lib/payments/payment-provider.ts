@@ -10,14 +10,21 @@ export type CreateCheckoutInput = Readonly<{
   returnUrl: string;
 }>;
 
+export type ProviderWebhookVerificationInput = Readonly<{
+  rawBody: string;
+  signature: string;
+  headers?: Readonly<Record<string, string>>;
+}>;
+
 export interface PaymentProvider {
   createCheckout(input: CreateCheckoutInput): Promise<{
     providerTransactionId: string;
+    checkoutUrl?: string;
   }>;
   createCustomerPortal(input: {
     providerCustomerId: string;
     providerSubscriptionId: string;
   }): Promise<{ url: string }>;
-  verifyWebhook(input: { rawBody: string; signature: string }): Promise<NormalizedBillingEvent>;
+  verifyWebhook(input: ProviderWebhookVerificationInput): Promise<NormalizedBillingEvent>;
   fetchSubscription(providerSubscriptionId: string): Promise<NormalizedBillingEvent>;
 }
