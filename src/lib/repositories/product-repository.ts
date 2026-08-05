@@ -16,11 +16,21 @@ export type HabitTarget = {
   quantity: number | null;
   unit: string | null;
   estimatedMinutes: number | null;
+  label?: string;
 };
 
 export type HabitCue = {
   type: 'time' | 'after_activity' | 'location' | 'none';
   value: string | null;
+};
+
+export type HabitPresentation = {
+  description: string;
+  icon: string;
+  fromTime: string;
+  untilTime: string;
+  timingContext: string;
+  startLocalDate: string;
 };
 
 export type CreateHabitCommand = {
@@ -34,10 +44,35 @@ export type CreateHabitCommand = {
   minimumTarget: HabitTarget;
   recurrence: RecurrenceRule;
   cue: HabitCue;
+  presentation: HabitPresentation;
   reminderIntent: { enabled: boolean; localTime: string | null };
   startLocalDate: string;
   activate: boolean;
   clientCreatedAt: string;
+};
+
+export type UpdateHabitVersionCommand = {
+  commandId: string;
+  habitId: string;
+  habitVersionId: string;
+  owner: ProductOwner;
+  title: string;
+  category: string;
+  expectedRevision: number;
+  normalTarget: HabitTarget;
+  minimumTarget: HabitTarget;
+  recurrence: RecurrenceRule;
+  cue: HabitCue;
+  presentation: HabitPresentation;
+  source: 'redesign' | 'recommendation' | 'restore';
+};
+
+export type SetHabitLifecycleCommand = {
+  commandId: string;
+  owner: ProductOwner;
+  habitId: string;
+  expectedRevision: number;
+  nextState: HabitLifecycleState;
 };
 
 export type CreateHabitResult = {
@@ -53,6 +88,11 @@ export type SessionSummary = {
   habitId: string;
   habitVersionId: string;
   title: string;
+  category: string;
+  icon: string;
+  timingContext: string;
+  habitRevision: number;
+  currentVersionId: string | null;
   normalTarget: HabitTarget;
   minimumTarget: HabitTarget;
   cue: HabitCue;
@@ -98,8 +138,24 @@ export type EditCheckInRepositoryCommand = RecordCheckInRepositoryCommand & {
 export type HabitListItem = {
   id: string;
   title: string;
+  category: string | null;
+  description: string;
+  normalTarget: HabitTarget;
+  minimumTarget: HabitTarget;
+  schedule: string;
+  cue: string;
+  status: 'Active' | 'Paused' | 'Archived';
+  iconName: string;
+  fromTime: string | null;
+  untilTime: string | null;
+  startLocalDate: string;
+  createdDate: string;
+  version: string;
+  streak: number;
+  consistency: number;
   lifecycleState: HabitLifecycleState;
   currentVersionId: string | null;
+  revision: number;
   updatedAt: string;
 };
 
@@ -112,7 +168,9 @@ export type HabitDetailRead = {
     minimumTarget: HabitTarget;
     recurrence: RecurrenceRule;
     cue: HabitCue;
+    metadata: Record<string, unknown>;
     createdAt: string;
+    revision: number;
   };
   versions: Array<{
     id: string;
@@ -125,6 +183,8 @@ export type HabitDetailRead = {
 
 export interface ProductRepository {
   createHabit(command: CreateHabitCommand): Promise<CreateHabitResult>;
+  updateHabitVersion(command: UpdateHabitVersionCommand): Promise<void>;
+  setHabitLifecycle(command: SetHabitLifecycleCommand): Promise<void>;
   saveHabitDraft(
     owner: ProductOwner,
     draftId: string,

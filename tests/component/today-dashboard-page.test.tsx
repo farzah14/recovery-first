@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, beforeEach } from 'vitest';
 
 import { TodayDashboard } from '@/features/today/today-dashboard';
+import { AccountStateProvider } from '@/components/account/account-state';
 
 describe('TodayDashboard', () => {
   beforeEach(() => {
@@ -27,6 +28,28 @@ describe('TodayDashboard', () => {
 
     // Recovery Available indication
     expect(screen.getByText('Recovery Available')).toBeVisible();
+  });
+
+  it('uses the authenticated display name in the greeting instead of a hardcoded name', () => {
+    render(
+      <AccountStateProvider
+        account={{
+          accountId: '15000000-0000-4000-8000-000000000001',
+          displayName: 'Zah Febri',
+          planTier: 'free',
+          timezone: 'Asia/Jakarta',
+        }}
+      >
+        <TodayDashboard />
+      </AccountStateProvider>,
+    );
+
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /Good (morning|afternoon|evening), Zah Febri\./i,
+      }),
+    ).toBeVisible();
   });
 
   it('records Full, Minimum, and Skipped outcomes correctly morphing control button and excluding Skipped from Today Progress', () => {

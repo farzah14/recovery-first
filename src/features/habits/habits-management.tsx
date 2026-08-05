@@ -49,11 +49,21 @@ import {
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CreateHabitDialog, type CreateHabitFormData } from '@/features/habits/create-habit-dialog';
 import { getStoredHabits, saveStoredHabits } from '@/lib/storage/habits-sync';
+import { useAccountState } from '@/components/account/account-state';
+import {
+  createBrowserProductRepository,
+  getBrowserProductOwner,
+} from '@/lib/repositories/signed-in/browser-product-repository';
+import {
+  buildCreateHabitCommand,
+  buildHabitVersionCommand,
+} from '@/lib/repositories/habit-command-builders';
+import type { HabitListItem } from '@/lib/repositories/product-repository';
 
 export interface HabitItem {
   id: string;
   name: string;
-  category: 'Mindfulness' | 'Health' | 'Learning' | 'Social';
+  category: string;
   description: string;
   normalTarget: string;
   minimumTarget: string;
@@ -66,6 +76,11 @@ export interface HabitItem {
   version: string;
   iconName: string;
   fromTime?: string;
+  untilTime?: string;
+  startLocalDate?: string;
+  lifecycleState?: HabitListItem['lifecycleState'];
+  currentVersionId?: string | null;
+  revision?: number;
 }
 
 const INITIAL_HABITS: HabitItem[] = [
@@ -210,6 +225,13 @@ function getNextMondayDateStr(): string {
   return nextMonday.toISOString().split('T')[0] ?? '';
 }
 
+function createCommandId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `habit-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+}
+
 function StatusFilterIcon({
   status,
   className,
@@ -248,16 +270,75 @@ function mergeStoredHabits(stored: ReturnType<typeof getStoredHabits>): HabitIte
   ];
 }
 
+function formatHabitTarget(target: HabitListItem['normalTarget']): string {
+  return (
+    target.label ||
+    (target.quantity !== null && target.unit ? `${target.quantity} ${target.unit}` : target.action)
+  );
+}
+
+function mapRepositoryHabit(habit: HabitListItem): HabitItem {
+  return {
+    id: habit.id,
+    name: habit.title,
+    category: habit.category || 'Other',
+    description: habit.description,
+    normalTarget: formatHabitTarget(habit.normalTarget),
+    minimumTarget: formatHabitTarget(habit.minimumTarget),
+    schedule: habit.schedule,
+    cue: habit.cue,
+    status: habit.status,
+    streak: habit.streak,
+    consistency: habit.consistency,
+    createdDate: habit.createdDate,
+    version: habit.version,
+    iconName: habit.iconName,
+    lifecycleState: habit.lifecycleState,
+    currentVersionId: habit.currentVersionId,
+    revision: habit.revision,
+    startLocalDate: habit.startLocalDate,
+    ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
+    ...(habit.untilTime ? { untilTime: habit.untilTime } : {}),
+  };
+}
+
 export function HabitsManagement(): React.JSX.Element {
+  const account = useAccountState();
+  const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
+  const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
+
   // Screen Mode: 'list' | 'detail'
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   const [selectedHabitId, setSelectedHabitId] = useState<string>('h1');
 
   // Habits State
-  const [habitsList, setHabitsList] = useState<HabitItem[]>(INITIAL_HABITS);
+  const [habitsList, setHabitsList] = useState<HabitItem[]>(
+    account.accountId ? [] : INITIAL_HABITS,
+  );
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+
+  const reloadRemoteHabits = React.useCallback(async () => {
+    if (!repository || !owner) return;
+    try {
+      setRemoteError(null);
+      const remoteHabits = await repository.listHabits(owner);
+      setHabitsList(remoteHabits.map(mapRepositoryHabit));
+    } catch (error) {
+      setRemoteError(
+        error instanceof Error ? error.message : 'Unable to load habits from Supabase.',
+      );
+    }
+  }, [owner, repository]);
 
   // Hydrate browser-local habits after mount to keep server and client markup deterministic.
   React.useEffect(() => {
+    if (repository && owner) {
+      const loadTimer = window.setTimeout(() => {
+        void reloadRemoteHabits();
+      }, 0);
+      return () => window.clearTimeout(loadTimer);
+    }
+
     const stored = getStoredHabits();
     if (stored.length === 0) return undefined;
 
@@ -266,7 +347,7 @@ export function HabitsManagement(): React.JSX.Element {
     }, 0);
 
     return () => window.clearTimeout(hydrationTimer);
-  }, []);
+  }, [owner, reloadRemoteHabits, repository]);
 
   const updateHabitsWithSync = (updater: (prev: HabitItem[]) => HabitItem[]) => {
     setHabitsList((prev) => {
@@ -388,7 +469,27 @@ export function HabitsManagement(): React.JSX.Element {
     }
   };
 
-  const handleTogglePause = (habitId: string) => {
+  const handleTogglePause = async (habitId: string) => {
+    const habit = habitsList.find((item) => item.id === habitId);
+    if (!habit) return;
+
+    if (repository && owner) {
+      try {
+        await repository.setHabitLifecycle({
+          commandId: createCommandId(),
+          owner,
+          habitId,
+          expectedRevision: habit.revision ?? 1,
+          nextState: habit.status === 'Active' ? 'paused' : 'starting',
+        });
+        await reloadRemoteHabits();
+        showToast(`Habit "${habit.name}" status updated.`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to update habit status.');
+      }
+      return;
+    }
+
     updateHabitsWithSync((prev) =>
       prev.map((h) => {
         if (h.id === habitId) {
@@ -401,7 +502,25 @@ export function HabitsManagement(): React.JSX.Element {
     );
   };
 
-  const handleCreateHabitSubmit = (data: CreateHabitFormData) => {
+  const handleCreateHabitSubmit = async (data: CreateHabitFormData) => {
+    if (repository && owner) {
+      try {
+        await repository.createHabit(
+          buildCreateHabitCommand(data, owner, {
+            habitId: createCommandId(),
+            habitVersionId: createCommandId(),
+            commandId: createCommandId(),
+            now: new Date().toISOString(),
+          }),
+        );
+        await reloadRemoteHabits();
+        showToast(`New habit "${data.name}" created successfully!`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to create habit.');
+      }
+      return;
+    }
+
     const newHabit: HabitItem = {
       id: `h-${Date.now()}`,
       name: data.name,
@@ -423,9 +542,48 @@ export function HabitsManagement(): React.JSX.Element {
     showToast(`New habit "${data.name}" created successfully!`);
   };
 
-  const handleSaveEditSubmit = (e: React.FormEvent) => {
+  const handleSaveEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editName.trim()) return;
+
+    const habit = habitsList.find((item) => item.id === selectedHabitId);
+    if (repository && owner && habit) {
+      if (!habit.currentVersionId) {
+        showToast('This habit has no current Supabase version yet.');
+        return;
+      }
+      try {
+        await repository.updateHabitVersion(
+          buildHabitVersionCommand(
+            {
+              name: editName,
+              category: habit.category,
+              normalTarget: editNormal,
+              minimumTarget: editMinimum,
+              icon: habit.iconName,
+              startDate: habit.startLocalDate || editDate.trim() || getTodayDateStr(),
+              fromTime: habit.fromTime || '08:00',
+              untilTime: habit.untilTime || '09:00',
+              timingContext: habit.schedule,
+              description: editDesc,
+            },
+            owner,
+            {
+              habitId: habit.id,
+              habitVersionId: createCommandId(),
+              commandId: createCommandId(),
+              expectedRevision: habit.revision ?? 1,
+            },
+          ),
+        );
+        await reloadRemoteHabits();
+        setEditDialogOpen(false);
+        showToast(`Habit "${editName.trim()}" specifications updated!`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to update habit.');
+      }
+      return;
+    }
 
     updateHabitsWithSync((prev) =>
       prev.map((h) => {
@@ -447,7 +605,27 @@ export function HabitsManagement(): React.JSX.Element {
     showToast(`Habit "${editName.trim()}" specifications updated!`);
   };
 
-  const handleDeleteHabitConfirm = () => {
+  const handleDeleteHabitConfirm = async () => {
+    const habit = habitsList.find((item) => item.id === selectedHabitId);
+    if (repository && owner && habit) {
+      try {
+        await repository.setHabitLifecycle({
+          commandId: createCommandId(),
+          owner,
+          habitId: habit.id,
+          expectedRevision: habit.revision ?? 1,
+          nextState: 'trash',
+        });
+        await reloadRemoteHabits();
+        setDeleteDialogOpen(false);
+        setViewMode('list');
+        showToast('Habit moved to archive/trash');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to delete habit.');
+      }
+      return;
+    }
+
     updateHabitsWithSync((prev) => prev.filter((h) => h.id !== selectedHabitId));
     setDeleteDialogOpen(false);
     setViewMode('list');
@@ -483,6 +661,14 @@ export function HabitsManagement(): React.JSX.Element {
 
   return (
     <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
+      {remoteError ? (
+        <p
+          role="alert"
+          className="mx-auto max-w-5xl px-4 pt-4 text-xs text-red-700 sm:px-6 lg:px-8"
+        >
+          {remoteError}
+        </p>
+      ) : null}
       {/* Toast Notification Banner (Centered Bottom Text-Only with Entrance & Exit Animations - No Rectangle Box) */}
       {toastMessage && (
         <div

@@ -15,7 +15,7 @@ export type RepositoryErrorCode = (typeof repositoryErrorCodes)[number];
 export class ProductRepositoryError extends Error {
   constructor(
     public readonly code: RepositoryErrorCode,
-    message = code,
+    message: string = code,
     public readonly details: Record<string, unknown> = {},
   ) {
     super(message);
