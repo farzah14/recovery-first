@@ -107,6 +107,25 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Start Supabase Local
+        run: pnpm db:start
+
+      - name: Reset database
+        run: pnpm db:reset
+
+      - name: Configure browser Supabase environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          status_file="${RUNNER_TEMP}/supabase-status.env"
+          pnpm exec supabase status -o env > "$status_file"
+          api_url="$(grep '^API_URL=' "$status_file" | cut -d= -f2- | sed 's/^"//; s/"$//')"
+          anon_key="$(grep '^ANON_KEY=' "$status_file" | cut -d= -f2- | sed 's/^"//; s/"$//')"
+          test -n "$api_url"
+          test -n "$anon_key"
+          echo "NEXT_PUBLIC_SUPABASE_URL=$api_url" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$anon_key" >> "$GITHUB_ENV"
+
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
@@ -120,3 +139,7 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+      - name: Stop Supabase Local
+        if: always()
+        run: pnpm db:stop

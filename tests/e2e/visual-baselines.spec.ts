@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('Visual Baselines', () => {
   // Full-page Habits captures include the complete management surface and can exceed
@@ -20,7 +20,7 @@ test.describe('Visual Baselines', () => {
     });
   });
 
-  test('matches today dashboard visual baseline', async ({ page }, testInfo) => {
+  test('matches today dashboard visual baseline', async ({ authPage: page }, testInfo) => {
     await page.setViewportSize(
       testInfo.project.name === 'chromium-mobile'
         ? { width: 390, height: 844 }
@@ -35,7 +35,7 @@ test.describe('Visual Baselines', () => {
     });
   });
 
-  test('matches habits management visual baseline', async ({ page }, testInfo) => {
+  test('matches habits management visual baseline', async ({ authPage: page }, testInfo) => {
     await page.setViewportSize(
       testInfo.project.name === 'chromium-mobile'
         ? { width: 390, height: 844 }

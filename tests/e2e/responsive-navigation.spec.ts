@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 const mobileViewports = [
   { name: 'mobile', width: 390, height: 844 },
@@ -13,7 +13,7 @@ const desktopViewports = [
 
 test.describe('Responsive Navigation', () => {
   for (const viewport of desktopViewports) {
-    test(`displays the sidebar at ${viewport.name} width`, async ({ page }) => {
+    test(`displays the sidebar at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/app/today');
 
@@ -24,7 +24,7 @@ test.describe('Responsive Navigation', () => {
   }
 
   for (const viewport of mobileViewports) {
-    test(`displays bottom navigation at ${viewport.name} width`, async ({ page }) => {
+    test(`displays bottom navigation at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/app/today');
 
