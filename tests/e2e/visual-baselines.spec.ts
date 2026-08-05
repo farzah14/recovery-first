@@ -29,6 +29,10 @@ test.describe('Visual Baselines', () => {
     await page.clock.install({ time: new Date('2026-01-15T10:00:00Z') });
     await page.goto('/app/today');
     await expect(page.getByRole('main')).toBeVisible();
+    await page.clock.runFor(1_000);
+    await expect(page.getByTestId('today-data-ready')).toHaveAttribute('data-ready', 'true', {
+      timeout: 30_000,
+    });
     await expect(page).toHaveScreenshot('today-dashboard.png', {
       animations: 'disabled',
       fullPage: true,
@@ -44,6 +48,10 @@ test.describe('Visual Baselines', () => {
     await page.clock.install({ time: new Date('2026-01-15T10:00:00Z') });
     await page.goto('/app/habits');
     await expect(page.getByRole('heading', { level: 1, name: 'Habits Library' })).toBeVisible();
+    await page.clock.runFor(1_000);
+    await expect(page.getByTestId('habits-data-ready')).toHaveAttribute('data-ready', 'true', {
+      timeout: 30_000,
+    });
     await expect(page).toHaveScreenshot('habits-management.png', {
       animations: 'disabled',
       fullPage: true,
