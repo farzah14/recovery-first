@@ -4,13 +4,13 @@ select plan(8);
 
 insert into auth.users (id, email)
 values
-  ('13000000-0000-4000-8000-000000000001', 'billing-owner@example.invalid'),
-  ('13000000-0000-4000-8000-000000000002', 'billing-other@example.invalid');
+  ('18000000-0000-4000-8000-000000000001', 'billing-owner@example.invalid'),
+  ('18000000-0000-4000-8000-000000000002', 'billing-other@example.invalid');
 
 insert into public.profiles (id)
 values
-  ('13000000-0000-4000-8000-000000000001'),
-  ('13000000-0000-4000-8000-000000000002');
+  ('18000000-0000-4000-8000-000000000001'),
+  ('18000000-0000-4000-8000-000000000002');
 
 select is(
   private.process_normalized_billing_event(
@@ -18,7 +18,7 @@ select is(
     'evt_01',
     'subscription_created',
     '2026-08-03T00:00:00Z',
-    '13000000-0000-4000-8000-000000000001',
+    '18000000-0000-4000-8000-000000000001',
     'ctm_ordering_01',
     'sub_ordering_01',
     'premium_monthly',
@@ -35,7 +35,7 @@ select is(
 select is(
   private.process_normalized_billing_event(
     'paddle', 'evt_01', 'subscription_created', '2026-08-03T00:00:00Z',
-    '13000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
+    '18000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
     'premium_monthly', 'active', '2026-08-03T00:00:00Z', '2026-09-03T00:00:00Z',
     false, 'hash_01'
   )->>'result',
@@ -46,7 +46,7 @@ select is(
 select is(
   private.process_normalized_billing_event(
     'paddle', 'evt_00', 'subscription_past_due', '2026-08-02T23:59:59Z',
-    '13000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
+    '18000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
     'premium_monthly', 'past_due', '2026-08-03T00:00:00Z', '2026-09-03T00:00:00Z',
     false, 'hash_00'
   )->>'result',
@@ -57,7 +57,7 @@ select is(
 select is(
   private.process_normalized_billing_event(
     'paddle', 'evt_02', 'subscription_cancelled', '2026-08-04T00:00:00Z',
-    '13000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
+    '18000000-0000-4000-8000-000000000001', 'ctm_ordering_01', 'sub_ordering_01',
     'premium_monthly', 'cancelled', '2026-08-03T00:00:00Z', '2026-09-03T00:00:00Z',
     true, 'hash_02'
   )->>'result',
@@ -75,7 +75,7 @@ select is(
 select throws_ok(
   $$select private.process_normalized_billing_event(
     'paddle', 'evt_other', 'subscription_created', '2026-08-05T00:00:00Z',
-    '13000000-0000-4000-8000-000000000002', 'ctm_ordering_01', 'sub_ordering_01',
+    '18000000-0000-4000-8000-000000000002', 'ctm_ordering_01', 'sub_ordering_01',
     'premium_monthly', 'active', '2026-08-05T00:00:00Z', '2026-09-05T00:00:00Z',
     false, 'hash_other'
   )$$,
