@@ -13,7 +13,7 @@ import { cn } from '@/lib/cn';
 import type { PaidProductCode } from '@/features/subscriptions/checkout-service';
 import type { BillingPriceMap } from '@/domain/billing/billing-price';
 import { formatBillingPrice } from '@/domain/billing/billing-price';
-import { PlanSelector } from '@/features/subscriptions/components/plan-selector';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
   CheckoutConfirmation,
   type CheckoutSession,
@@ -22,6 +22,7 @@ import {
 export default function PricingPage(): React.JSX.Element {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PaidProductCode | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [prices, setPrices] = useState<BillingPriceMap | null>(null);
   const monthlyRef = useRef<HTMLButtonElement>(null);
   const annualRef = useRef<HTMLButtonElement>(null);
@@ -102,6 +103,18 @@ export default function PricingPage(): React.JSX.Element {
     };
   }
 
+  function openCheckout(productCode: PaidProductCode): void {
+    setSelectedPlan(productCode);
+    setCheckoutOpen(true);
+  }
+
+  function handleCheckoutOpenChange(open: boolean): void {
+    setCheckoutOpen(open);
+    if (!open) {
+      setSelectedPlan(null);
+    }
+  }
+
   return (
     <ContentContainer className="flex flex-col items-center py-12 sm:py-16">
       {/* Header Section */}
@@ -155,16 +168,6 @@ export default function PricingPage(): React.JSX.Element {
           </button>
         </div>
       </header>
-
-      <section aria-labelledby="plan-selection-title" className="mb-12 w-full max-w-3xl">
-        <h2
-          className="mb-3 text-center text-xl font-bold text-[var(--color-text-primary)]"
-          id="plan-selection-title"
-        >
-          Choose a plan to review
-        </h2>
-        <PlanSelector prices={prices} value={selectedPlan} onChange={setSelectedPlan} />
-      </section>
 
       {/* Pricing Cards (Free, Lite, Premium) */}
       <div className="relative z-10 mb-16 grid w-full grid-cols-1 items-stretch gap-8 md:grid-cols-3">
@@ -264,7 +267,7 @@ export default function PricingPage(): React.JSX.Element {
 
           <Button
             fullWidth
-            onClick={() => setSelectedPlan(isAnnual ? 'lite_annual' : 'lite_monthly')}
+            onClick={() => openCheckout(isAnnual ? 'lite_annual' : 'lite_monthly')}
             variant="primary"
             className="shadow-md"
           >
@@ -317,7 +320,7 @@ export default function PricingPage(): React.JSX.Element {
 
           <Button
             fullWidth
-            onClick={() => setSelectedPlan(isAnnual ? 'premium_annual' : 'premium_monthly')}
+            onClick={() => openCheckout(isAnnual ? 'premium_annual' : 'premium_monthly')}
             variant="primary"
           >
             Get Premium
@@ -325,19 +328,28 @@ export default function PricingPage(): React.JSX.Element {
         </div>
       </div>
 
-      {selectedPlan ? (
-        <div className="w-full max-w-3xl">
-          <CheckoutConfirmation
-            productCode={selectedPlan}
-            now={new Date()}
-            prices={prices}
-            onConfirm={createCheckoutSession}
-          />
-          <p className="mt-3 text-center text-sm text-[var(--color-text-secondary)]">
-            Sign in before confirming checkout so the subscription is attached to your account.
-          </p>
-        </div>
-      ) : null}
+      <Dialog open={checkoutOpen} onOpenChange={handleCheckoutOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto p-0 sm:max-w-2xl">
+          <DialogTitle className="sr-only">Review your trial</DialogTitle>
+          <DialogDescription className="sr-only">
+            Review trial and recurring billing details before checkout.
+          </DialogDescription>
+          {selectedPlan ? (
+            <>
+              <CheckoutConfirmation
+                key={selectedPlan}
+                productCode={selectedPlan}
+                now={new Date()}
+                prices={prices}
+                onConfirm={createCheckoutSession}
+              />
+              <p className="px-5 pb-5 text-center text-sm text-[var(--color-text-secondary)]">
+                Sign in before confirming checkout so the subscription is attached to your account.
+              </p>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Compare Features Section */}
       <div className="mb-8 w-full max-w-4xl">
