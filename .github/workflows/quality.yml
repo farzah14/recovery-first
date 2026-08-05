@@ -5,6 +5,13 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      update_visual_snapshots:
+        description: Regenerate Linux Playwright visual baselines and upload them as an artifact
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -130,7 +137,23 @@ jobs:
         run: pnpm exec playwright install chromium
 
       - name: Run browser smoke tests
-        run: pnpm test:e2e
+        env:
+          UPDATE_VISUAL_SNAPSHOTS: ${{ github.event_name == 'workflow_dispatch' && inputs.update_visual_snapshots || 'false' }}
+        run: |
+          if [[ "$UPDATE_VISUAL_SNAPSHOTS" == "true" ]]; then
+            pnpm test:visual -- --update-snapshots
+          else
+            pnpm test:e2e
+          fi
+
+      - name: Upload regenerated visual baselines
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.update_visual_snapshots == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux-${{ github.run_id }}
+          path: tests/e2e/visual-baselines.spec.ts-snapshots/*-linux.png
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload browser report
         if: failure()

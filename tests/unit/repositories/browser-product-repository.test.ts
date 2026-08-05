@@ -34,4 +34,17 @@ describe('browser product repository factory', () => {
     expect(repository).not.toBeNull();
     expect(createSupabaseBrowserClient).toHaveBeenCalledOnce();
   });
+
+  it('creates a repository for the Supabase local loopback URL used by CI', () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:55421');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'local-publishable-key');
+
+    const repository = createBrowserProductRepository({
+      accountId: '15000000-0000-4000-8000-000000000001',
+      planTier: 'free',
+      timezone: 'UTC',
+    });
+
+    expect(repository).not.toBeNull();
+  });
 });

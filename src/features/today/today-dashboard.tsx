@@ -308,13 +308,18 @@ export function TodayDashboard(): React.JSX.Element {
           },
         ],
   );
+  const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
 
   const [remoteError, setRemoteError] = useState<string | null>(null);
 
   const reloadRemoteToday = React.useCallback(async () => {
-    if (!repository || !owner) return;
+    if (!repository || !owner) {
+      setRemoteDataReady(true);
+      return;
+    }
     const localDate = getLocalDateForTimezone(owner.timezone);
     try {
+      setRemoteDataReady(false);
       setRemoteError(null);
       await repository.ensureSessionHorizon(owner, localDate);
       const today = await repository.getToday(owner, localDate);
@@ -327,7 +332,9 @@ export function TodayDashboard(): React.JSX.Element {
           };
         }),
       );
+      setRemoteDataReady(true);
     } catch (error) {
+      setRemoteDataReady(false);
       setRemoteError(
         error instanceof Error ? error.message : 'Unable to load today from Supabase.',
       );
@@ -611,6 +618,12 @@ export function TodayDashboard(): React.JSX.Element {
       currentDate={dashboardDate}
       reflectionNote={reflectionNote}
     >
+      <span
+        aria-hidden="true"
+        className="sr-only"
+        data-ready={remoteDataReady ? 'true' : 'false'}
+        data-testid="today-data-ready"
+      />
       {remoteError ? (
         <p
           role="alert"

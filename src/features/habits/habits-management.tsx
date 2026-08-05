@@ -315,15 +315,22 @@ export function HabitsManagement(): React.JSX.Element {
   const [habitsList, setHabitsList] = useState<HabitItem[]>(
     account.accountId ? [] : INITIAL_HABITS,
   );
+  const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
   const [remoteError, setRemoteError] = useState<string | null>(null);
 
   const reloadRemoteHabits = React.useCallback(async () => {
-    if (!repository || !owner) return;
+    if (!repository || !owner) {
+      setRemoteDataReady(true);
+      return;
+    }
     try {
+      setRemoteDataReady(false);
       setRemoteError(null);
       const remoteHabits = await repository.listHabits(owner);
       setHabitsList(remoteHabits.map(mapRepositoryHabit));
+      setRemoteDataReady(true);
     } catch (error) {
+      setRemoteDataReady(false);
       setRemoteError(
         error instanceof Error ? error.message : 'Unable to load habits from Supabase.',
       );
@@ -661,6 +668,12 @@ export function HabitsManagement(): React.JSX.Element {
 
   return (
     <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
+      <span
+        aria-hidden="true"
+        className="sr-only"
+        data-ready={remoteDataReady ? 'true' : 'false'}
+        data-testid="habits-data-ready"
+      />
       {remoteError ? (
         <p
           role="alert"
