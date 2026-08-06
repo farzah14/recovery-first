@@ -19,12 +19,12 @@ describe('TodayDashboard', () => {
 
     // Progress summary widget & total habits
     expect(screen.getByText("Today's Progress")).toBeVisible();
-    expect(screen.getByText('3 Total Habits')).toBeVisible();
+    expect(screen.getByText('2 Total Habits')).toBeVisible();
 
     // Habit cards
     expect(screen.getByRole('button', { name: 'Daily Meditation' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Morning Hydration' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Read 5 Pages' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Hydration & Water' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Read 5 Pages' })).toBeNull();
 
     // Recovery Available indication
     expect(screen.getByText('Recovery Available')).toBeVisible();
@@ -64,8 +64,8 @@ describe('TodayDashboard', () => {
     // Check that Skipped status displays Skipped on the morphed control button
     expect(screen.getByRole('button', { name: /Skipped/i })).toBeVisible();
 
-    // Check that progress completed count did NOT increase from initial (Initial: Morning Hydration [minimum]=1, Read 5 Pages [full]=1 => Total 2)
-    expect(screen.getByText(/2 of 3 habits completed today/i)).toBeVisible();
+    // Skipped is not completed, so progress remains at zero of the two active Library habits.
+    expect(screen.getByText(/0 of 2 habits completed today/i)).toBeVisible();
 
     // Record Full for Daily Meditation by clicking Skipped to reset then Full
     fireEvent.click(screen.getByRole('button', { name: /Skipped/i }));
@@ -74,9 +74,9 @@ describe('TodayDashboard', () => {
       fireEvent.click(fullButtons[0]);
     }
 
-    // Check that Full displays Completed! and increases completed count to 3
-    expect(screen.getAllByRole('button', { name: /Completed!/i }).length).toBe(3);
-    expect(screen.getByText(/3 of 3 habits completed today/i)).toBeVisible();
+    // Check that Full displays Completed! and increases completed count to one.
+    expect(screen.getAllByRole('button', { name: /Completed!/i }).length).toBe(1);
+    expect(screen.getByText(/1 of 2 habits completed today/i)).toBeVisible();
   });
 
   it('allows editing a habit name and target parameters via Edit Habit dialog', () => {
@@ -89,6 +89,27 @@ describe('TodayDashboard', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Edit Habit' })).toBeVisible();
     expect(screen.getByDisplayValue('Daily Meditation')).toBeVisible();
+  });
+
+  it('persists Today edits back to the canonical Library record', async () => {
+    render(<TodayDashboard />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Edit Daily Meditation/i }));
+    fireEvent.change(screen.getByDisplayValue('Daily Meditation'), {
+      target: { value: 'Library-renamed Meditation' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => {
+      const storedHabits = JSON.parse(
+        window.localStorage.getItem('recovery-first.habits-list') ?? '[]',
+      ) as Array<{ id: string; name: string }>;
+      expect(storedHabits.find((habit) => habit.id === 'h1')?.name).toBe(
+        'Library-renamed Meditation',
+      );
+      expect(screen.getByRole('button', { name: 'Library-renamed Meditation' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Daily Meditation' })).toBeNull();
+    });
   });
 
   it('opens Create Habit dialog when requested from sidebar', () => {
@@ -182,8 +203,8 @@ describe('TodayDashboard', () => {
     expect(adjustBtn.className).toContain('text-[11px]');
 
     // Check Min: and Full: target list items
-    expect(screen.getByText(/Min:\s*Minimum 2 mins/i)).toBeVisible();
-    expect(screen.getByText(/Full:\s*Full 10 mins/i)).toBeVisible();
+    expect(screen.getByText(/Min:\s*Minimum 5 mins stretching/i)).toBeVisible();
+    expect(screen.getByText(/Full:\s*Full 30 mins meditation/i)).toBeVisible();
 
     // Click Skip on first habit
     const skipButtons = screen.getAllByRole('button', { name: 'Skip' });
@@ -191,10 +212,10 @@ describe('TodayDashboard', () => {
       fireEvent.click(skipButtons[0]);
     }
 
-    // Check Completed! text element
-    const completedButtons = screen.getAllByRole('button', { name: /Completed!/i });
-    expect(completedButtons[0]).toBeVisible();
-    expect(completedButtons[0]).not.toHaveClass('border');
+    // Skipped is recorded but does not count as completed.
+    const skippedButton = screen.getByRole('button', { name: /Skipped/i });
+    expect(skippedButton).toBeVisible();
+    expect(skippedButton).not.toHaveClass('border');
   });
 
   it('hides Adjust Plan button when the habit is completed', () => {
@@ -273,8 +294,8 @@ describe('TodayDashboard', () => {
 
     // From-Until Clock time ranges present
     expect(screen.getByText('08:00 AM - 09:00 AM')).toBeVisible();
-    expect(screen.getByText('09:00 AM - 10:00 AM')).toBeVisible();
-    expect(screen.getByText('05:00 PM - 06:00 PM')).toBeVisible();
+    expect(screen.getByText('09:00 AM - 05:00 PM')).toBeVisible();
+    expect(screen.queryByText('05:00 PM - 06:00 PM')).toBeNull();
 
     // Ensure no prefixed strings like Daily • 08:00 AM exist
     expect(screen.queryByText(/Daily\s*•/i)).toBeNull();
@@ -324,10 +345,50 @@ describe('TodayDashboard', () => {
       expect(timingTexts).toEqual([
         '05:00 AM - 05:30 AM',
         '08:00 AM - 09:00 AM',
-        '09:00 AM - 10:00 AM',
-        '05:00 PM - 06:00 PM',
+        '09:00 AM - 05:00 PM',
         '09:00 PM - 10:00 PM',
       ]);
+    });
+  });
+
+  it('derives Today habits from the Library definitions instead of retaining stale sessions', async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    window.localStorage.setItem(
+      'recovery-first.habits-list',
+      JSON.stringify([
+        {
+          id: 'h1',
+          name: 'Renamed Library Meditation',
+          category: 'Mindfulness',
+          normalTarget: '30 mins meditation',
+          minimumTarget: '5 mins stretching',
+          schedule: '08:00 AM - 09:00 AM',
+          status: 'Active',
+          createdDate: todayStr,
+          iconName: 'meditation',
+        },
+        {
+          id: 'h2',
+          name: 'Paused Library Hydration',
+          category: 'Health',
+          normalTarget: '2.5 Liters water',
+          minimumTarget: '1 Liter water',
+          schedule: '09:00 AM - 05:00 PM',
+          status: 'Paused',
+          createdDate: todayStr,
+          iconName: 'water',
+        },
+      ]),
+    );
+
+    render(<TodayDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Renamed Library Meditation' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Daily Meditation' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Paused Library Hydration' })).toBeNull();
+      expect(screen.getByText('1 Total Habits')).toBeVisible();
     });
   });
 });

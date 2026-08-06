@@ -57,7 +57,8 @@ export function matchesTimeBucket(habit: HabitScheduleSource, bucket: TimeFilter
   return timeOfDayBucket(hour) === bucket;
 }
 
-export type DateFilterPreset = 'all' | 'today' | 'last7' | 'last30' | 'thisMonth' | 'custom';
+export type DateFilterPreset =
+  'all' | 'today' | 'tomorrow' | 'last7' | 'last30' | 'thisMonth' | 'custom';
 
 export interface DateRange {
   from?: string;
@@ -141,6 +142,12 @@ export function matchesDatePreset(
   const today = toDateString(now);
 
   if (preset === 'today') return normalized === today;
+
+  if (preset === 'tomorrow') {
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return normalized === toDateString(tomorrow);
+  }
 
   if (preset === 'last7') {
     const start = new Date(now);

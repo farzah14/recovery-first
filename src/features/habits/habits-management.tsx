@@ -32,9 +32,11 @@ import {
 import {
   matchesDatePreset,
   matchesTimeBucket,
+  normalizeCreatedDate,
   type DateFilterPreset,
   type TimeFilterValue,
 } from '@/domain/habits/habit-filters';
+import { DEFAULT_HABITS, type HabitRecord } from '@/domain/habits/default-habits';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -47,23 +49,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CreateHabitDialog, type CreateHabitFormData } from '@/features/habits/create-habit-dialog';
-import { getStoredHabits, saveStoredHabits } from '@/lib/storage/habits-sync';
-import { useAccountState } from '@/components/account/account-state';
 import {
-  createBrowserProductRepository,
-  getBrowserProductOwner,
-} from '@/lib/repositories/signed-in/browser-product-repository';
-import {
-  buildCreateHabitCommand,
-  buildHabitVersionCommand,
-} from '@/lib/repositories/habit-command-builders';
-import type { HabitListItem } from '@/lib/repositories/product-repository';
+  CreateHabitDialog,
+  type CreateHabitFormData,
+  CATEGORY_OPTIONS,
+  ICON_OPTIONS,
+  CLOCK_PRESETS,
+  formatTimeRange,
+} from '@/features/habits/create-habit-dialog';
+import { getLibraryHabits, saveStoredHabits } from '@/lib/storage/habits-sync';
 
 export interface HabitItem {
   id: string;
   name: string;
-  category: string;
+  category: 'Mindfulness' | 'Health' | 'Learning' | 'Social';
   description: string;
   normalTarget: string;
   minimumTarget: string;
@@ -77,62 +76,32 @@ export interface HabitItem {
   iconName: string;
   fromTime?: string;
   untilTime?: string;
-  startLocalDate?: string;
-  lifecycleState?: HabitListItem['lifecycleState'];
-  currentVersionId?: string | null;
-  revision?: number;
+  timingContext?: string;
 }
 
-const INITIAL_HABITS: HabitItem[] = [
-  {
-    id: 'h1',
-    name: 'Daily Meditation',
-    category: 'Mindfulness',
-    description: 'A moment of grounding to start the day with clarity and intention.',
-    normalTarget: '30 mins meditation',
-    minimumTarget: '5 mins stretching',
-    schedule: 'Daily (08:00 AM - 09:00 AM)',
-    cue: 'After morning coffee / 08:00 AM Notification',
-    status: 'Active',
-    streak: 12,
-    consistency: 92,
-    createdDate: 'Oct 12, 2023',
-    version: 'v3',
-    iconName: '🧘‍♂️',
-  },
-  {
-    id: 'h2',
-    name: 'Hydration & Water',
-    category: 'Health',
-    description: 'Stay properly hydrated throughout work hours.',
-    normalTarget: '2.5 Liters water',
-    minimumTarget: '1 Liter water',
-    schedule: 'Daily (09:00 AM - 05:00 PM)',
-    cue: 'Desk water bottle refilled',
-    status: 'Active',
-    streak: 8,
-    consistency: 85,
-    createdDate: 'Jan 05, 2024',
-    version: 'v1',
-    iconName: '💧',
-  },
-  {
-    id: 'h3',
-    name: 'Read Tech Documentation',
-    category: 'Learning',
-    description: 'Continuous professional reading and technical development.',
-    normalTarget: '30 mins reading',
-    minimumTarget: '5 mins article skim',
-    schedule: 'Weekdays (07:00 PM - 08:00 PM)',
-    cue: 'After evening meal',
-    status: 'Paused',
-    streak: 0,
-    consistency: 64,
-    createdDate: 'Nov 20, 2023',
-    version: 'v2',
-    iconName: '📚',
-  },
-];
+function toHabitItem(habit: HabitRecord): HabitItem {
+  return {
+    id: habit.id,
+    name: habit.name,
+    category: (habit.category as HabitItem['category']) || 'Mindfulness',
+    description: habit.description || '',
+    normalTarget: habit.normalTarget,
+    minimumTarget: habit.minimumTarget,
+    schedule: habit.schedule,
+    cue: habit.cue || habit.schedule,
+    status: habit.status,
+    streak: habit.streak ?? 1,
+    consistency: habit.consistency ?? 100,
+    createdDate: habit.createdDate,
+    version: habit.version || 'v1',
+    iconName: habit.iconName || '🎯',
+    ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
+    ...(habit.untilTime ? { untilTime: habit.untilTime } : {}),
+    ...(habit.timingContext ? { timingContext: habit.timingContext } : {}),
+  };
+}
+
+const INITIAL_HABITS: HabitItem[] = DEFAULT_HABITS.map(toHabitItem);
 
 const STATUS_FILTER_OPTIONS = ['All', 'Active', 'Paused'] as const;
 type StatusFilter = (typeof STATUS_FILTER_OPTIONS)[number];
@@ -179,15 +148,13 @@ function TimeFilterIcon({
 const DATE_FILTER_OPTIONS: { value: DateFilterPreset; label: string; icon: LucideIcon }[] = [
   { value: 'all', label: 'All Dates', icon: Calendar },
   { value: 'today', label: 'Today', icon: Sun },
-  { value: 'last7', label: 'Last 7 Days', icon: Clock },
-  { value: 'last30', label: 'Last 30 Days', icon: Calendar },
-  { value: 'thisMonth', label: 'This Month', icon: Calendar },
-  { value: 'custom', label: 'Custom', icon: Calendar },
+  { value: 'tomorrow', label: 'Tomorrow', icon: Sunrise },
 ];
 
 const DATE_FILTER_COLORS: Record<DateFilterPreset, string> = {
   all: '#3f4940',
   today: '#004e27',
+  tomorrow: '#2563EB',
   last7: '#2563EB',
   last30: '#7C3AED',
   thisMonth: '#DB2777',
@@ -225,13 +192,6 @@ function getNextMondayDateStr(): string {
   return nextMonday.toISOString().split('T')[0] ?? '';
 }
 
-function createCommandId(): string {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `habit-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  );
-}
-
 function StatusFilterIcon({
   status,
   className,
@@ -246,136 +206,115 @@ function StatusFilterIcon({
   );
 }
 
-function mergeStoredHabits(stored: ReturnType<typeof getStoredHabits>): HabitItem[] {
-  const storedIds = new Set(stored.map((habit) => habit.id));
-  return [
-    ...stored.map((habit) => ({
-      id: habit.id,
-      name: habit.name,
-      category: (habit.category as HabitItem['category']) || 'Mindfulness',
-      description: habit.normalTarget ? `Target: ${habit.normalTarget}` : 'Custom habit',
-      normalTarget: habit.normalTarget,
-      minimumTarget: habit.minimumTarget,
-      schedule: habit.schedule,
-      cue: habit.cue || habit.schedule,
-      status: habit.status,
-      streak: 1,
-      consistency: 100,
-      createdDate: habit.createdDate,
-      version: 'v1',
-      iconName: habit.iconName || INITIAL_HABITS[0]?.iconName || '🎯',
-      ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
-    })),
-    ...INITIAL_HABITS.filter((habit) => !storedIds.has(habit.id)),
-  ];
+function mergeLibraryHabits(records: ReadonlyArray<HabitRecord>): HabitItem[] {
+  return records.map(toHabitItem);
 }
 
-function formatHabitTarget(target: HabitListItem['normalTarget']): string {
-  return (
-    target.label ||
-    (target.quantity !== null && target.unit ? `${target.quantity} ${target.unit}` : target.action)
-  );
+function getIconIdFromEmoji(emojiOrName: string): string {
+  const normalized = emojiOrName.toLowerCase();
+  if (normalized === 'water' || normalized.includes('💧')) return 'water';
+  if (normalized === 'reading' || normalized.includes('📚') || normalized.includes('📖'))
+    return 'reading';
+  if (normalized === 'exercise' || normalized.includes('🏋️') || normalized.includes('🏃'))
+    return 'exercise';
+  if (normalized === 'running' || normalized.includes('🏃')) return 'running';
+  if (normalized === 'sleep' || normalized.includes('🌙') || normalized.includes('😴'))
+    return 'sleep';
+  if (normalized === 'coding' || normalized.includes('💻')) return 'coding';
+  if (normalized === 'writing' || normalized.includes('✏️')) return 'writing';
+  if (normalized === 'nutrition' || normalized.includes('🍎')) return 'nutrition';
+  if (normalized === 'flame' || normalized.includes('🔥')) return 'flame';
+  if (normalized === 'coffee' || normalized.includes('☕')) return 'coffee';
+  if (normalized === 'music' || normalized.includes('🎵')) return 'music';
+  if (normalized === 'zap' || normalized.includes('⚡')) return 'zap';
+  if (normalized === 'target' || normalized.includes('🎯')) return 'target';
+  return 'meditation';
 }
 
-function mapRepositoryHabit(habit: HabitListItem): HabitItem {
-  return {
-    id: habit.id,
-    name: habit.title,
-    category: habit.category || 'Other',
-    description: habit.description,
-    normalTarget: formatHabitTarget(habit.normalTarget),
-    minimumTarget: formatHabitTarget(habit.minimumTarget),
-    schedule: habit.schedule,
-    cue: habit.cue,
-    status: habit.status,
-    streak: habit.streak,
-    consistency: habit.consistency,
-    createdDate: habit.createdDate,
-    version: habit.version,
-    iconName: habit.iconName,
-    lifecycleState: habit.lifecycleState,
-    currentVersionId: habit.currentVersionId,
-    revision: habit.revision,
-    startLocalDate: habit.startLocalDate,
-    ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
-    ...(habit.untilTime ? { untilTime: habit.untilTime } : {}),
-  };
+function getIconEmojiFromId(iconId: string): string {
+  switch (iconId) {
+    case 'meditation':
+      return '🧘‍♂️';
+    case 'water':
+      return '💧';
+    case 'reading':
+      return '📖';
+    case 'exercise':
+      return '🏋️‍♂️';
+    case 'running':
+      return '🏃‍♂️';
+    case 'sleep':
+      return '🌙';
+    case 'coding':
+      return '💻';
+    case 'writing':
+      return '✏️';
+    case 'nutrition':
+      return '🍎';
+    case 'flame':
+      return '🔥';
+    case 'coffee':
+      return '☕';
+    case 'music':
+      return '🎵';
+    case 'zap':
+      return '⚡';
+    default:
+      return '🎯';
+  }
 }
 
 export function HabitsManagement(): React.JSX.Element {
-  const account = useAccountState();
-  const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
-  const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
-
   // Screen Mode: 'list' | 'detail'
   const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
   const [selectedHabitId, setSelectedHabitId] = useState<string>('h1');
 
   // Habits State
-  const [habitsList, setHabitsList] = useState<HabitItem[]>(
-    account.accountId ? [] : INITIAL_HABITS,
-  );
-  const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
-  const [remoteError, setRemoteError] = useState<string | null>(null);
-
-  const reloadRemoteHabits = React.useCallback(async () => {
-    if (!repository || !owner) {
-      setRemoteDataReady(true);
-      return;
-    }
-    try {
-      setRemoteDataReady(false);
-      setRemoteError(null);
-      const remoteHabits = await repository.listHabits(owner);
-      setHabitsList(remoteHabits.map(mapRepositoryHabit));
-      setRemoteDataReady(true);
-    } catch (error) {
-      setRemoteDataReady(false);
-      setRemoteError(
-        error instanceof Error ? error.message : 'Unable to load habits from Supabase.',
-      );
-    }
-  }, [owner, repository]);
+  const [habitsList, setHabitsList] = useState<HabitItem[]>(INITIAL_HABITS);
+  const shouldPersistHabitsRef = useRef(false);
 
   // Hydrate browser-local habits after mount to keep server and client markup deterministic.
   React.useEffect(() => {
-    if (repository && owner) {
-      const loadTimer = window.setTimeout(() => {
-        void reloadRemoteHabits();
-      }, 0);
-      return () => window.clearTimeout(loadTimer);
-    }
-
-    const stored = getStoredHabits();
-    if (stored.length === 0) return undefined;
+    const libraryHabits = getLibraryHabits();
+    if (libraryHabits.length === 0) return undefined;
 
     const hydrationTimer = window.setTimeout(() => {
-      setHabitsList(mergeStoredHabits(stored));
+      setHabitsList(mergeLibraryHabits(libraryHabits));
     }, 0);
 
     return () => window.clearTimeout(hydrationTimer);
-  }, [owner, reloadRemoteHabits, repository]);
+  }, []);
+
+  React.useEffect(() => {
+    if (!shouldPersistHabitsRef.current) return;
+
+    shouldPersistHabitsRef.current = false;
+    saveStoredHabits(
+      habitsList.map((h) => ({
+        id: h.id,
+        name: h.name,
+        category: h.category,
+        normalTarget: h.normalTarget,
+        minimumTarget: h.minimumTarget,
+        schedule: h.schedule,
+        cue: h.cue,
+        status: h.status,
+        createdDate: h.createdDate,
+        iconName: h.iconName,
+        description: h.description,
+        streak: h.streak,
+        consistency: h.consistency,
+        version: h.version,
+        ...(h.fromTime ? { fromTime: h.fromTime } : {}),
+        ...(h.untilTime ? { untilTime: h.untilTime } : {}),
+        ...(h.timingContext ? { timingContext: h.timingContext } : {}),
+      })),
+    );
+  }, [habitsList]);
 
   const updateHabitsWithSync = (updater: (prev: HabitItem[]) => HabitItem[]) => {
-    setHabitsList((prev) => {
-      const next = updater(prev);
-      saveStoredHabits(
-        next.map((h) => ({
-          id: h.id,
-          name: h.name,
-          category: h.category,
-          normalTarget: h.normalTarget,
-          minimumTarget: h.minimumTarget,
-          schedule: h.schedule,
-          cue: h.cue,
-          status: h.status,
-          createdDate: h.createdDate,
-          iconName: h.iconName,
-          ...(h.fromTime ? { fromTime: h.fromTime } : {}),
-        })),
-      );
-      return next;
-    });
+    shouldPersistHabitsRef.current = true;
+    setHabitsList((prev) => updater(prev));
   };
 
   // Filters & Search State
@@ -412,12 +351,13 @@ export function HabitsManagement(): React.JSX.Element {
     if (
       value === 'all' ||
       value === 'today' ||
+      value === 'tomorrow' ||
       value === 'last7' ||
       value === 'last30' ||
       value === 'thisMonth' ||
       value === 'custom'
     ) {
-      setSelectedDateFilter(value);
+      setSelectedDateFilter(value as DateFilterPreset);
       setVisibleActiveCount(4);
     }
   }
@@ -435,8 +375,15 @@ export function HabitsManagement(): React.JSX.Element {
   // Edit Form Fields
   const [editName, setEditName] = useState(activeHabit?.name || '');
   const [editDesc, setEditDesc] = useState(activeHabit?.description || '');
+  const [editCategory, setEditCategory] = useState(
+    activeHabit?.category?.toLowerCase() || 'mindfulness',
+  );
   const [editNormal, setEditNormal] = useState(activeHabit?.normalTarget || '');
   const [editMinimum, setEditMinimum] = useState(activeHabit?.minimumTarget || '');
+  const [editIcon, setEditIcon] = useState('meditation');
+  const [editFromTime, setEditFromTime] = useState(activeHabit?.fromTime || '08:00');
+  const [editUntilTime, setEditUntilTime] = useState(activeHabit?.untilTime || '09:00');
+  const [editTiming, setEditTiming] = useState(activeHabit?.timingContext || '08:00 AM - 09:00 AM');
   const [editDate, setEditDate] = useState(activeHabit?.createdDate || getTodayDateStr());
 
   // Toast State
@@ -462,77 +409,47 @@ export function HabitsManagement(): React.JSX.Element {
     }, 3000);
   };
 
+  const openEditHabitModal = (habit: HabitItem) => {
+    setSelectedHabitId(habit.id);
+    setEditName(habit.name);
+    setEditDesc(habit.description);
+    setEditCategory((habit.category || 'mindfulness').toLowerCase());
+    setEditNormal(habit.normalTarget);
+    setEditMinimum(habit.minimumTarget);
+    setEditIcon(getIconIdFromEmoji(habit.iconName));
+    setEditFromTime(habit.fromTime || '08:00');
+    setEditUntilTime(habit.untilTime || '09:00');
+    setEditTiming(habit.timingContext || habit.schedule || '08:00 AM - 09:00 AM');
+    setEditDate(habit.createdDate || getTodayDateStr());
+    setEditDialogOpen(true);
+  };
+
   const handleOpenDetail = (habitId: string) => {
     const habit = habitsList.find((h) => h.id === habitId);
     if (habit) {
       setSelectedHabitId(habitId);
-      setEditName(habit.name);
-      setEditDesc(habit.description);
-      setEditNormal(habit.normalTarget);
-      setEditMinimum(habit.minimumTarget);
-      setEditDate(habit.createdDate || getTodayDateStr());
       setViewMode('detail');
       setDetailTab('overview');
     }
   };
 
-  const handleTogglePause = async (habitId: string) => {
-    const habit = habitsList.find((item) => item.id === habitId);
+  const handleTogglePause = (habitId: string) => {
+    const habit = habitsList.find((h) => h.id === habitId);
     if (!habit) return;
 
-    if (repository && owner) {
-      try {
-        await repository.setHabitLifecycle({
-          commandId: createCommandId(),
-          owner,
-          habitId,
-          expectedRevision: habit.revision ?? 1,
-          nextState: habit.status === 'Active' ? 'paused' : 'starting',
-        });
-        await reloadRemoteHabits();
-        showToast(`Habit "${habit.name}" status updated.`);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Unable to update habit status.');
-      }
-      return;
-    }
-
+    const nextStatus = habit.status === 'Active' ? 'Paused' : 'Active';
     updateHabitsWithSync((prev) =>
-      prev.map((h) => {
-        if (h.id === habitId) {
-          const nextStatus = h.status === 'Active' ? 'Paused' : 'Active';
-          showToast(`Habit "${h.name}" status updated to ${nextStatus}`);
-          return { ...h, status: nextStatus };
-        }
-        return h;
-      }),
+      prev.map((h) => (h.id === habitId ? { ...h, status: nextStatus } : h)),
     );
+    showToast(`Habit "${habit.name}" status updated to ${nextStatus}`);
   };
 
-  const handleCreateHabitSubmit = async (data: CreateHabitFormData) => {
-    if (repository && owner) {
-      try {
-        await repository.createHabit(
-          buildCreateHabitCommand(data, owner, {
-            habitId: createCommandId(),
-            habitVersionId: createCommandId(),
-            commandId: createCommandId(),
-            now: new Date().toISOString(),
-          }),
-        );
-        await reloadRemoteHabits();
-        showToast(`New habit "${data.name}" created successfully!`);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Unable to create habit.');
-      }
-      return;
-    }
-
+  const handleCreateHabitSubmit = (data: CreateHabitFormData) => {
     const newHabit: HabitItem = {
       id: `h-${Date.now()}`,
       name: data.name,
       category: (data.category as HabitItem['category']) || 'Mindfulness',
-      description: `Target: ${data.normalTarget} (Min: ${data.minimumTarget})`,
+      description: data.description?.trim() || '',
       normalTarget: data.normalTarget,
       minimumTarget: data.minimumTarget,
       schedule: `${data.category} (${data.timingContext})`,
@@ -542,55 +459,23 @@ export function HabitsManagement(): React.JSX.Element {
       consistency: 100,
       createdDate: data.startDate || getTodayDateStr(),
       version: 'v1',
-      iconName: data.icon === 'meditation' ? '🧘‍♂️' : data.icon === 'water' ? '💧' : '🎯',
+      iconName: getIconEmojiFromId(data.icon),
       fromTime: data.fromTime,
+      untilTime: data.untilTime,
+      timingContext: data.timingContext,
     };
     updateHabitsWithSync((prev) => [newHabit, ...prev]);
     showToast(`New habit "${data.name}" created successfully!`);
   };
 
-  const handleSaveEditSubmit = async (e: React.FormEvent) => {
+  const handleSaveEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editName.trim()) return;
 
-    const habit = habitsList.find((item) => item.id === selectedHabitId);
-    if (repository && owner && habit) {
-      if (!habit.currentVersionId) {
-        showToast('This habit has no current Supabase version yet.');
-        return;
-      }
-      try {
-        await repository.updateHabitVersion(
-          buildHabitVersionCommand(
-            {
-              name: editName,
-              category: habit.category,
-              normalTarget: editNormal,
-              minimumTarget: editMinimum,
-              icon: habit.iconName,
-              startDate: habit.startLocalDate || editDate.trim() || getTodayDateStr(),
-              fromTime: habit.fromTime || '08:00',
-              untilTime: habit.untilTime || '09:00',
-              timingContext: habit.schedule,
-              description: editDesc,
-            },
-            owner,
-            {
-              habitId: habit.id,
-              habitVersionId: createCommandId(),
-              commandId: createCommandId(),
-              expectedRevision: habit.revision ?? 1,
-            },
-          ),
-        );
-        await reloadRemoteHabits();
-        setEditDialogOpen(false);
-        showToast(`Habit "${editName.trim()}" specifications updated!`);
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Unable to update habit.');
-      }
-      return;
-    }
+    const matchedCat = CATEGORY_OPTIONS.find((c) => c.id === editCategory);
+    const categoryLabel = (matchedCat?.label as HabitItem['category']) || ('Mindfulness' as const);
+    const computedTiming =
+      editTiming || formatTimeRange(editFromTime, editUntilTime) || '08:00 AM - 09:00 AM';
 
     updateHabitsWithSync((prev) =>
       prev.map((h) => {
@@ -598,9 +483,16 @@ export function HabitsManagement(): React.JSX.Element {
           return {
             ...h,
             name: editName.trim(),
+            category: categoryLabel,
             description: editDesc.trim(),
-            normalTarget: editNormal.trim(),
-            minimumTarget: editMinimum.trim(),
+            normalTarget: editNormal.trim() || h.normalTarget,
+            minimumTarget: editMinimum.trim() || h.minimumTarget,
+            iconName: getIconEmojiFromId(editIcon),
+            fromTime: editFromTime,
+            untilTime: editUntilTime,
+            timingContext: computedTiming,
+            schedule: `${categoryLabel} (${computedTiming})`,
+            cue: computedTiming,
             createdDate: editDate.trim() || getTodayDateStr(),
           };
         }
@@ -612,27 +504,7 @@ export function HabitsManagement(): React.JSX.Element {
     showToast(`Habit "${editName.trim()}" specifications updated!`);
   };
 
-  const handleDeleteHabitConfirm = async () => {
-    const habit = habitsList.find((item) => item.id === selectedHabitId);
-    if (repository && owner && habit) {
-      try {
-        await repository.setHabitLifecycle({
-          commandId: createCommandId(),
-          owner,
-          habitId: habit.id,
-          expectedRevision: habit.revision ?? 1,
-          nextState: 'trash',
-        });
-        await reloadRemoteHabits();
-        setDeleteDialogOpen(false);
-        setViewMode('list');
-        showToast('Habit moved to archive/trash');
-      } catch (error) {
-        showToast(error instanceof Error ? error.message : 'Unable to delete habit.');
-      }
-      return;
-    }
-
+  const handleDeleteHabitConfirm = () => {
     updateHabitsWithSync((prev) => prev.filter((h) => h.id !== selectedHabitId));
     setDeleteDialogOpen(false);
     setViewMode('list');
@@ -665,23 +537,22 @@ export function HabitsManagement(): React.JSX.Element {
   const pausedHabits = filteredHabits.filter((h) => h.status === 'Paused');
   const displayedActiveHabits = activeHabits.slice(0, visibleActiveCount);
   const hasMoreActiveHabits = activeHabits.length > visibleActiveCount;
+  const getLibraryHabitCountForDate = (date: Date): number => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateKey = `${date.getFullYear()}-${month}-${day}`;
+
+    return habitsList.filter((habit) => {
+      if (habit.status === 'Archived') return false;
+      return normalizeCreatedDate(habit.createdDate) === dateKey;
+    }).length;
+  };
 
   return (
-    <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
-      <span
-        aria-hidden="true"
-        className="sr-only"
-        data-ready={remoteDataReady ? 'true' : 'false'}
-        data-testid="habits-data-ready"
-      />
-      {remoteError ? (
-        <p
-          role="alert"
-          className="mx-auto max-w-5xl px-4 pt-4 text-xs text-red-700 sm:px-6 lg:px-8"
-        >
-          {remoteError}
-        </p>
-      ) : null}
+    <AppShell
+      onOpenCreateHabit={() => setCreateDialogOpen(true)}
+      habitCountForDate={getLibraryHabitCountForDate}
+    >
       {/* Toast Notification Banner (Centered Bottom Text-Only with Entrance & Exit Animations - No Rectangle Box) */}
       {toastMessage && (
         <div
@@ -1217,9 +1088,13 @@ export function HabitsManagement(): React.JSX.Element {
                 </Badge>
               </div>
 
-              <p className="max-w-2xl text-xs leading-relaxed text-[#3f4940] sm:text-sm">
-                {activeHabit.description}
-              </p>
+              {activeHabit.description &&
+                activeHabit.description.trim() !== '' &&
+                !activeHabit.description.startsWith('Target:') && (
+                  <p className="max-w-2xl text-xs leading-relaxed text-[#3f4940] sm:text-sm">
+                    {activeHabit.description}
+                  </p>
+                )}
             </div>
 
             {/* Actions */}
@@ -1232,6 +1107,16 @@ export function HabitsManagement(): React.JSX.Element {
               >
                 <Pencil className="size-4 text-[#3f4940]" />
                 <span>Edit</span>
+              </Button>
+
+              <Button
+                size="compact"
+                variant="secondary"
+                onClick={() => setRedesignDialogOpen(true)}
+                className="flex items-center gap-1.5 border border-[var(--color-border-standard,#DDE5E1)] bg-white text-xs font-semibold text-[#004e27] hover:bg-[#f0f4f3]"
+              >
+                <Wrench className="size-3.5" />
+                <span>Redesign</span>
               </Button>
 
               <button
@@ -1265,7 +1150,7 @@ export function HabitsManagement(): React.JSX.Element {
               onClick={() => setDetailTab('overview')}
               className={`border-b-2 px-4 py-3 text-xs font-bold whitespace-nowrap transition-colors ${
                 detailTab === 'overview'
-                  ? 'border-[#004e27] text-[#004e27]'
+                  ? 'border-[#004e27] font-bold text-[#004e27]'
                   : 'border-transparent text-[#3f4940] hover:text-[#161A17]'
               }`}
             >
@@ -1297,8 +1182,8 @@ export function HabitsManagement(): React.JSX.Element {
 
           {/* Tab Content */}
           {detailTab === 'overview' && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <div className="col-span-1 space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs md:col-span-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="col-span-1 space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs">
                 <h2 className="flex items-center gap-2 text-base font-bold text-[#161A17]">
                   <Sparkles className="size-5 text-[#004e27]" />
                   <span>Current Definition</span>
@@ -1396,47 +1281,6 @@ export function HabitsManagement(): React.JSX.Element {
                       <span className="size-2 rounded-full bg-[#9fa9a4]" /> Skip (8%)
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Lifecycle Card */}
-              <div className="col-span-1 flex flex-col justify-between space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs md:col-span-2 lg:col-span-1">
-                <div>
-                  <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-[#161A17]">
-                    <Info className="size-5 text-[#3f4940]" />
-                    <span>Lifecycle</span>
-                  </h2>
-
-                  <ul className="space-y-3 text-xs">
-                    <li className="flex items-center justify-between border-b border-[var(--color-border-standard,#DDE5E1)] pb-2">
-                      <span className="font-medium text-[#3f4940]">Created</span>
-                      <span className="font-semibold text-[#161A17]">
-                        {activeHabit.createdDate}
-                      </span>
-                    </li>
-                    <li className="flex items-center justify-between border-b border-[var(--color-border-standard,#DDE5E1)] pb-2">
-                      <span className="font-medium text-[#3f4940]">Current Version</span>
-                      <span className="rounded bg-[#f0f4f3] px-2 py-0.5 text-xs font-bold text-[#004e27]">
-                        {activeHabit.version}
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="space-y-3 rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-[#f8f9f9] p-4 text-center">
-                  <p className="text-xs leading-relaxed text-[#3f4940]">
-                    Habits evolve. If this isn’t working for you anymore, consider a redesign.
-                  </p>
-                  <Button
-                    size="compact"
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => setRedesignDialogOpen(true)}
-                    className="flex items-center justify-center gap-1.5 border-[#004e27] text-xs font-semibold text-[#004e27]"
-                  >
-                    <Wrench className="size-3.5" />
-                    <span>Redesign Habit</span>
-                  </Button>
                 </div>
               </div>
             </div>
@@ -1625,21 +1469,27 @@ export function HabitsManagement(): React.JSX.Element {
         existingNames={habitsList.map((h) => h.name)}
       />
 
-      {/* DIALOG 2: EDIT HABIT */}
+      {/* DIALOG 2: EDIT HABIT (Unified Rich Modal) */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-[#161A17]">
-            <Pencil className="size-5 text-[#004e27]" />
-            <span>Edit Habit Specifications</span>
-          </DialogTitle>
-          <DialogDescription className="text-xs text-[#3f4940]">
-            Update parameters for {activeHabit?.name}.
-          </DialogDescription>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <div className="flex flex-col gap-1 border-b border-[var(--color-border-standard,#DDE5E1)] pb-3">
+            <div className="flex items-center gap-2">
+              <Pencil className="size-5 text-[#004e27]" />
+              <DialogTitle className="text-lg font-bold text-[#161A17]">Edit Habit</DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-[#3f4940]">
+              Modify parameters for habit: {activeHabit?.name || editName}
+            </DialogDescription>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#e8eee9]">
+              <div className="h-full w-full rounded-full bg-[#004e27] transition-all" />
+            </div>
+          </div>
 
-          <form onSubmit={handleSaveEditSubmit} className="mt-4 space-y-4 text-xs">
+          <form onSubmit={handleSaveEditSubmit} className="space-y-4 pt-2 text-xs">
+            {/* Habit Name */}
             <div className="space-y-1">
-              <label className="font-semibold text-[#161A17]" htmlFor="editName">
-                Habit Name
+              <label className="block text-xs font-semibold text-[#161A17]" htmlFor="editName">
+                Habit Name <span className="text-red-500">*</span>
               </label>
               <input
                 id="editName"
@@ -1647,20 +1497,213 @@ export function HabitsManagement(): React.JSX.Element {
                 required
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs text-[#161A17]"
+                placeholder="e.g. Daily Walk & Fresh Air"
+                className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs text-[#161A17] focus:border-[#004e27] focus:outline-none"
               />
             </div>
 
-            <div className="space-y-1">
+            {/* Category Grid */}
+            <div className="space-y-2 border-t border-[var(--color-border-standard,#DDE5E1)] pt-3">
+              <span className="block text-xs font-semibold text-[#161A17]">Category</span>
+              <div className="grid grid-cols-3 gap-2">
+                {CATEGORY_OPTIONS.map((cat) => {
+                  const IconComp = cat.Icon;
+                  const isSelected = editCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setEditCategory(cat.id)}
+                      className={cn(
+                        'flex items-center gap-2 rounded-lg border p-2.5 text-left text-xs font-semibold transition-all',
+                        isSelected
+                          ? 'border-[#004e27] bg-[#96f4a8]/20 font-bold text-[#004e27] shadow-xs'
+                          : 'border-[var(--color-border-standard,#DDE5E1)] bg-white text-[#3f4940] hover:border-[#004e27]/40',
+                      )}
+                    >
+                      <IconComp
+                        className={cn(
+                          'size-4 shrink-0',
+                          isSelected ? 'text-[#004e27]' : 'text-[#3f4940]',
+                        )}
+                      />
+                      <span className="truncate">{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Definition Grid: Normal & Minimum Target */}
+            <div className="space-y-3 border-t border-[var(--color-border-standard,#DDE5E1)] pt-3">
+              <span className="block text-xs font-semibold text-[#161A17]">
+                Define Your Habit Targets
+              </span>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {/* Normal Target */}
+                <div className="space-y-1">
+                  <label
+                    className="flex items-center gap-1.5 text-[11px] font-semibold text-[#161A17]"
+                    htmlFor="editFull"
+                  >
+                    <CheckCircle2 className="size-4 text-[#004e27]" />
+                    <span>Normal Target</span>
+                  </label>
+                  <input
+                    id="editFull"
+                    type="text"
+                    required
+                    value={editNormal}
+                    onChange={(e) => setEditNormal(e.target.value)}
+                    placeholder="e.g. 30 mins walk"
+                    className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs text-[#161A17] focus:border-[#004e27] focus:outline-none"
+                  />
+                  <p className="text-[10px] text-[#3f4940]">Standard target for normal days</p>
+                </div>
+
+                {/* Minimum Target */}
+                <div className="space-y-1">
+                  <label
+                    className="flex items-center gap-1.5 text-[11px] font-semibold text-[#161A17]"
+                    htmlFor="editMin"
+                  >
+                    <Leaf className="size-4 text-[#F59E0B]" />
+                    <span>Minimum Target</span>
+                  </label>
+                  <div className="flex h-10 items-center rounded-lg border border-amber-300/70 bg-[#FFFBEB] px-3 transition-all focus-within:border-[#F59E0B] focus-within:ring-2 focus-within:ring-[#F59E0B]/20">
+                    <Leaf className="mr-2 size-4 shrink-0 text-[#F59E0B]" />
+                    <input
+                      id="editMin"
+                      type="text"
+                      required
+                      value={editMinimum}
+                      onChange={(e) => setEditMinimum(e.target.value)}
+                      placeholder="e.g. 5 mins walk"
+                      className="w-full border-none bg-transparent text-xs text-[#161A17] focus:ring-0 focus:outline-none"
+                    />
+                  </div>
+                  <p className="text-[10px] text-[#3f4940]">Your non-zero effort for hard days</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Choose Icon */}
+            <div className="space-y-2 border-t border-[var(--color-border-standard,#DDE5E1)] pt-3">
+              <span className="block text-xs font-semibold text-[#161A17]">Choose Icon</span>
+              <div className="grid grid-cols-7 gap-2 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-[#f8f9f9] p-3">
+                {ICON_OPTIONS.map((opt) => {
+                  const IconComp = opt.Icon;
+                  const isSelected = editIcon === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      aria-label={`Select ${opt.label} icon`}
+                      onClick={() => setEditIcon(opt.id)}
+                      className={cn(
+                        'flex size-9 items-center justify-center rounded-lg transition-all',
+                        isSelected
+                          ? 'bg-[#004e27] font-bold text-white shadow-xs ring-2 ring-[#004e27]'
+                          : 'text-[#3f4940] hover:bg-white hover:text-[#004e27]',
+                      )}
+                      title={opt.label}
+                    >
+                      <IconComp className="size-4.5" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Clock Schedule */}
+            <div className="space-y-3 border-t border-[var(--color-border-standard,#DDE5E1)] pt-3">
+              <div className="flex items-center justify-between">
+                <label
+                  className="flex items-center gap-1.5 text-xs font-semibold text-[#161A17]"
+                  htmlFor="editFromTime"
+                >
+                  <Clock className="size-4 text-[#004e27]" />
+                  <span>Clock Schedule (From - Until)</span>
+                </label>
+                <span className="text-[11px] font-medium text-[#3f4940]">Schedule range</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className="mb-1 block text-[11px] font-semibold text-[#3f4940]"
+                    htmlFor="editFromTime"
+                  >
+                    From Clock
+                  </label>
+                  <input
+                    id="editFromTime"
+                    type="time"
+                    value={editFromTime}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditFromTime(val);
+                      setEditTiming(formatTimeRange(val, editUntilTime));
+                    }}
+                    className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs font-semibold text-[#161A17] focus:border-[#004e27] focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label
+                    className="mb-1 block text-[11px] font-semibold text-[#3f4940]"
+                    htmlFor="editUntilTime"
+                  >
+                    Until Clock
+                  </label>
+                  <input
+                    id="editUntilTime"
+                    type="time"
+                    value={editUntilTime}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditUntilTime(val);
+                      setEditTiming(formatTimeRange(editFromTime, val));
+                    }}
+                    className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs font-semibold text-[#161A17] focus:border-[#004e27] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {CLOCK_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => {
+                      setEditFromTime(p.from);
+                      setEditUntilTime(p.until);
+                      setEditTiming(p.label);
+                    }}
+                    className={cn(
+                      'rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all',
+                      editFromTime === p.from && editUntilTime === p.until
+                        ? 'border-[#004e27] bg-[#96f4a8]/30 font-bold text-[#027235]'
+                        : 'border-[var(--color-border-standard,#DDE5E1)] bg-white text-[#3f4940] hover:border-[#004e27]/40',
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description textarea */}
+            <div className="space-y-1 border-t border-[var(--color-border-standard,#DDE5E1)] pt-3">
               <label className="font-semibold text-[#161A17]" htmlFor="editDesc">
-                Description
+                Description & Notes <span className="font-normal text-[#3f4940]">(optional)</span>
               </label>
               <textarea
                 id="editDesc"
                 rows={2}
                 value={editDesc}
                 onChange={(e) => setEditDesc(e.target.value)}
-                className="w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white p-2.5 text-xs text-[#161A17]"
+                placeholder="e.g. Personal motivations or cues for this habit..."
+                className="w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white p-2.5 text-xs text-[#161A17] focus:border-[#004e27] focus:outline-none"
               />
             </div>
 
@@ -1721,7 +1764,7 @@ export function HabitsManagement(): React.JSX.Element {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 border-t border-[var(--color-border-standard,#DDE5E1)] pt-4">
               <Button
                 type="button"
                 size="compact"

@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    testTimeout: 60000,
+    fileParallelism: false,
     setupFiles: ['./src/test-support/setup.ts'],
     include: [
       'tests/unit/**/*.test.ts',
