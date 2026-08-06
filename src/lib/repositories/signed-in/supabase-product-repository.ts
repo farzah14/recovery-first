@@ -31,6 +31,7 @@ type HabitRow = Database['public']['Tables']['habits']['Row'];
 type VersionRow = Database['public']['Tables']['habit_versions']['Row'];
 type SessionRow = Database['public']['Tables']['sessions']['Row'];
 type CheckInRow = Database['public']['Tables']['check_ins']['Row'];
+type CheckInHistoryRow = Database['public']['Tables']['check_in_history']['Row'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -69,8 +70,9 @@ function recurrenceFromJson(value: Json): RecurrenceRule {
   if (
     record.kind === 'weekdays' &&
     Array.isArray(record.weekdays) &&
-    record.weekdays.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
-      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    record.weekdays.every(
+      (day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+        typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
     )
   ) {
     return { kind: 'weekdays', weekdays: record.weekdays };
@@ -79,8 +81,9 @@ function recurrenceFromJson(value: Json): RecurrenceRule {
     record.kind === 'times_per_week' &&
     typeof record.count === 'number' &&
     Array.isArray(record.placement) &&
-    record.placement.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
-      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    record.placement.every(
+      (day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+        typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
     )
   ) {
     return { kind: 'times_per_week', count: record.count, placement: record.placement };
@@ -97,24 +100,43 @@ function recurrenceFromJson(value: Json): RecurrenceRule {
 
 function lifecycleFromValue(value: unknown): HabitLifecycleState {
   if (
-    value === 'draft' || value === 'starting' || value === 'building' || value === 'active' ||
-    value === 'stable' || value === 'at_risk' || value === 'recovery' || value === 'rebuilding' ||
-    value === 'needs_review' || value === 'paused' || value === 'stopped' || value === 'completed' ||
-    value === 'archived' || value === 'trash' || value === 'decision_required'
-  ) return value;
+    value === 'draft' ||
+    value === 'starting' ||
+    value === 'building' ||
+    value === 'active' ||
+    value === 'stable' ||
+    value === 'at_risk' ||
+    value === 'recovery' ||
+    value === 'rebuilding' ||
+    value === 'needs_review' ||
+    value === 'paused' ||
+    value === 'stopped' ||
+    value === 'completed' ||
+    value === 'archived' ||
+    value === 'trash' ||
+    value === 'decision_required'
+  )
+    return value;
   return 'draft';
 }
 
 function sessionStatusFromValue(value: unknown): SessionSummary['status'] {
   if (
-    value === 'full' || value === 'minimum' || value === 'manual_skipped' ||
-    value === 'automatic_skipped' || value === 'excused' || value === 'unrecorded'
-  ) return value;
+    value === 'full' ||
+    value === 'minimum' ||
+    value === 'manual_skipped' ||
+    value === 'automatic_skipped' ||
+    value === 'excused' ||
+    value === 'unrecorded'
+  )
+    return value;
   return 'unrecorded';
 }
 
 function versionSourceFromValue(value: unknown): HabitDetailRead['versions'][number]['source'] {
-  return value === 'redesign' || value === 'recommendation' || value === 'restore' ? value : 'creation';
+  return value === 'redesign' || value === 'recommendation' || value === 'restore'
+    ? value
+    : 'creation';
 }
 
 function errorDetails(error: unknown): ProviderError {
@@ -128,26 +150,43 @@ function errorDetails(error: unknown): ProviderError {
   return {};
 }
 
-function mapProviderError(error: unknown, operation: 'habit' | 'session' | 'check_in' | 'read'): ProductRepositoryError {
+function mapProviderError(
+  error: unknown,
+  operation: 'habit' | 'session' | 'check_in' | 'read',
+): ProductRepositoryError {
   if (error instanceof ProductRepositoryError) return error;
   const details = errorDetails(error);
   const message = `${details.message ?? ''} ${details.details ?? ''}`.toLowerCase();
   if (message.includes('active_limit_reached') || message.includes('active_habit_limit_reached')) {
     return new ProductRepositoryError('active_limit_reached');
   }
-  if (message.includes('same_day_edit_closed')) return new ProductRepositoryError('same_day_edit_closed');
-  if (message.includes('idempotency_payload_conflict')) return new ProductRepositoryError('idempotency_conflict');
-  if (message.includes('revision_conflict') || details.code === '40001' || message.includes('stale_revision')) {
+  if (message.includes('same_day_edit_closed'))
+    return new ProductRepositoryError('same_day_edit_closed');
+  if (message.includes('idempotency_payload_conflict'))
+    return new ProductRepositoryError('idempotency_conflict');
+  if (
+    message.includes('revision_conflict') ||
+    details.code === '40001' ||
+    message.includes('stale_revision')
+  ) {
     return new ProductRepositoryError('stale_revision');
   }
-  if (message.includes('session_not_found') || message.includes('habit_version_not_found')) {
+  if (
+    message.includes('session_not_found') ||
+    message.includes('habit_version_not_found') ||
+    message.includes('check_in_not_found')
+  ) {
     return new ProductRepositoryError('session_not_found');
   }
   if (message.includes('habit_not_found') || message.includes('row_not_found')) {
-    return new ProductRepositoryError(operation === 'session' || operation === 'check_in' ? 'session_not_found' : 'habit_not_found');
+    return new ProductRepositoryError(
+      operation === 'session' || operation === 'check_in' ? 'session_not_found' : 'habit_not_found',
+    );
   }
   if (details.code === '42501' || message.includes('rls') || message.includes('permission')) {
-    return new ProductRepositoryError(operation === 'session' || operation === 'check_in' ? 'session_not_found' : 'habit_not_found');
+    return new ProductRepositoryError(
+      operation === 'session' || operation === 'check_in' ? 'session_not_found' : 'habit_not_found',
+    );
   }
   return new ProductRepositoryError('repository_unavailable', 'Supabase repository unavailable', {
     providerCode: details.code ?? null,
@@ -168,7 +207,10 @@ export class SupabaseProductRepository implements ProductRepository {
 
   private assertOwner(owner: ProductOwner): void {
     if (owner.identityMode !== 'account' || owner.ownerId !== this.userId) {
-      throw new ProductRepositoryError('repository_unavailable', 'Signed-in repository owner mismatch');
+      throw new ProductRepositoryError(
+        'repository_unavailable',
+        'Signed-in repository owner mismatch',
+      );
     }
   }
 
@@ -214,27 +256,33 @@ export class SupabaseProductRepository implements ProductRepository {
       });
       if (insertError) throw insertError;
 
-      const { data: versionData, error: versionError } = await this.client.rpc('create_habit_version', {
-        p_habit_id: command.habitId,
-        p_version_id: command.habitVersionId,
-        p_expected_revision: 1,
-        p_normal_target: command.normalTarget,
-        p_minimum_target: command.minimumTarget,
-        p_schedule_rule: command.recurrence,
-        p_cue: command.cue,
-        p_recovery_structure: {},
-        p_source: 'creation',
-        p_command_id: command.commandId,
-      });
+      const { data: versionData, error: versionError } = await this.client.rpc(
+        'create_habit_version',
+        {
+          p_habit_id: command.habitId,
+          p_version_id: command.habitVersionId,
+          p_expected_revision: 1,
+          p_normal_target: command.normalTarget,
+          p_minimum_target: command.minimumTarget,
+          p_schedule_rule: command.recurrence,
+          p_cue: command.cue,
+          p_recovery_structure: {},
+          p_source: 'creation',
+          p_command_id: command.commandId,
+        },
+      );
       if (versionError) throw versionError;
 
       const sessions = command.activate ? generateSessionsForCommand(command) : [];
       if (command.activate) {
-        const { data: activationData, error: activationError } = await this.client.rpc('activate_habit', {
-          p_habit_id: command.habitId,
-          p_expected_revision: 2,
-          p_command_id: `${command.commandId}-activate`,
-        });
+        const { data: activationData, error: activationError } = await this.client.rpc(
+          'activate_habit',
+          {
+            p_habit_id: command.habitId,
+            p_expected_revision: 2,
+            p_command_id: `${command.commandId}-activate`,
+          },
+        );
         if (activationError) throw activationError;
         for (const session of sessions) {
           await this.ensureSession({
@@ -272,7 +320,10 @@ export class SupabaseProductRepository implements ProductRepository {
   }
 
   async saveHabitDraft(): Promise<void> {
-    throw new ProductRepositoryError('repository_unavailable', 'Signed-in drafts require an approved server draft boundary');
+    throw new ProductRepositoryError(
+      'repository_unavailable',
+      'Signed-in drafts require an approved server draft boundary',
+    );
   }
 
   async getHabitDraft(owner: ProductOwner): Promise<unknown | null> {
@@ -281,25 +332,31 @@ export class SupabaseProductRepository implements ProductRepository {
   }
 
   async deleteHabitDraft(): Promise<void> {
-    throw new ProductRepositoryError('repository_unavailable', 'Signed-in drafts require an approved server draft boundary');
+    throw new ProductRepositoryError(
+      'repository_unavailable',
+      'Signed-in drafts require an approved server draft boundary',
+    );
   }
 
   async listHabits(owner: ProductOwner): Promise<HabitListItem[]> {
     this.assertOwner(owner);
     try {
-      const { data, error } = await this.client.from('habit_summary_view')
+      const { data, error } = await this.client
+        .from('habit_summary_view')
         .select('*')
         .eq('user_id', this.userId);
       if (error) throw error;
       return (data ?? []).flatMap((row: SummaryRow) => {
         if (!row.habit_id || !row.title || !row.lifecycle_state) return [];
-        return [{
-          id: row.habit_id,
-          title: row.title,
-          lifecycleState: row.lifecycle_state,
-          currentVersionId: row.current_version_id,
-          updatedAt: new Date().toISOString(),
-        }];
+        return [
+          {
+            id: row.habit_id,
+            title: row.title,
+            lifecycleState: row.lifecycle_state,
+            currentVersionId: row.current_version_id,
+            updatedAt: new Date().toISOString(),
+          },
+        ];
       });
     } catch (error) {
       throw mapProviderError(error, 'read');
@@ -309,25 +366,62 @@ export class SupabaseProductRepository implements ProductRepository {
   async getHabitDetail(owner: ProductOwner, habitId: string): Promise<HabitDetailRead | null> {
     this.assertOwner(owner);
     try {
-      const [{ data: summary, error: summaryError }, { data: habit, error: habitError }, { data: versions, error: versionsError }, { data: sessions, error: sessionsError }, { data: checkIns, error: checkInsError }] = await Promise.all([
-        this.client.from('habit_summary_view').select('*').eq('user_id', this.userId).eq('habit_id', habitId).maybeSingle(),
-        this.client.from('habits').select('*').eq('user_id', this.userId).eq('id', habitId).maybeSingle(),
-        this.client.from('habit_versions').select('*').eq('user_id', this.userId).eq('habit_id', habitId).order('version_number', { ascending: false }),
-        this.client.from('sessions').select('*').eq('user_id', this.userId).eq('habit_id', habitId).order('scheduled_local_date', { ascending: false }),
+      const [
+        { data: summary, error: summaryError },
+        { data: habit, error: habitError },
+        { data: versions, error: versionsError },
+        { data: sessions, error: sessionsError },
+        { data: checkIns, error: checkInsError },
+        { data: checkInHistory, error: checkInHistoryError },
+      ] = await Promise.all([
+        this.client
+          .from('habit_summary_view')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('habit_id', habitId)
+          .maybeSingle(),
+        this.client
+          .from('habits')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('id', habitId)
+          .maybeSingle(),
+        this.client
+          .from('habit_versions')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('habit_id', habitId)
+          .order('version_number', { ascending: false }),
+        this.client
+          .from('sessions')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('habit_id', habitId)
+          .order('scheduled_local_date', { ascending: false }),
         this.client.from('check_ins').select('*').eq('user_id', this.userId),
+        this.client.from('check_in_history').select('*').eq('user_id', this.userId),
       ]);
       if (summaryError) throw summaryError;
       if (habitError) throw habitError;
       if (versionsError) throw versionsError;
       if (sessionsError) throw sessionsError;
       if (checkInsError) throw checkInsError;
+      if (checkInHistoryError) throw checkInHistoryError;
       if (!summary || !habit || !summary.current_version_id) return null;
 
       const versionRows = (versions ?? []) as VersionRow[];
-      const currentVersion = versionRows.find((version) => version.id === summary.current_version_id);
+      const currentVersion = versionRows.find(
+        (version) => version.id === summary.current_version_id,
+      );
       if (!currentVersion) return null;
-      const checkInBySession = new Map(((checkIns ?? []) as CheckInRow[]).map((checkIn) => [checkIn.session_id, checkIn]));
+      const checkInBySession = new Map(
+        ((checkIns ?? []) as CheckInRow[]).map((checkIn) => [checkIn.session_id, checkIn]),
+      );
       const sessionRows = (sessions ?? []) as SessionRow[];
+      const sessionIds = new Set(sessionRows.map((session) => session.id));
+      const historyRows = ((checkInHistory ?? []) as CheckInHistoryRow[]).filter((history) =>
+        sessionIds.has(history.session_id),
+      );
       return {
         habit: {
           id: habit.id,
@@ -352,7 +446,9 @@ export class SupabaseProductRepository implements ProductRepository {
           source: versionSourceFromValue(version.source),
         })),
         sessions: sessionRows.map((session) => {
-          const version = versionRows.find((candidate) => candidate.id === session.habit_version_id) ?? currentVersion;
+          const version =
+            versionRows.find((candidate) => candidate.id === session.habit_version_id) ??
+            currentVersion;
           const checkIn = checkInBySession.get(session.id);
           return {
             id: session.id,
@@ -368,8 +464,23 @@ export class SupabaseProductRepository implements ProductRepository {
             status: checkIn?.outcome ?? session.status,
             revision: session.revision,
             synchronizationState: 'synced',
+            ...(checkIn
+              ? {
+                  currentCheckInId: checkIn.id,
+                  currentCheckInRevision: checkIn.revision,
+                }
+              : {}),
           } satisfies SessionSummary;
         }),
+        checkInHistory: historyRows.map((history) => ({
+          id: history.id,
+          sessionId: history.session_id,
+          outcome: history.previous_outcome,
+          frictionCode: history.previous_friction_code,
+          frictionNote: history.previous_friction_note,
+          replacedAt: history.replaced_at,
+          previousRevision: history.previous_revision,
+        })),
       };
     } catch (error) {
       throw mapProviderError(error, 'habit');
@@ -379,14 +490,32 @@ export class SupabaseProductRepository implements ProductRepository {
   async ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number> {
     this.assertOwner(owner);
     try {
-      const { data: habits, error: habitsError } = await this.client.from('habits').select('*')
-        .eq('user_id', this.userId).is('deleted_at', null)
-        .in('lifecycle_state', ['starting', 'building', 'active', 'stable', 'at_risk', 'recovery', 'rebuilding', 'needs_review']);
+      const { data: habits, error: habitsError } = await this.client
+        .from('habits')
+        .select('*')
+        .eq('user_id', this.userId)
+        .is('deleted_at', null)
+        .in('lifecycle_state', [
+          'starting',
+          'building',
+          'active',
+          'stable',
+          'at_risk',
+          'recovery',
+          'rebuilding',
+          'needs_review',
+        ]);
       if (habitsError) throw habitsError;
       const habitRows = (habits ?? []) as HabitRow[];
       if (habitRows.length === 0) return 0;
-      const { data: versions, error: versionsError } = await this.client.from('habit_versions').select('*')
-        .eq('user_id', this.userId).in('habit_id', habitRows.map((habit) => habit.id));
+      const { data: versions, error: versionsError } = await this.client
+        .from('habit_versions')
+        .select('*')
+        .eq('user_id', this.userId)
+        .in(
+          'habit_id',
+          habitRows.map((habit) => habit.id),
+        );
       if (versionsError) throw versionsError;
       const versionRows = (versions ?? []) as VersionRow[];
       let ensured = 0;
@@ -432,43 +561,82 @@ export class SupabaseProductRepository implements ProductRepository {
 
   async resolveExpiredUnrecorded(owner: ProductOwner): Promise<number> {
     this.assertOwner(owner);
-    throw new ProductRepositoryError('repository_unavailable', 'Signed-in expiry reconciliation requires an approved server function');
+    throw new ProductRepositoryError(
+      'repository_unavailable',
+      'Signed-in expiry reconciliation requires an approved server function',
+    );
   }
 
   async getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead> {
     this.assertOwner(owner);
     try {
-      const [{ data: todayRows, error: todayError }, { data: versions, error: versionsError }, { data: summaries, error: summariesError }] = await Promise.all([
-        this.client.from('today_session_view').select('*').eq('user_id', this.userId).eq('scheduled_local_date', localDate).order('scheduled_local_time', { ascending: true, nullsFirst: true }),
+      const [
+        { data: todayRows, error: todayError },
+        { data: versions, error: versionsError },
+        { data: summaries, error: summariesError },
+        { data: checkIns, error: checkInsError },
+      ] = await Promise.all([
+        this.client
+          .from('today_session_view')
+          .select('*')
+          .eq('user_id', this.userId)
+          .eq('scheduled_local_date', localDate)
+          .order('scheduled_local_time', { ascending: true, nullsFirst: true }),
         this.client.from('habit_versions').select('*').eq('user_id', this.userId),
-        this.client.from('habit_summary_view').select('habit_id,lifecycle_state').eq('user_id', this.userId),
+        this.client
+          .from('habit_summary_view')
+          .select('habit_id,lifecycle_state')
+          .eq('user_id', this.userId),
+        this.client.from('check_ins').select('*').eq('user_id', this.userId),
       ]);
       if (todayError) throw todayError;
       if (versionsError) throw versionsError;
       if (summariesError) throw summariesError;
-      const versionById = new Map(((versions ?? []) as VersionRow[]).map((version) => [version.id, version]));
+      if (checkInsError) throw checkInsError;
+      const versionById = new Map(
+        ((versions ?? []) as VersionRow[]).map((version) => [version.id, version]),
+      );
+      const checkInBySession = new Map(
+        ((checkIns ?? []) as CheckInRow[]).map((checkIn) => [checkIn.session_id, checkIn]),
+      );
       const sessions = ((todayRows ?? []) as TodayRow[]).flatMap((row) => {
-        if (!row.session_id || !row.habit_id || !row.habit_version_id || !row.habit_title || !row.scheduled_local_date) return [];
+        if (
+          !row.session_id ||
+          !row.habit_id ||
+          !row.habit_version_id ||
+          !row.habit_title ||
+          !row.scheduled_local_date
+        )
+          return [];
         const version = versionById.get(row.habit_version_id);
         if (!version) return [];
-        return [{
-          id: row.session_id,
-          habitId: row.habit_id,
-          habitVersionId: row.habit_version_id,
-          title: row.habit_title,
-          normalTarget: targetFromJson(version.normal_target),
-          minimumTarget: targetFromJson(version.minimum_target),
-          cue: cueFromJson(version.cue),
-          scheduledLocalDate: row.scheduled_local_date,
-          scheduledLocalTime: row.scheduled_local_time,
-          timezoneSnapshot: row.timezone_snapshot ?? owner.timezone,
-          status: sessionStatusFromValue(row.status),
-          revision: row.revision ?? 1,
-          synchronizationState: 'synced',
-        } satisfies SessionSummary];
+        const checkIn = checkInBySession.get(row.session_id);
+        return [
+          {
+            id: row.session_id,
+            habitId: row.habit_id,
+            habitVersionId: row.habit_version_id,
+            title: row.habit_title,
+            normalTarget: targetFromJson(version.normal_target),
+            minimumTarget: targetFromJson(version.minimum_target),
+            cue: cueFromJson(version.cue),
+            scheduledLocalDate: row.scheduled_local_date,
+            scheduledLocalTime: row.scheduled_local_time,
+            timezoneSnapshot: row.timezone_snapshot ?? owner.timezone,
+            status: sessionStatusFromValue(row.status),
+            revision: row.revision ?? 1,
+            synchronizationState: 'synced',
+            ...(checkIn
+              ? {
+                  currentCheckInId: checkIn.id,
+                  currentCheckInRevision: checkIn.revision,
+                }
+              : {}),
+          } satisfies SessionSummary,
+        ];
       });
-      const activeHabitCount = ((summaries ?? []) as SummaryRow[]).filter((summary) =>
-        summary.lifecycle_state && isSlotConsumingHabitState(summary.lifecycle_state),
+      const activeHabitCount = ((summaries ?? []) as SummaryRow[]).filter(
+        (summary) => summary.lifecycle_state && isSlotConsumingHabitState(summary.lifecycle_state),
       ).length;
       return {
         localDate,
@@ -513,15 +681,31 @@ export class SupabaseProductRepository implements ProductRepository {
 
   async editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult> {
     this.assertOwner(command.owner);
-    return this.recordCheckIn({
-      commandId: command.commandId,
-      owner: command.owner,
-      sessionId: command.sessionId,
-      outcome: command.outcome,
-      frictionCode: command.frictionCode,
-      frictionNote: command.frictionNote,
-      expectedSessionRevision: command.expectedSessionRevision,
-      clientRecordedAt: command.clientRecordedAt,
-    });
+    try {
+      const params = {
+        p_check_in_id: command.currentCheckInId,
+        p_session_id: command.sessionId,
+        p_outcome: command.outcome,
+        p_friction_code: command.frictionCode,
+        p_friction_note: command.frictionNote,
+        p_recorded_local_at: command.clientRecordedAt,
+        p_timezone_snapshot: command.owner.timezone,
+        p_expected_session_revision: command.expectedSessionRevision,
+        p_expected_check_in_revision: command.expectedCheckInRevision,
+        p_command_id: command.commandId,
+      } as unknown as Database['public']['Functions']['edit_same_day_check_in']['Args'];
+      const { data, error } = await this.client.rpc('edit_same_day_check_in', params);
+      if (error) throw error;
+      const result = asRecordResult(data);
+      return {
+        checkInId: stringValue(result.checkInId, command.currentCheckInId),
+        sessionId: stringValue(result.sessionId, command.sessionId),
+        outcome: command.outcome,
+        sessionRevision: numberValue(result.sessionRevision, command.expectedSessionRevision + 1),
+        synchronizationState: 'synced',
+      };
+    } catch (error) {
+      throw mapProviderError(error, 'check_in');
+    }
   }
 }
