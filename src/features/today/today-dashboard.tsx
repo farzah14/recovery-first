@@ -106,7 +106,7 @@ function getTodayHabitSessions(
 ): HabitSession[] {
   const existingById = new Map(existing.map((h) => [h.id, h]));
   return records
-    .filter((record) => record.status !== 'Archived' && isTodayDate(record.createdDate))
+    .filter((record) => record.status === 'Active' && isTodayDate(record.createdDate))
     .map((record) => toHabitSession(record, existingById.get(record.id)));
 }
 
