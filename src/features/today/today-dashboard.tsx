@@ -30,6 +30,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { useAccountState } from '@/components/account/account-state';
 import { AppShell } from '@/components/layout/app-shell';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -100,13 +101,13 @@ function toHabitSession(record: StoredHabit, previous?: HabitSession): HabitSess
 }
 
 function getTodayHabitSessions(
-  records: ReadonlyArray<StoredHabit>,
-  previous: ReadonlyArray<HabitSession> = [],
+  records: StoredHabit[],
+  existing: HabitSession[] = [],
 ): HabitSession[] {
-  const previousById = new Map(previous.map((habit) => [habit.id, habit]));
+  const existingById = new Map(existing.map((h) => [h.id, h]));
   return records
-    .filter((record) => record.status === 'Active' && isTodayDate(record.createdDate))
-    .map((record) => toHabitSession(record, previousById.get(record.id)));
+    .filter((record) => record.status !== 'Archived' && isTodayDate(record.createdDate))
+    .map((record) => toHabitSession(record, existingById.get(record.id)));
 }
 
 export const CLOCK_PRESETS = [
