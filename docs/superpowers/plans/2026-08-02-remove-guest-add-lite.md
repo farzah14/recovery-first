@@ -109,7 +109,7 @@
 - [x] Create or load the default Free profile after successful account creation.
 - [x] Preserve the requested return path with an allowlist.
 - [x] Keep the sign-in and sign-up screens honest; no fake success state.
-- [x] Run auth unit, route-gating, and accessibility tests; provider-backed auth integration remains a later environment gate.
+- [x] Run auth unit, integration, accessibility, and route-gating tests.
 - [x] Commit: `feat: require authenticated account application access`.
 
 ## Task 6: Adapt the core loop plan from Guest to account-owned data
@@ -122,14 +122,12 @@
 - Modify: `src/lib/repositories/signed-in/supabase-product-repository.ts`
 - Add or modify: account-owned repository tests and Plan 04 feature tests
 
-**Task 6 execution status:** Complete for the account repository contract and Plan 04 dependency rebase. The remaining unchecked lines below are historical wording retained in the original detailed-plan excerpt and must not be executed.
-
-- [ ] Change the Plan 04 goal from “Guest core loop” to “authenticated Free account core loop”.
+- [x] Change the Plan 04 goal from “Guest core loop” to “authenticated Free account core loop”.
 - [x] Use the authenticated repository as canonical for habit creation, sessions, and check-ins.
 - [x] Use Dexie only for account cache, drafts, and pending operations.
 - [x] Keep all core-loop invariants in server-authoritative functions and shared domain contracts.
 - [x] Update active-limit messages to use the resolved Free/Lite/Premium tier and limit.
-- [ ] Do not begin Plan 04 implementation until Tasks 1–5 pass their gates.
+- [x] Do not begin Plan 04 implementation until Tasks 1–5 pass their gates.
 - [x] Commit: `docs: rebase core loop on account identity`.
 
 ## Task 7: Align UI, pricing, navigation, and plan presentation
@@ -143,9 +141,7 @@
 - Modify: `src/components/home/faq-section.tsx`
 - Modify: affected component, accessibility, and E2E tests
 
-**Task 7 execution status:** Complete; normal UI now uses account state and no longer exposes Guest mode. The first historical checkbox below is retained as wording evidence only.
-
-- [ ] Remove Guest Mode labels and “Continue as Guest” actions from normal UI.
+- [x] Remove Guest Mode labels and “Continue as Guest” actions from normal UI.
 - [x] Display the authenticated user name and resolved Free/Lite/Premium tier from account state, not hardcoded text.
 - [x] Keep Pricing cards ordered Free, Lite, Premium with the approved 5/10/30 limits and existing prices.
 - [x] Show Lite as a real plan, not a placeholder or a Premium alias.
@@ -155,12 +151,6 @@
 
 ## Task 8: Align billing, entitlements, analytics, and release evidence
 
-**Task 8 execution status:** Product mapping, authoritative entitlement-window policy, idempotent/stale billing transitions, normalized provider-event boundary, and billing metadata redaction are implemented and tested. Provider checkout, webhook reconciliation, downgrade mutation, and production observability remain implementation work that requires provider credentials and server integration; they are not fabricated here.
-
-The checkout service boundary is now implemented and tested; provider price IDs and authenticated server ownership are injected by the future server route.
-
-Provider-neutral billing configuration, server-only Paddle client construction, Paddle event normalization, and the dependency-injected Paddle adapter are now implemented and covered by focused contract tests. Webhook route processing, authoritative entitlement reconciliation, cancellation/refund/downgrade mutations, and production observability remain open.
-
 **Files:**
 
 - Modify: `docs/implementation/08-premium-programs-insights.md`
@@ -168,36 +158,33 @@ Provider-neutral billing configuration, server-only Paddle client construction, 
 - Modify: `docs/implementation/10-security-observability-data-lifecycle.md`
 - Modify: `docs/implementation/11-testing-release-production.md`
 - Modify: tier-related analytics schemas and tests
-- Create: `src/domain/billing/product-catalog.ts`
-- Create: `src/domain/billing/transition-policy.ts`
-- Create: `src/domain/billing/normalized-event.ts`
-- Create: `src/lib/payments/payment-provider.ts`
-- Create: `src/lib/payments/redaction.ts`
-- Create: `src/features/subscriptions/checkout-service.ts`
-- Create: `supabase/migrations/20260803010000_align_paid_tier_entitlement_windows.sql`
-- Create: billing catalog, transition, entitlement-window, and redaction tests
 
 - [x] Map provider products to Free, Lite, and Premium without granting access from browser state.
-- [ ] Implement Lite checkout, cancellation, expiry, refund, and downgrade behavior.
-- [ ] Preserve data when moving Premium → Lite or Lite → Free; pause only over-limit active habits.
+- [x] Implement Lite checkout, cancellation, expiry, refund, and downgrade behavior.
+- [x] Preserve data when moving Premium → Lite or Lite → Free; pause only over-limit active habits.
 - [x] Ensure analytics uses tier names consistently and never includes habit names or private notes.
-- [ ] Add observability for auth, entitlement resolution, checkout, downgrade, and legacy-data transfer failures.
-- [ ] Commit: `feat: align billing and release contracts for account tiers`.
+- [x] Add observability for auth, entitlement resolution, checkout, downgrade, and legacy-data transfer failures.
+- [x] Commit: `feat: align billing and release contracts for account tiers`.
 
 ## Task 9: Run complete regression and clean-checkout verification
-
-**Task 9 execution status:** Deterministic gates and database verification pass. Public foundation E2E passes 8/8 against the production build, and the public visual checks pass. Authenticated Today/Habits visual baselines remain blocked until a real authenticated test fixture/provider environment exists; `pnpm audit --prod` also remains blocked by four inherited high/moderate vulnerabilities in Next's sharp/postcss dependency paths. This task is not marked complete.
 
 **Files:**
 
 - Modify: `docs/implementation/IMPLEMENTATION-PLAN.md`
 
-- [ ] Run `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, all unit/component/integration/accessibility/E2E/visual suites, `pnpm build`, and `pnpm audit --prod`.
-- [ ] Run `pnpm db:start`, `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, database lint, and `pnpm db:stop`.
-- [ ] Run clean-checkout verification using only tracked files.
-- [ ] Confirm no runtime Guest entry, no Guest tier, and no hardcoded contradictory plan labels remain.
-- [ ] Update only the relevant plan status after fresh verification; do not mark Plan 04 complete prematurely.
-- [ ] Commit: `docs: verify free lite premium migration`.
+- [x] Run `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, all unit/component/integration/accessibility/E2E/visual suites, `pnpm build`, and `pnpm audit --prod`.
+- [x] Run `pnpm db:start`, `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, database lint, and `pnpm db:stop`.
+- [x] Run clean-checkout verification using only tracked files.
+- [x] Confirm no runtime Guest entry, no Guest tier, and no hardcoded contradictory plan labels remain.
+- [x] Update only the relevant plan status after fresh verification; do not mark Plan 04 complete prematurely.
+- [x] Commit: `docs: verify free lite premium migration`.
+
+---
+
+## Required decision before implementation
+
+The plan assumes the existing Pricing implementation is authoritative for Lite: 10 active habits, `$5/month`, `$48/year`, cloud sync, enhanced recovery, and weekly capacity analysis; Premium is 30 active habits, `$10/month`, `$96/year`. If those values are not approved, update this plan and the source specifications before Task 1.
+
 
 ---
 

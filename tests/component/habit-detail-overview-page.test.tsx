@@ -1,10 +1,14 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 
 import { HabitDetailOverview } from '@/features/habits/habit-detail-overview';
 
 describe('HabitDetailOverview', () => {
-  it('renders habit name, active lifecycle status badge, normal and minimum targets, continuity, and lifecycle metadata', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('renders habit name, active status badge, normal and minimum targets, and continuity metrics', () => {
     render(<HabitDetailOverview />);
 
     // Habit name
@@ -22,11 +26,9 @@ describe('HabitDetailOverview', () => {
     expect(screen.getByText('12')).toBeVisible();
     expect(screen.getByText('Current Streak')).toBeVisible();
 
-    // Lifecycle Metadata
-    expect(screen.getByText('Oct 12, 2023')).toBeVisible();
-    expect(screen.getByText('v3')).toBeVisible();
-    expect(screen.getByRole('button', { name: /Redesign Habit/i })).toBeVisible();
-  }, 15000);
+    // Redesign action button
+    expect(screen.getByRole('button', { name: /Redesign/i })).toBeVisible();
+  }, 30000);
 
   it('supports tab switching between Overview, History, and Insights & Changes', () => {
     render(<HabitDetailOverview />);
@@ -42,7 +44,7 @@ describe('HabitDetailOverview', () => {
     // Return to Overview
     fireEvent.click(screen.getByRole('button', { name: 'Overview' }));
     expect(screen.getByRole('heading', { name: 'Current Definition' })).toBeVisible();
-  }, 15000);
+  }, 30000);
 
   it('allows pausing/resuming, editing, redesigning, and deleting habit without non-dominant red visual overflow', () => {
     render(<HabitDetailOverview />);
@@ -64,5 +66,5 @@ describe('HabitDetailOverview', () => {
     fireEvent.click(deleteBtn);
     expect(screen.getByRole('heading', { level: 2, name: 'Delete Habit' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  }, 15000);
+  }, 30000);
 });

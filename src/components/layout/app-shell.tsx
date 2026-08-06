@@ -22,6 +22,7 @@ import {
 import { routes } from '@/lib/navigation/route-definitions';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
+import { normalizeCreatedDate } from '@/domain/habits/habit-filters';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +31,12 @@ import {
   useAccountState,
 } from '@/components/account/account-state';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
-import { addHabitToSync, getTodayDateStr } from '@/lib/storage/habits-sync';
+import {
+  addHabitToSync,
+  getStoredHabits,
+  getTodayDateStr,
+  type StoredHabit,
+} from '@/lib/storage/habits-sync';
 import type { WeeklyOverviewRead } from '@/lib/repositories/product-repository';
 
 const sidebarCollapsedStorageKey = 'recovery-first.sidebar-collapsed';
@@ -53,6 +59,7 @@ interface AppShellProps {
   todayCompletedCount?: number;
   todayTotalCount?: number;
   weeklyOverview?: WeeklyOverviewRead;
+  habitCountForDate?: (date: Date) => number;
   currentDate?: Date;
   reflectionNote?: string;
 }
@@ -65,6 +72,7 @@ export function AppShell({
   todayCompletedCount = 0,
   todayTotalCount = 0,
   weeklyOverview,
+  habitCountForDate,
   currentDate,
   reflectionNote,
 }: AppShellProps): React.JSX.Element {
@@ -72,6 +80,7 @@ export function AppShell({
   const account = useAccountState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [storedHabits, setStoredHabits] = useState<StoredHabit[]>([]);
   const [resolvedCurrentDate, setResolvedCurrentDate] = useState(
     currentDate ?? DESIGN_REFERENCE_DATE,
   );
@@ -93,6 +102,21 @@ export function AppShell({
 
     return () => window.clearTimeout(timeoutId);
   }, [currentDate]);
+
+  useEffect(() => {
+    const syncStoredHabits = () => {
+      setStoredHabits(getStoredHabits());
+    };
+
+    syncStoredHabits();
+    window.addEventListener('habits-updated', syncStoredHabits);
+    window.addEventListener('storage', syncStoredHabits);
+
+    return () => {
+      window.removeEventListener('habits-updated', syncStoredHabits);
+      window.removeEventListener('storage', syncStoredHabits);
+    };
+  }, []);
 
   const [collapseAnimationsEnabled, setCollapseAnimationsEnabled] = useState(false);
   const [fallbackCreateDialogOpen, setFallbackCreateDialogOpen] = useState(false);
@@ -151,6 +175,40 @@ export function AppShell({
     { day: 'S', fullDay: 'Sunday' },
   ];
 
+  const formatDateKey = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+
+  const getDateSpecificTotal = (targetDate: Date): number => {
+    const currentDateKey = formatDateKey(refDate);
+    const targetDateKey = formatDateKey(targetDate);
+
+    const dateAdjustment = storedHabits.reduce((adjustment, habit) => {
+      if (habit.status !== 'Active') return adjustment;
+
+      const startDateKey = normalizeCreatedDate(habit.createdDate);
+      if (!startDateKey) return adjustment;
+
+      if (targetDateKey > currentDateKey) {
+        return startDateKey > currentDateKey && startDateKey <= targetDateKey
+          ? adjustment + 1
+          : adjustment;
+      }
+
+      if (targetDateKey < currentDateKey) {
+        return startDateKey > targetDateKey && startDateKey <= currentDateKey
+          ? adjustment - 1
+          : adjustment;
+      }
+
+      return adjustment;
+    }, 0);
+
+    return Math.max(0, todayTotalCount + dateAdjustment);
+  };
+
   const weeklyData: DayOverview[] = baseDaysConfig.map((config, idx) => {
     const fallbackTargetDate = new Date(refDate);
     fallbackTargetDate.setDate(refDate.getDate() + idx - currentDayIndex);
@@ -174,8 +232,15 @@ export function AppShell({
       month: 'short',
       day: 'numeric',
     });
-    const completed = persistedDay?.completedCount ?? (isToday ? todayCompletedCount : 0);
-    const total = persistedDay?.totalCount ?? (isToday ? todayTotalCount : 0);
+    const fallbackTotal = Math.max(
+      0,
+      habitCountForDate
+        ? habitCountForDate(fallbackTargetDate)
+        : getDateSpecificTotal(fallbackTargetDate),
+    );
+    const total = persistedDay?.totalCount ?? fallbackTotal;
+    const completed =
+      persistedDay?.completedCount ?? (isToday ? Math.min(todayCompletedCount, total) : 0);
 
     return {
       day: config.day,

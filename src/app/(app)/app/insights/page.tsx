@@ -1,16 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { BarChart3, TrendingUp, Sparkles, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
+import { BarChart3, TrendingUp, Sparkles } from 'lucide-react';
 
 export default function InsightsPage(): React.JSX.Element {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
   return (
-    <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
+    <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
@@ -26,18 +22,7 @@ export default function InsightsPage(): React.JSX.Element {
               progress.
             </p>
           </div>
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-            size="compact"
-            variant="primary"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-xs"
-          >
-            <Plus className="size-4 shrink-0" />
-            <span>Add Habit</span>
-          </Button>
         </div>
-
-        <CreateHabitDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
