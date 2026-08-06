@@ -559,12 +559,17 @@ export class SupabaseProductRepository implements ProductRepository {
     }
   }
 
-  async resolveExpiredUnrecorded(owner: ProductOwner): Promise<number> {
+  async resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number> {
     this.assertOwner(owner);
-    throw new ProductRepositoryError(
-      'repository_unavailable',
-      'Signed-in expiry reconciliation requires an approved server function',
-    );
+    try {
+      const { data, error } = await this.client.rpc('resolve_unrecorded_sessions', {
+        p_now: now,
+      });
+      if (error) throw error;
+      return numberValue(data, 0);
+    } catch (error) {
+      throw mapProviderError(error, 'session');
+    }
   }
 
   async getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead> {

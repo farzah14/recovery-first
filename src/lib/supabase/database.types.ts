@@ -1028,6 +1028,7 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_unrecorded_sessions: { Args: { p_now: string }; Returns: number }
     }
     Enums: {
       check_in_outcome: "full" | "minimum" | "manual_skipped" | "excused"

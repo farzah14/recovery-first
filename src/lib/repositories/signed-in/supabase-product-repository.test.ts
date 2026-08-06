@@ -174,6 +174,19 @@ describe('SupabaseProductRepository', () => {
     ).rejects.toMatchObject({ code: 'stale_revision' });
   });
 
+  it('calls the owner-scoped Automatic Skipped resolver with the supplied clock', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 2, error: null });
+    const client = { rpc } as unknown as SupabaseProductRepositoryClient;
+    const repository = new SupabaseProductRepository(client, owner.ownerId);
+
+    await expect(
+      repository.resolveExpiredUnrecorded(owner, '2026-08-07T12:00:00.000Z'),
+    ).resolves.toBe(2);
+    expect(rpc).toHaveBeenCalledWith('resolve_unrecorded_sessions', {
+      p_now: '2026-08-07T12:00:00.000Z',
+    });
+  });
+
   it('reads Today sessions from the security-invoker view and joins their immutable version', async () => {
     const from = vi.fn((table: string) => {
       if (table === 'today_session_view') {
