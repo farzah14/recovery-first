@@ -29,6 +29,7 @@ describe('HabitsManagement', () => {
     // Active habit cards
     expect(screen.getByText('Daily Meditation')).toBeVisible();
     expect(screen.getByText('Hydration & Water')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^Check-in$/i })).not.toBeInTheDocument();
 
     // Paused habits section
     expect(screen.getByText(/Paused Habits \(1\)/i)).toBeVisible();
