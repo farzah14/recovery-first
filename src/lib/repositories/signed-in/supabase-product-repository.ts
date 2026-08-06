@@ -15,7 +15,9 @@ import type {
   SetHabitLifecycleCommand,
   TodayRepositoryRead,
   UpdateHabitVersionCommand,
+  WeeklyOverviewRead,
 } from '@/lib/repositories/product-repository';
+import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import {
   decodeHabitVersionPayload,
@@ -138,19 +140,6 @@ function daysBetween(start: string, end: string): string[] {
     current.setUTCDate(current.getUTCDate() + 1);
   }
   return result;
-}
-
-function localDateForTimezone(timezone: string, now = new Date()): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
 }
 
 function isScheduledOnDate(
@@ -443,7 +432,7 @@ export function createSupabaseProductRepository({
       const activeRows = habits ?? [];
       const versions = await loadVersions(activeRows.map((row) => row.id));
       const versionById = new Map(versions.map((version) => [version.id, version]));
-      const today = localDateForTimezone(owner.timezone);
+      const today = getLocalDateForTimezone(owner.timezone);
       let ensured = 0;
 
       for (const habit of activeRows) {
@@ -500,6 +489,45 @@ export function createSupabaseProductRepository({
       const activeHabitLimit =
         owner.planTier === 'premium' ? 30 : owner.planTier === 'lite' ? 10 : 5;
       return { localDate, sessions, activeHabitCount, activeHabitLimit };
+    },
+
+    async getWeeklyOverview(
+      candidate: ProductOwner,
+      localDate: string,
+    ): Promise<WeeklyOverviewRead> {
+      assertOwner(candidate);
+      const range = getLocalWeekRange(localDate);
+      const { data, error } = await client
+        .from('sessions')
+        .select('scheduled_local_date,status')
+        .eq('user_id', owner.ownerId)
+        .gte('scheduled_local_date', range.startDate)
+        .lte('scheduled_local_date', range.endDate);
+      if (error) throw mapError(error);
+
+      const counts = new Map(
+        range.dates.map((date) => [date, { completedCount: 0, totalCount: 0 }]),
+      );
+      for (const row of data ?? []) {
+        const date = row.scheduled_local_date;
+        const count = counts.get(date);
+        if (!count) continue;
+        count.totalCount += 1;
+        if (row.status === 'full' || row.status === 'minimum') {
+          count.completedCount += 1;
+        }
+      }
+
+      return {
+        todayDate: range.todayDate,
+        startDate: range.startDate,
+        endDate: range.endDate,
+        days: range.dates.map((date) => ({
+          localDate: date,
+          completedCount: counts.get(date)?.completedCount ?? 0,
+          totalCount: counts.get(date)?.totalCount ?? 0,
+        })),
+      };
     },
 
     async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {

@@ -222,6 +222,15 @@ where id in (
   '28000000-0000-4000-8000-000000000001'
 );
 
+-- Keep the synthetic browser fixture stable across CI runs. The production
+-- schema intentionally defaults these timestamps to now(), but visual tests
+-- must not change when the workflow runs on a different day.
+update public.habits
+set state_changed_at = '2026-01-01 00:00:00+00'::timestamptz,
+    created_at = '2026-01-01 00:00:00+00'::timestamptz,
+    updated_at = '2026-01-01 00:00:00+00'::timestamptz
+where user_id = '13000000-0000-4000-8000-000000000001';
+
 insert into public.sessions (
   id,
   habit_id,

@@ -27,6 +27,8 @@ function createFakeClient({
       builder.eq = () => builder;
       builder.is = () => builder;
       builder.in = () => builder;
+      builder.gte = () => builder;
+      builder.lte = () => builder;
       builder.order = () => builder;
       builder.then = (resolve: (value: typeof response) => unknown) =>
         Promise.resolve(response).then(resolve);
@@ -290,5 +292,58 @@ describe('SupabaseProductRepository', () => {
       habitRevision: 3,
       status: 'unrecorded',
     });
+  });
+
+  it('aggregates the authenticated owner sessions into a Monday-to-Sunday overview', async () => {
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        sessions: [
+          {
+            scheduled_local_date: '2026-08-03',
+            status: 'full',
+            user_id: owner.ownerId,
+          },
+          {
+            scheduled_local_date: '2026-08-03',
+            status: 'unrecorded',
+            user_id: owner.ownerId,
+          },
+          {
+            scheduled_local_date: '2026-08-04',
+            status: 'minimum',
+            user_id: owner.ownerId,
+          },
+          {
+            scheduled_local_date: '2026-08-04',
+            status: 'manual_skipped',
+            user_id: owner.ownerId,
+          },
+          {
+            scheduled_local_date: '2026-08-10',
+            status: 'full',
+            user_id: owner.ownerId,
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const overview = await repository.getWeeklyOverview(owner, '2026-08-06');
+
+    expect(overview).toEqual({
+      todayDate: '2026-08-06',
+      startDate: '2026-08-03',
+      endDate: '2026-08-09',
+      days: [
+        { localDate: '2026-08-03', completedCount: 1, totalCount: 2 },
+        { localDate: '2026-08-04', completedCount: 1, totalCount: 2 },
+        { localDate: '2026-08-05', completedCount: 0, totalCount: 0 },
+        { localDate: '2026-08-06', completedCount: 0, totalCount: 0 },
+        { localDate: '2026-08-07', completedCount: 0, totalCount: 0 },
+        { localDate: '2026-08-08', completedCount: 0, totalCount: 0 },
+        { localDate: '2026-08-09', completedCount: 0, totalCount: 0 },
+      ],
+    });
+    expect(calls).toContainEqual({ kind: 'from', name: 'sessions' });
   });
 });
