@@ -1,20 +1,9 @@
 'use client';
 
-export interface StoredHabit {
-  id: string;
-  name: string;
-  category: string;
-  normalTarget: string;
-  minimumTarget: string;
-  schedule: string;
-  cue?: string;
-  status: 'Active' | 'Paused' | 'Archived';
-  createdDate: string;
-  iconName: string;
-  fromTime?: string;
-  untilTime?: string;
-  timingContext?: string;
-}
+import { normalizeCreatedDate } from '@/domain/habits/habit-filters';
+import { DEFAULT_HABITS, type HabitRecord } from '@/domain/habits/default-habits';
+
+export type StoredHabit = HabitRecord;
 
 const HABITS_STORAGE_KEY = 'recovery-first.habits-list';
 
@@ -28,17 +17,10 @@ export function isTodayDate(dateStr: string): boolean {
   const todayStr = getTodayDateStr();
   const lower = dateStr.toLowerCase().trim();
 
-  // Standard YYYY-MM-DD comparison
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return dateStr <= todayStr;
-  }
+  const normalized = normalizeCreatedDate(dateStr);
+  if (normalized) return normalized <= todayStr;
 
-  if (
-    lower.includes('today') ||
-    lower.includes('just now') ||
-    lower.includes('oct 12') ||
-    lower.includes('jan 05')
-  ) {
+  if (lower.includes('today') || lower.includes('just now')) {
     return true;
   }
 
@@ -54,11 +36,41 @@ export function getStoredHabits(): StoredHabit[] {
   try {
     const raw = localStorage.getItem(HABITS_STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as StoredHabit[];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as StoredHabit[]) : [];
   } catch (err) {
     console.error('Failed to read stored habits', err);
     return [];
   }
+}
+
+/**
+ * Returns the canonical Library records: defaults plus browser-local overrides/new habits.
+ * Records are merged by stable ID so editing a default habit never creates a second habit.
+ */
+export function getLibraryHabits(): StoredHabit[] {
+  const stored = getStoredHabits();
+  const storedById = new Map(stored.map((habit) => [habit.id, habit]));
+  const defaultIds = new Set(DEFAULT_HABITS.map((habit) => habit.id));
+
+  return [
+    ...DEFAULT_HABITS.map((habit) => {
+      const stored = storedById.get(habit.id);
+      return stored ? { ...habit, ...stored } : { ...habit };
+    }),
+    ...stored.filter((habit) => !defaultIds.has(habit.id)),
+  ];
+}
+
+export function getLibraryHabitCountForDate(date: Date): number {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateKey = `${date.getFullYear()}-${month}-${day}`;
+
+  return getLibraryHabits().filter((habit) => {
+    if (habit.status === 'Archived') return false;
+    return normalizeCreatedDate(habit.createdDate) === dateKey;
+  }).length;
 }
 
 export function saveStoredHabits(habits: StoredHabit[]): void {
@@ -75,4 +87,17 @@ export function addHabitToSync(habit: StoredHabit): void {
   const existing = getStoredHabits();
   const updated = [habit, ...existing.filter((h) => h.id !== habit.id)];
   saveStoredHabits(updated);
+}
+
+export function updateHabitToSync(id: string, updates: Partial<StoredHabit>): void {
+  const current = getLibraryHabits().find((habit) => habit.id === id);
+  if (!current) return;
+
+  const updated = { ...current, ...updates };
+  const existing = getStoredHabits();
+  saveStoredHabits([updated, ...existing.filter((habit) => habit.id !== id)]);
+}
+
+export function archiveHabitToSync(id: string): void {
+  updateHabitToSync(id, { status: 'Archived' });
 }

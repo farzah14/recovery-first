@@ -228,6 +228,16 @@ export function HabitDetailOverview(): React.JSX.Element {
               <span>Edit</span>
             </Button>
 
+            <Button
+              size="compact"
+              variant="secondary"
+              onClick={() => setRedesignDialogOpen(true)}
+              className="flex items-center gap-1.5 border border-[var(--color-border-standard,#DDE5E1)] bg-white text-xs font-semibold text-[#004e27] hover:bg-[#f0f4f3]"
+            >
+              <Wrench className="size-3.5" />
+              <span>Redesign</span>
+            </Button>
+
             <button
               type="button"
               onClick={() => {
@@ -258,7 +268,7 @@ export function HabitDetailOverview(): React.JSX.Element {
             onClick={() => setActiveTab('overview')}
             className={`border-b-2 px-4 py-3 text-xs font-bold whitespace-nowrap transition-colors ${
               activeTab === 'overview'
-                ? 'border-[#004e27] text-[#004e27]'
+                ? 'border-[#004e27] font-bold text-[#004e27]'
                 : 'border-transparent text-[#3f4940] hover:text-[#161A17]'
             }`}
           >
@@ -290,9 +300,9 @@ export function HabitDetailOverview(): React.JSX.Element {
 
         {/* Overview Tab Content (Bento Content Grid) */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Bento Card 1: Current Definition (Spans 2 cols on md+) */}
-            <div className="col-span-1 space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs md:col-span-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Bento Card 1: Current Definition */}
+            <div className="col-span-1 space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs">
               <h2 className="flex items-center gap-2 text-base font-bold text-[#161A17]">
                 <Sparkles className="size-5 text-[#004e27]" />
                 <span>Current Definition</span>
@@ -407,51 +417,6 @@ export function HabitDetailOverview(): React.JSX.Element {
                     <span>Skipped (8%)</span>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Bento Card 3: Lifecycle Metadata */}
-            <div className="col-span-1 flex flex-col justify-between space-y-4 rounded-xl border border-[var(--color-border-standard,#DDE5E1)] bg-white p-5 shadow-xs md:col-span-2 lg:col-span-1">
-              <div>
-                <h2 className="mb-4 flex items-center gap-2 text-base font-bold text-[#161A17]">
-                  <Info className="size-5 text-[#3f4940]" />
-                  <span>Lifecycle</span>
-                </h2>
-
-                <ul className="space-y-3 text-xs">
-                  <li className="flex items-center justify-between border-b border-[var(--color-border-standard,#DDE5E1)] pb-2">
-                    <span className="font-medium text-[#3f4940]">Created</span>
-                    <span className="font-semibold text-[#161A17]">Oct 12, 2023</span>
-                  </li>
-                  <li className="flex items-center justify-between border-b border-[var(--color-border-standard,#DDE5E1)] pb-2">
-                    <span className="font-medium text-[#3f4940]">Current Version</span>
-                    <span className="rounded bg-[#f0f4f3] px-2 py-0.5 text-xs font-bold text-[#004e27]">
-                      v3
-                    </span>
-                  </li>
-                  <li className="flex items-center justify-between border-b border-[var(--color-border-standard,#DDE5E1)] pb-2">
-                    <span className="font-medium text-[#3f4940]">Last Modified</span>
-                    <span className="font-semibold text-[#161A17]">2 weeks ago</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Redesign Callout Box */}
-              <div className="space-y-3 rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-[#f8f9f9] p-4 text-center">
-                <p className="text-xs leading-relaxed text-[#3f4940]">
-                  Habits evolve. If this isn’t working for you anymore, consider a redesign rather
-                  than giving up.
-                </p>
-                <Button
-                  size="compact"
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => setRedesignDialogOpen(true)}
-                  className="flex items-center justify-center gap-1.5 border-[#004e27] text-xs font-semibold text-[#004e27] hover:bg-emerald-50"
-                >
-                  <Wrench className="size-3.5" />
-                  <span>Redesign Habit</span>
-                </Button>
               </div>
             </div>
           </div>

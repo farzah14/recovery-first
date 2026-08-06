@@ -22,6 +22,7 @@ import {
 import { routes } from '@/lib/navigation/route-definitions';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
+import { normalizeCreatedDate } from '@/domain/habits/habit-filters';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,7 +31,12 @@ import {
   useAccountState,
 } from '@/components/account/account-state';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
-import { addHabitToSync, getTodayDateStr } from '@/lib/storage/habits-sync';
+import {
+  addHabitToSync,
+  getStoredHabits,
+  getTodayDateStr,
+  type StoredHabit,
+} from '@/lib/storage/habits-sync';
 
 const sidebarCollapsedStorageKey = 'recovery-first.sidebar-collapsed';
 const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
@@ -51,6 +57,7 @@ interface AppShellProps {
   onOpenReflectionModal?: () => void;
   todayCompletedCount?: number;
   todayTotalCount?: number;
+  habitCountForDate?: (date: Date) => number;
   currentDate?: Date;
   reflectionNote?: string;
 }
@@ -62,6 +69,7 @@ export function AppShell({
   onOpenReflectionModal,
   todayCompletedCount = 2,
   todayTotalCount = 3,
+  habitCountForDate,
   currentDate,
   reflectionNote,
 }: AppShellProps): React.JSX.Element {
@@ -69,6 +77,7 @@ export function AppShell({
   const account = useAccountState();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [storedHabits, setStoredHabits] = useState<StoredHabit[]>([]);
   const [resolvedCurrentDate, setResolvedCurrentDate] = useState(
     currentDate ?? DESIGN_REFERENCE_DATE,
   );
@@ -90,6 +99,21 @@ export function AppShell({
 
     return () => window.clearTimeout(timeoutId);
   }, [currentDate]);
+
+  useEffect(() => {
+    const syncStoredHabits = () => {
+      setStoredHabits(getStoredHabits());
+    };
+
+    syncStoredHabits();
+    window.addEventListener('habits-updated', syncStoredHabits);
+    window.addEventListener('storage', syncStoredHabits);
+
+    return () => {
+      window.removeEventListener('habits-updated', syncStoredHabits);
+      window.removeEventListener('storage', syncStoredHabits);
+    };
+  }, []);
 
   const [collapseAnimationsEnabled, setCollapseAnimationsEnabled] = useState(false);
   const [fallbackCreateDialogOpen, setFallbackCreateDialogOpen] = useState(false);
@@ -150,6 +174,40 @@ export function AppShell({
 
   const samplePastCompletions = [2, 3, 0, 2, 3, 1, 0];
 
+  const formatDateKey = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+
+  const getDateSpecificTotal = (targetDate: Date): number => {
+    const currentDateKey = formatDateKey(refDate);
+    const targetDateKey = formatDateKey(targetDate);
+
+    const dateAdjustment = storedHabits.reduce((adjustment, habit) => {
+      if (habit.status !== 'Active') return adjustment;
+
+      const startDateKey = normalizeCreatedDate(habit.createdDate);
+      if (!startDateKey) return adjustment;
+
+      if (targetDateKey > currentDateKey) {
+        return startDateKey > currentDateKey && startDateKey <= targetDateKey
+          ? adjustment + 1
+          : adjustment;
+      }
+
+      if (targetDateKey < currentDateKey) {
+        return startDateKey > targetDateKey && startDateKey <= currentDateKey
+          ? adjustment - 1
+          : adjustment;
+      }
+
+      return adjustment;
+    }, 0);
+
+    return Math.max(0, todayTotalCount + dateAdjustment);
+  };
+
   const weeklyData: DayOverview[] = baseDaysConfig.map((config, idx) => {
     const isToday = idx === currentDayIndex;
 
@@ -168,18 +226,18 @@ export function AppShell({
     const dayNum = targetDate.getDate();
     const dateStr = `${monthShort} ${dayNum}`;
 
-    let completed = 0;
-    let total = todayTotalCount;
+    const dayTotal = Math.max(
+      0,
+      habitCountForDate ? habitCountForDate(targetDate) : getDateSpecificTotal(targetDate),
+    );
 
+    let completed = 0;
     if (isToday) {
-      completed = todayCompletedCount;
-      total = todayTotalCount;
+      completed = Math.min(todayCompletedCount, dayTotal);
     } else if (idx < currentDayIndex) {
-      completed = Math.min(samplePastCompletions[idx] ?? 2, todayTotalCount);
-      total = todayTotalCount > 0 ? todayTotalCount : 3;
+      completed = Math.min(samplePastCompletions[idx] ?? 2, dayTotal);
     } else {
       completed = 0;
-      total = todayTotalCount;
     }
 
     return {
@@ -187,7 +245,7 @@ export function AppShell({
       fullDay,
       dateStr,
       completed,
-      total,
+      total: dayTotal,
       isToday,
     };
   });

@@ -37,11 +37,16 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/cn';
 import {
-  getStoredHabits,
   addHabitToSync,
+  archiveHabitToSync,
+  getLibraryHabitCountForDate,
+  getLibraryHabits,
   isTodayDate,
   getTodayDateStr,
+  updateHabitToSync,
+  type StoredHabit,
 } from '@/lib/storage/habits-sync';
+import { DEFAULT_HABITS } from '@/domain/habits/default-habits';
 
 export type OutcomeType = 'unrecorded' | 'full' | 'minimum' | 'skipped';
 
@@ -56,6 +61,52 @@ export interface HabitSession {
   needsReview?: boolean;
   recoveryAvailable?: boolean;
   icon: string;
+}
+
+function getTodayIcon(iconName: string): string {
+  const normalized = iconName.toLowerCase();
+  if (normalized === 'water' || normalized.includes('💧') || normalized.includes('water')) {
+    return 'water';
+  }
+  if (normalized === 'reading' || normalized.includes('📚') || normalized.includes('book')) {
+    return 'reading';
+  }
+  if (normalized === 'exercise' || normalized.includes('dumbbell')) return 'exercise';
+  if (normalized === 'running' || normalized.includes('foot')) return 'running';
+  if (normalized === 'sleep' || normalized.includes('moon')) return 'sleep';
+  if (normalized === 'coding' || normalized.includes('code')) return 'coding';
+  if (normalized === 'writing' || normalized.includes('pencil')) return 'writing';
+  if (normalized === 'nutrition' || normalized.includes('apple')) return 'nutrition';
+  return normalized || 'meditation';
+}
+
+function toHabitSession(record: StoredHabit, previous?: HabitSession): HabitSession {
+  return {
+    id: record.id,
+    name: record.name,
+    category: record.category,
+    timingContext: record.timingContext || record.schedule || '08:00 AM - 09:00 AM',
+    minimumSummary: record.minimumTarget.startsWith('Minimum')
+      ? record.minimumTarget
+      : `Minimum ${record.minimumTarget}`,
+    fullSummary: record.normalTarget.startsWith('Full')
+      ? record.normalTarget
+      : `Full ${record.normalTarget}`,
+    outcome: previous?.outcome ?? 'unrecorded',
+    needsReview: previous?.needsReview ?? record.id === 'h1',
+    recoveryAvailable: previous?.recoveryAvailable ?? record.id === 'h1',
+    icon: getTodayIcon(record.iconName),
+  };
+}
+
+function getTodayHabitSessions(
+  records: ReadonlyArray<StoredHabit>,
+  previous: ReadonlyArray<HabitSession> = [],
+): HabitSession[] {
+  const previousById = new Map(previous.map((habit) => [habit.id, habit]));
+  return records
+    .filter((record) => record.status === 'Active' && isTodayDate(record.createdDate))
+    .map((record) => toHabitSession(record, previousById.get(record.id)));
 }
 
 export const CLOCK_PRESETS = [
@@ -229,85 +280,21 @@ function getDynamicGreeting(now: Date = new Date()): { greeting: string; dateStr
 
 export function TodayDashboard(): React.JSX.Element {
   const [dashboardDate, setDashboardDate] = useState(DESIGN_REFERENCE_DATE);
-  const [habits, setHabits] = useState<HabitSession[]>([
-    {
-      id: 'h1',
-      name: 'Daily Meditation',
-      category: 'Mindfulness',
-      timingContext: '08:00 AM - 09:00 AM',
-      minimumSummary: 'Minimum 2 mins',
-      fullSummary: 'Full 10 mins',
-      outcome: 'unrecorded',
-      needsReview: true,
-      recoveryAvailable: true,
-      icon: 'meditation',
-    },
-    {
-      id: 'h2',
-      name: 'Morning Hydration',
-      category: 'Health',
-      timingContext: '09:00 AM - 10:00 AM',
-      minimumSummary: 'Minimum 250ml',
-      fullSummary: 'Full 500ml',
-      outcome: 'minimum',
-      icon: 'water',
-    },
-    {
-      id: 'h3',
-      name: 'Read 5 Pages',
-      category: 'Personal Growth',
-      timingContext: '05:00 PM - 06:00 PM',
-      minimumSummary: 'Minimum 1 page',
-      fullSummary: 'Full 5 pages',
-      outcome: 'full',
-      icon: 'reading',
-    },
-  ]);
+  const [habits, setHabits] = useState<HabitSession[]>(() => getTodayHabitSessions(DEFAULT_HABITS));
 
-  // Sync active habits from storage (automatically shows habits created for today and excludes future start dates)
+  // Rebuild Today from the canonical Library records after browser data is available.
   React.useEffect(() => {
-    const syncFromStorage = () => {
-      const stored = getStoredHabits();
-      if (stored.length > 0) {
-        setHabits((prev) => {
-          const nonTodayIds = new Set(
-            stored
-              .filter((s) => s.status !== 'Active' || !isTodayDate(s.createdDate))
-              .map((s) => s.id),
-          );
-
-          const todaySessions: HabitSession[] = stored
-            .filter((s) => s.status === 'Active' && isTodayDate(s.createdDate))
-            .map((s) => ({
-              id: s.id,
-              name: s.name,
-              category: s.category,
-              timingContext: s.schedule || '08:00 AM - 09:00 AM',
-              minimumSummary: s.minimumTarget.startsWith('Minimum')
-                ? s.minimumTarget
-                : `Minimum ${s.minimumTarget}`,
-              fullSummary: s.normalTarget.startsWith('Full')
-                ? s.normalTarget
-                : `Full ${s.normalTarget}`,
-              outcome: 'unrecorded',
-              icon: s.iconName === '💧' ? 'water' : s.iconName === '📚' ? 'reading' : 'meditation',
-            }));
-
-          const remainingPrev = prev.filter((p) => !nonTodayIds.has(p.id));
-          const existingIds = new Set(remainingPrev.map((h) => h.id));
-          const unadded = todaySessions.filter((ns) => !existingIds.has(ns.id));
-
-          return [...remainingPrev, ...unadded];
-        });
-      }
+    const syncFromLibrary = () => {
+      const libraryHabits = getLibraryHabits();
+      setHabits((previous) => getTodayHabitSessions(libraryHabits, previous));
     };
 
-    syncFromStorage();
-    window.addEventListener('habits-updated', syncFromStorage);
-    window.addEventListener('storage', syncFromStorage);
+    syncFromLibrary();
+    window.addEventListener('habits-updated', syncFromLibrary);
+    window.addEventListener('storage', syncFromLibrary);
     return () => {
-      window.removeEventListener('habits-updated', syncFromStorage);
-      window.removeEventListener('storage', syncFromStorage);
+      window.removeEventListener('habits-updated', syncFromLibrary);
+      window.removeEventListener('storage', syncFromLibrary);
     };
   }, []);
 
@@ -404,21 +391,20 @@ export function TodayDashboard(): React.JSX.Element {
     const categoryLabel =
       CATEGORY_OPTIONS.find((c) => c.id === editCategory)?.label || editingHabit.category;
 
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === editingHabit.id
-          ? {
-              ...h,
-              name: editName.trim(),
-              category: categoryLabel,
-              timingContext: editTiming.trim() || h.timingContext,
-              minimumSummary: editMin.trim() || h.minimumSummary,
-              fullSummary: editFull.trim() || h.fullSummary,
-              icon: editIcon,
-            }
-          : h,
-      ),
-    );
+    const libraryHabit = getLibraryHabits().find((habit) => habit.id === editingHabit.id);
+    if (libraryHabit) {
+      updateHabitToSync(editingHabit.id, {
+        name: editName.trim(),
+        category: categoryLabel,
+        schedule: editTiming.trim() || libraryHabit.schedule,
+        timingContext: editTiming.trim() || libraryHabit.timingContext || libraryHabit.schedule,
+        minimumTarget: editMin.trim().replace(/^Minimum\s+/i, '') || libraryHabit.minimumTarget,
+        normalTarget: editFull.trim().replace(/^Full\s+/i, '') || libraryHabit.normalTarget,
+        iconName: editIcon,
+        fromTime: editFromTime,
+        untilTime: editUntilTime,
+      });
+    }
 
     showToast(`Habit "${editName.trim()}" updated successfully!`);
     setEditingHabit(null);
@@ -426,7 +412,7 @@ export function TodayDashboard(): React.JSX.Element {
 
   const handleDeleteHabit = (id: string) => {
     const habit = habits.find((h) => h.id === id);
-    setHabits((prev) => prev.filter((h) => h.id !== id));
+    archiveHabitToSync(id);
     setEditingHabit(null);
     showToast(`Habit "${habit?.name ?? 'Habit'}" deleted.`);
   };
@@ -453,6 +439,7 @@ export function TodayDashboard(): React.JSX.Element {
       todayCompletedCount={completedCount}
       todayTotalCount={totalCount}
       currentDate={dashboardDate}
+      habitCountForDate={getLibraryHabitCountForDate}
       reflectionNote={reflectionNote}
     >
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
@@ -1232,25 +1219,15 @@ export function TodayDashboard(): React.JSX.Element {
             minimumTarget: data.minimumTarget,
             schedule: `${data.category} (${data.timingContext})`,
             cue: data.timingContext,
+            timingContext: data.timingContext,
+            fromTime: data.fromTime,
+            untilTime: data.untilTime,
             status: 'Active',
             createdDate: startDate,
             iconName: data.icon === 'water' ? '💧' : data.icon === 'reading' ? '📚' : '🧘‍♂️',
           });
 
           if (isForToday) {
-            const created: HabitSession = {
-              id: habitId,
-              name: data.name,
-              category: data.category,
-              timingContext: data.timingContext || '08:00 AM - 09:00 AM',
-              minimumSummary: `Minimum ${data.minimumTarget}`,
-              fullSummary: `Full ${data.normalTarget}`,
-              outcome: 'unrecorded',
-              icon: data.icon,
-            };
-            setHabits((prev) =>
-              prev.some((habit) => habit.id === created.id) ? prev : [...prev, created],
-            );
             showToast(`New habit "${data.name}" created for today!`);
           } else {
             showToast(

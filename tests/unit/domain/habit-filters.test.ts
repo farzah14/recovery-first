@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   extractStartHour,
+  matchesDatePreset,
   matchesTimeBucket,
   timeOfDayBucket,
   type TimeFilterValue,
@@ -102,5 +103,24 @@ describe('matchesTimeBucket', () => {
     for (const bucket of buckets) {
       expect(matchesTimeBucket(untimed, bucket)).toBe(false);
     }
+  });
+});
+
+describe('matchesDatePreset', () => {
+  const now = new Date('2026-08-03T12:00:00Z');
+
+  it('matches all dates when preset is all', () => {
+    expect(matchesDatePreset('2026-08-03', 'all', {}, now)).toBe(true);
+    expect(matchesDatePreset('2026-08-04', 'all', {}, now)).toBe(true);
+  });
+
+  it('matches today preset for current date', () => {
+    expect(matchesDatePreset('2026-08-03', 'today', {}, now)).toBe(true);
+    expect(matchesDatePreset('2026-08-04', 'today', {}, now)).toBe(false);
+  });
+
+  it('matches tomorrow preset for next date', () => {
+    expect(matchesDatePreset('2026-08-04', 'tomorrow', {}, now)).toBe(true);
+    expect(matchesDatePreset('2026-08-03', 'tomorrow', {}, now)).toBe(false);
   });
 });
