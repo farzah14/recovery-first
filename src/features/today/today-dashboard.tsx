@@ -30,6 +30,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { useAccountState } from '@/components/account/account-state';
 import { AppShell } from '@/components/layout/app-shell';
 import { CreateHabitDialog, type CreateHabitFormData } from '@/features/habits/create-habit-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +47,6 @@ import {
   updateHabitToSync,
   type StoredHabit,
 } from '@/lib/storage/habits-sync';
-import { useAccountState } from '@/components/account/account-state';
 import {
   createBrowserProductRepository,
   getBrowserProductOwner,
@@ -118,12 +118,12 @@ function toHabitSession(record: StoredHabit, previous?: HabitSession): HabitSess
 
 function getTodayHabitSessions(
   records: ReadonlyArray<StoredHabit>,
-  previous: ReadonlyArray<HabitSession> = [],
+  existing: ReadonlyArray<HabitSession> = [],
 ): HabitSession[] {
-  const previousById = new Map(previous.map((habit) => [habit.id, habit]));
+  const existingById = new Map(existing.map((h) => [h.id, h]));
   return records
     .filter((record) => record.status === 'Active' && isTodayDate(record.createdDate))
-    .map((record) => toHabitSession(record, previousById.get(record.id)));
+    .map((record) => toHabitSession(record, existingById.get(record.id)));
 }
 
 export const CLOCK_PRESETS = [
@@ -285,7 +285,7 @@ function createCommandId(): string {
 
 function getDynamicGreeting(
   now: Date = new Date(),
-  displayName = 'Alex',
+  name: string = 'Alex',
 ): { greeting: string; dateString: string } {
   const hour = now.getHours();
 
@@ -302,14 +302,13 @@ function getDynamicGreeting(
     day: 'numeric',
   });
 
-  return { greeting: `${salutation}, ${displayName || 'Alex'}.`, dateString: formattedDate };
+  return { greeting: `${salutation}, ${name}.`, dateString: formattedDate };
 }
 
 export function TodayDashboard(): React.JSX.Element {
   const account = useAccountState();
   const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
   const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
-
   const [dashboardDate, setDashboardDate] = useState(DESIGN_REFERENCE_DATE);
   const [habits, setHabits] = useState<HabitSession[]>(() => getTodayHabitSessions(DEFAULT_HABITS));
 
@@ -385,10 +384,8 @@ export function TodayDashboard(): React.JSX.Element {
   }, []);
 
   // Dynamic Time-Based Greeting (Good morning / afternoon / evening based on current hour)
-  const { greeting, dateString } = getDynamicGreeting(
-    dashboardDate,
-    account.accountId ? account.displayName : 'Alex',
-  );
+  const accountName = account.displayName && account.displayName !== 'Account' ? account.displayName : 'Alex';
+  const { greeting, dateString } = getDynamicGreeting(dashboardDate, accountName);
 
   // Dialog States
   const [selectedHabitForDetail, setSelectedHabitForDetail] = useState<HabitSession | null>(null);
