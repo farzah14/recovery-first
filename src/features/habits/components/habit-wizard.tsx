@@ -12,6 +12,7 @@ import { habitFormSchema } from '@/features/habits/forms/habit-form-schema';
 import { createHabitFormDefaults } from '@/features/habits/forms/habit-form-defaults';
 import type { HabitFormValues } from '@/features/habits/forms/habit-form-types';
 import { activeLimitOptions } from '@/features/habits/application/activate-habit';
+import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { createHabit } from '@/features/habits/application/create-habit';
 import { saveHabitDraft } from '@/features/habits/application/save-habit-draft';
 import { ActiveLimitDialog } from '@/features/habits/components/active-limit-dialog';
@@ -49,13 +50,7 @@ function newId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `habit-${Date.now()}-${Math.random()}`;
 }
 
-function ErrorMessage({
-  id,
-  message,
-}: {
-  id: string;
-  message: unknown;
-}): React.JSX.Element | null {
+function ErrorMessage({ id, message }: { id: string; message: unknown }): React.JSX.Element | null {
   return typeof message === 'string' ? (
     <p id={id} className="text-sm text-[var(--color-danger)]">
       {message}
@@ -105,7 +100,14 @@ export function HabitWizard({
 
   const stepFields: Array<Array<keyof HabitFormValues>> = [
     ['category', 'title'],
-    ['normalAction', 'normalQuantity', 'normalUnit', 'minimumAction', 'minimumQuantity', 'minimumUnit'],
+    [
+      'normalAction',
+      'normalQuantity',
+      'normalUnit',
+      'minimumAction',
+      'minimumQuantity',
+      'minimumUnit',
+    ],
     ['recurrenceKind', 'weekdays', 'timesPerWeek', 'cueType', 'cueValue', 'timezone'],
     ['reminderEnabled', 'reminderLocalTime'],
     [],
@@ -165,10 +167,14 @@ export function HabitWizard({
   const updateWeekday = (day: number, checked: boolean) => {
     const current = form.getValues('weekdays');
     const next = checked ? [...new Set([...current, day])] : current.filter((item) => item !== day);
-    form.setValue('weekdays', next.sort((left, right) => left - right) as HabitFormValues['weekdays'], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+    form.setValue(
+      'weekdays',
+      next.sort((left, right) => left - right) as HabitFormValues['weekdays'],
+      {
+        shouldDirty: true,
+        shouldValidate: true,
+      },
+    );
   };
 
   return (
@@ -177,12 +183,19 @@ export function HabitWizard({
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-[var(--color-primary)]">Create a habit</p>
-            <h1 className="mt-1 text-2xl font-bold text-[var(--color-text-primary)]">A plan with a smaller option</h1>
+            <h1 className="mt-1 text-2xl font-bold text-[var(--color-text-primary)]">
+              A plan with a smaller option
+            </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)]">
-              Define a Normal action and a Minimum action so continuity remains possible on difficult days.
+              Define a Normal action and a Minimum action so continuity remains possible on
+              difficult days.
             </p>
           </div>
-          <Button type="button" variant="ghost" onClick={() => (isFormDirty ? setLeaveOpen(true) : navigate('/app/habits'))}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => (isFormDirty ? setLeaveOpen(true) : navigate('/app/habits'))}
+          >
             Leave wizard
           </Button>
         </div>
@@ -194,12 +207,16 @@ export function HabitWizard({
               <li key={label}>
                 <button
                   type="button"
-                  className="w-full rounded-md border border-[var(--color-border)] px-2 py-2 text-left text-xs focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--color-focus)_24%,transparent)]"
+                  className="w-full rounded-md border border-[var(--color-border)] px-2 py-2 text-left text-xs focus-visible:ring-4 focus-visible:ring-[color-mix(in_srgb,var(--color-focus)_24%,transparent)] focus-visible:outline-none"
                   aria-current={number === step ? 'step' : undefined}
                   onClick={() => number < step && setStep(number)}
                 >
-                  <span className="block font-semibold text-[var(--color-text-primary)]">{number}. {label}</span>
-                  <span className="text-[var(--color-text-secondary)]">{number === step ? 'Current step' : number < step ? 'Complete' : 'Upcoming'}</span>
+                  <span className="block font-semibold text-[var(--color-text-primary)]">
+                    {number}. {label}
+                  </span>
+                  <span className="text-[var(--color-text-secondary)]">
+                    {number === step ? 'Current step' : number < step ? 'Complete' : 'Upcoming'}
+                  </span>
                 </button>
               </li>
             );
@@ -209,11 +226,21 @@ export function HabitWizard({
         <form onSubmit={step === 5 ? handleCreate : (event) => event.preventDefault()} noValidate>
           {step === 1 ? (
             <fieldset className="grid gap-5" aria-labelledby="goal-step-title">
-              <legend id="goal-step-title" className="text-xl font-semibold">Goal and name</legend>
-              <p className="text-sm text-[var(--color-text-secondary)]">Choose a private goal category and give the habit a concise name.</p>
+              <legend id="goal-step-title" className="text-xl font-semibold">
+                Goal and name
+              </legend>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Choose a private goal category and give the habit a concise name.
+              </p>
               <div className="grid gap-2">
-                <label htmlFor="habit-category" className="text-sm font-semibold">Goal category</label>
-                <select id="habit-category" className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm" {...form.register('category')}>
+                <label htmlFor="habit-category" className="text-sm font-semibold">
+                  Goal category
+                </label>
+                <select
+                  id="habit-category"
+                  className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
+                  {...form.register('category')}
+                >
                   <option value="movement">Movement</option>
                   <option value="mindfulness">Mindfulness</option>
                   <option value="learning">Learning</option>
@@ -223,8 +250,15 @@ export function HabitWizard({
                 </select>
               </div>
               <div className="grid gap-2">
-                <label htmlFor="habit-name" className="text-sm font-semibold">Habit name</label>
-                <Input id="habit-name" aria-describedby={errors.title ? 'habit-name-error' : undefined} aria-invalid={Boolean(errors.title)} {...form.register('title')} />
+                <label htmlFor="habit-name" className="text-sm font-semibold">
+                  Habit name
+                </label>
+                <Input
+                  id="habit-name"
+                  aria-describedby={errors.title ? 'habit-name-error' : undefined}
+                  aria-invalid={Boolean(errors.title)}
+                  {...form.register('title')}
+                />
                 <ErrorMessage id="habit-name-error" message={errors.title?.message} />
               </div>
             </fieldset>
@@ -232,34 +266,86 @@ export function HabitWizard({
 
           {step === 2 ? (
             <fieldset className="grid gap-5" aria-labelledby="targets-step-title">
-              <legend id="targets-step-title" className="text-xl font-semibold">Normal and Minimum</legend>
-              <p className="text-sm text-[var(--color-text-secondary)]">Minimum is a successful continuity outcome, not a failure state.</p>
+              <legend id="targets-step-title" className="text-xl font-semibold">
+                Normal and Minimum
+              </legend>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Minimum is a successful continuity outcome, not a failure state.
+              </p>
               <div className="grid gap-4 rounded-lg border border-[var(--color-border)] p-4 sm:grid-cols-2">
                 <div className="grid gap-2 sm:col-span-2">
-                  <label htmlFor="normal-action" className="text-sm font-semibold">Normal action</label>
-                  <Input id="normal-action" aria-describedby={errors.normalAction ? 'normal-action-error' : undefined} aria-invalid={Boolean(errors.normalAction)} {...form.register('normalAction')} />
+                  <label htmlFor="normal-action" className="text-sm font-semibold">
+                    Normal action
+                  </label>
+                  <Input
+                    id="normal-action"
+                    aria-describedby={errors.normalAction ? 'normal-action-error' : undefined}
+                    aria-invalid={Boolean(errors.normalAction)}
+                    {...form.register('normalAction')}
+                  />
                   <ErrorMessage id="normal-action-error" message={errors.normalAction?.message} />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="normal-quantity" className="text-sm font-semibold">Normal quantity</label>
-                  <Input id="normal-quantity" type="number" min="0" step="any" {...form.register('normalQuantity', { setValueAs: (value) => value === '' ? null : Number(value) })} />
+                  <label htmlFor="normal-quantity" className="text-sm font-semibold">
+                    Normal quantity
+                  </label>
+                  <Input
+                    id="normal-quantity"
+                    type="number"
+                    min="0"
+                    step="any"
+                    {...form.register('normalQuantity', {
+                      setValueAs: (value) => (value === '' ? null : Number(value)),
+                    })}
+                  />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="normal-unit" className="text-sm font-semibold">Normal unit</label>
-                  <Input id="normal-unit" {...form.register('normalUnit', { setValueAs: (value) => value.trim() || null })} />
+                  <label htmlFor="normal-unit" className="text-sm font-semibold">
+                    Normal unit
+                  </label>
+                  <Input
+                    id="normal-unit"
+                    {...form.register('normalUnit', {
+                      setValueAs: (value) => value.trim() || null,
+                    })}
+                  />
                 </div>
                 <div className="grid gap-2 sm:col-span-2">
-                  <label htmlFor="minimum-action" className="text-sm font-semibold">Minimum action</label>
-                  <Input id="minimum-action" aria-describedby={errors.minimumAction ? 'minimum-action-error' : undefined} aria-invalid={Boolean(errors.minimumAction)} {...form.register('minimumAction')} />
+                  <label htmlFor="minimum-action" className="text-sm font-semibold">
+                    Minimum action
+                  </label>
+                  <Input
+                    id="minimum-action"
+                    aria-describedby={errors.minimumAction ? 'minimum-action-error' : undefined}
+                    aria-invalid={Boolean(errors.minimumAction)}
+                    {...form.register('minimumAction')}
+                  />
                   <ErrorMessage id="minimum-action-error" message={errors.minimumAction?.message} />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="minimum-quantity" className="text-sm font-semibold">Minimum quantity</label>
-                  <Input id="minimum-quantity" type="number" min="0" step="any" {...form.register('minimumQuantity', { setValueAs: (value) => value === '' ? null : Number(value) })} />
+                  <label htmlFor="minimum-quantity" className="text-sm font-semibold">
+                    Minimum quantity
+                  </label>
+                  <Input
+                    id="minimum-quantity"
+                    type="number"
+                    min="0"
+                    step="any"
+                    {...form.register('minimumQuantity', {
+                      setValueAs: (value) => (value === '' ? null : Number(value)),
+                    })}
+                  />
                 </div>
                 <div className="grid gap-2">
-                  <label htmlFor="minimum-unit" className="text-sm font-semibold">Minimum unit</label>
-                  <Input id="minimum-unit" {...form.register('minimumUnit', { setValueAs: (value) => value.trim() || null })} />
+                  <label htmlFor="minimum-unit" className="text-sm font-semibold">
+                    Minimum unit
+                  </label>
+                  <Input
+                    id="minimum-unit"
+                    {...form.register('minimumUnit', {
+                      setValueAs: (value) => value.trim() || null,
+                    })}
+                  />
                 </div>
               </div>
             </fieldset>
@@ -267,10 +353,18 @@ export function HabitWizard({
 
           {step === 3 ? (
             <fieldset className="grid gap-5" aria-labelledby="schedule-step-title">
-              <legend id="schedule-step-title" className="text-xl font-semibold">Schedule and cue</legend>
+              <legend id="schedule-step-title" className="text-xl font-semibold">
+                Schedule and cue
+              </legend>
               <div className="grid gap-2">
-                <label htmlFor="recurrence-kind" className="text-sm font-semibold">Schedule</label>
-                <select id="recurrence-kind" className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm" {...form.register('recurrenceKind')}>
+                <label htmlFor="recurrence-kind" className="text-sm font-semibold">
+                  Schedule
+                </label>
+                <select
+                  id="recurrence-kind"
+                  className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
+                  {...form.register('recurrenceKind')}
+                >
                   <option value="daily">Every day</option>
                   <option value="weekdays">Selected weekdays</option>
                   <option value="times_per_week">Times per week</option>
@@ -281,8 +375,15 @@ export function HabitWizard({
                   <span className="text-sm font-semibold">Placement days</span>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {weekdays.map(([day, label]) => (
-                      <label key={day} className="flex min-h-11 items-center gap-2 rounded-md border border-[var(--color-border)] px-3 text-sm">
-                        <input type="checkbox" checked={values.weekdays?.includes(day) ?? false} onChange={(event) => updateWeekday(day, event.target.checked)} />
+                      <label
+                        key={day}
+                        className="flex min-h-11 items-center gap-2 rounded-md border border-[var(--color-border)] px-3 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={values.weekdays?.includes(day) ?? false}
+                          onChange={(event) => updateWeekday(day, event.target.checked)}
+                        />
                         {label}
                       </label>
                     ))}
@@ -292,14 +393,30 @@ export function HabitWizard({
               ) : null}
               {values.recurrenceKind === 'times_per_week' ? (
                 <div className="grid gap-2">
-                  <label htmlFor="times-per-week" className="text-sm font-semibold">Times per week</label>
-                  <Input id="times-per-week" type="number" min="1" max="7" {...form.register('timesPerWeek', { setValueAs: (value) => value === '' ? null : Number(value) })} />
+                  <label htmlFor="times-per-week" className="text-sm font-semibold">
+                    Times per week
+                  </label>
+                  <Input
+                    id="times-per-week"
+                    type="number"
+                    min="1"
+                    max="7"
+                    {...form.register('timesPerWeek', {
+                      setValueAs: (value) => (value === '' ? null : Number(value)),
+                    })}
+                  />
                   <ErrorMessage id="times-per-week-error" message={errors.timesPerWeek?.message} />
                 </div>
               ) : null}
               <div className="grid gap-2">
-                <label htmlFor="cue-type" className="text-sm font-semibold">Cue type</label>
-                <select id="cue-type" className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm" {...form.register('cueType')}>
+                <label htmlFor="cue-type" className="text-sm font-semibold">
+                  Cue type
+                </label>
+                <select
+                  id="cue-type"
+                  className="min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 text-sm"
+                  {...form.register('cueType')}
+                >
                   <option value="none">No cue</option>
                   <option value="after_activity">After an activity</option>
                   <option value="time">At a time</option>
@@ -307,11 +424,18 @@ export function HabitWizard({
                 </select>
               </div>
               <div className="grid gap-2">
-                <label htmlFor="cue-value" className="text-sm font-semibold">Cue details</label>
-                <Input id="cue-value" {...form.register('cueValue', { setValueAs: (value) => value.trim() || null })} />
+                <label htmlFor="cue-value" className="text-sm font-semibold">
+                  Cue details
+                </label>
+                <Input
+                  id="cue-value"
+                  {...form.register('cueValue', { setValueAs: (value) => value.trim() || null })}
+                />
               </div>
               <div className="grid gap-2">
-                <label htmlFor="habit-timezone" className="text-sm font-semibold">Timezone used for sessions</label>
+                <label htmlFor="habit-timezone" className="text-sm font-semibold">
+                  Timezone used for sessions
+                </label>
                 <Input id="habit-timezone" readOnly {...form.register('timezone')} />
               </div>
             </fieldset>
@@ -319,17 +443,34 @@ export function HabitWizard({
 
           {step === 4 ? (
             <fieldset className="grid gap-5" aria-labelledby="reminder-step-title">
-              <legend id="reminder-step-title" className="text-xl font-semibold">Optional reminder</legend>
-              <p className="text-sm text-[var(--color-text-secondary)]">Reminders are optional and do not change whether a session can be completed.</p>
+              <legend id="reminder-step-title" className="text-xl font-semibold">
+                Optional reminder
+              </legend>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Reminders are optional and do not change whether a session can be completed.
+              </p>
               <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--color-border)] px-3 text-sm">
                 <input type="checkbox" {...form.register('reminderEnabled')} />
                 Enable an in-app reminder
               </label>
               {values.reminderEnabled ? (
                 <div className="grid gap-2">
-                  <label htmlFor="reminder-time" className="text-sm font-semibold">Reminder time</label>
-                  <Input id="reminder-time" type="time" aria-describedby={errors.reminderLocalTime ? 'reminder-time-error' : undefined} aria-invalid={Boolean(errors.reminderLocalTime)} {...form.register('reminderLocalTime', { setValueAs: (value) => value || null })} />
-                  <ErrorMessage id="reminder-time-error" message={errors.reminderLocalTime?.message} />
+                  <label htmlFor="reminder-time" className="text-sm font-semibold">
+                    Reminder time
+                  </label>
+                  <Input
+                    id="reminder-time"
+                    type="time"
+                    aria-describedby={errors.reminderLocalTime ? 'reminder-time-error' : undefined}
+                    aria-invalid={Boolean(errors.reminderLocalTime)}
+                    {...form.register('reminderLocalTime', {
+                      setValueAs: (value) => value || null,
+                    })}
+                  />
+                  <ErrorMessage
+                    id="reminder-time-error"
+                    message={errors.reminderLocalTime?.message}
+                  />
                 </div>
               ) : null}
             </fieldset>
@@ -337,21 +478,54 @@ export function HabitWizard({
 
           {step === 5 ? (
             <fieldset className="grid gap-5" aria-labelledby="review-step-title">
-              <legend id="review-step-title" className="text-xl font-semibold">Review and create</legend>
-              <p className="text-sm text-[var(--color-text-secondary)]">Review the values you entered before creating this habit.</p>
+              <legend id="review-step-title" className="text-xl font-semibold">
+                Review and create
+              </legend>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                Review the values you entered before creating this habit.
+              </p>
               <dl className="grid gap-3 rounded-lg border border-[var(--color-border)] p-4 text-sm sm:grid-cols-2">
-                <div><dt className="font-semibold">Habit name</dt><dd>{values.title}</dd></div>
-                <div><dt className="font-semibold">Category</dt><dd>{values.category}</dd></div>
-                <div><dt className="font-semibold">Normal</dt><dd>{values.normalAction}</dd></div>
-                <div><dt className="font-semibold">Minimum</dt><dd>{values.minimumAction}</dd></div>
-                <div><dt className="font-semibold">Schedule</dt><dd>{values.recurrenceKind}</dd></div>
-                <div><dt className="font-semibold">Cue</dt><dd>{values.cueValue ?? 'None'}</dd></div>
-                <div><dt className="font-semibold">Reminder</dt><dd>{values.reminderEnabled ? values.reminderLocalTime : 'Off'}</dd></div>
-                <div><dt className="font-semibold">Start date</dt><dd>{values.startLocalDate}</dd></div>
+                <div>
+                  <dt className="font-semibold">Habit name</dt>
+                  <dd>{values.title}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Category</dt>
+                  <dd>{values.category}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Normal</dt>
+                  <dd>{values.normalAction}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Minimum</dt>
+                  <dd>{values.minimumAction}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Schedule</dt>
+                  <dd>{values.recurrenceKind}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Cue</dt>
+                  <dd>{values.cueValue ?? 'None'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Reminder</dt>
+                  <dd>{values.reminderEnabled ? values.reminderLocalTime : 'Off'}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold">Start date</dt>
+                  <dd>{values.startLocalDate}</dd>
+                </div>
               </dl>
               <Alert tone="info">
-                <p className="font-semibold">Uses 1 of 3 active habit slots</p>
-                <p className="mt-1 text-sm">The first eligible session appears from {values.startLocalDate} in {values.timezone}.</p>
+                <p className="font-semibold">
+                  Uses 1 of {activeHabitLimitFor(owner.planTier)} active habit slots
+                </p>
+                <p className="mt-1 text-sm">
+                  The first eligible session appears from {values.startLocalDate} in{' '}
+                  {values.timezone}.
+                </p>
               </Alert>
               {submitError ? <Alert tone="danger">{submitError}</Alert> : null}
             </fieldset>

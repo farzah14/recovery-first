@@ -1,10 +1,8 @@
 import { habitFormSchema } from '@/features/habits/forms/habit-form-schema';
+import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { mapHabitFormToCreateCommand } from '@/features/habits/mappers/habit-form-mapper';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
-import type {
-  ProductOwner,
-  ProductRepository,
-} from '@/lib/repositories/product-repository';
+import type { ProductOwner, ProductRepository } from '@/lib/repositories/product-repository';
 
 export async function createHabit(input: {
   repository: ProductRepository;
@@ -25,7 +23,7 @@ export async function createHabit(input: {
     return { kind: 'created' as const, result };
   } catch (error) {
     if (error instanceof ProductRepositoryError && error.code === 'active_limit_reached') {
-      return { kind: 'active_limit' as const, limit: 3 };
+      return { kind: 'active_limit' as const, limit: activeHabitLimitFor(input.identity.planTier) };
     }
     throw error;
   }

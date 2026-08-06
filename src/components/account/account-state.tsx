@@ -5,15 +5,19 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { PlanTier } from '@/domain/shared/plan-tier';
 
 export type AccountState = {
+  id?: string;
   displayName: string;
   planTier: PlanTier;
+  timezone?: string;
   entitlementStatus?:
     'resolved' | 'loading' | 'unavailable' | 'downgrade_required' | 'legacy_recovery';
 };
 
 const defaultAccountState: AccountState = {
+  id: '',
   displayName: 'Account',
   planTier: 'free',
+  timezone: 'UTC',
   entitlementStatus: 'resolved',
 };
 

@@ -105,4 +105,22 @@ describe('createHabit', () => {
     ).resolves.toEqual({ kind: 'active_limit', limit: 3 });
     expect(repository.deleteHabitDraft).not.toHaveBeenCalled();
   });
+
+  it('uses the authenticated plan limit when the account repository rejects activation', async () => {
+    const repository = createRepositorySpy({ activeLimit: true });
+    await expect(
+      createHabit({
+        repository,
+        values: validValues,
+        identity: {
+          ownerId: '00000000-0000-4000-8000-000000000704',
+          identityMode: 'account',
+          planTier: 'lite',
+          timezone: 'Asia/Jakarta',
+        },
+        ids,
+        now: '2026-07-29T13:00:00.000Z',
+      }),
+    ).resolves.toEqual({ kind: 'active_limit', limit: 10 });
+  });
 });
