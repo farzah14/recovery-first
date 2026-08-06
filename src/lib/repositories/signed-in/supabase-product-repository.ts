@@ -497,24 +497,38 @@ export function createSupabaseProductRepository({
     ): Promise<WeeklyOverviewRead> {
       assertOwner(candidate);
       const range = getLocalWeekRange(localDate);
-      const { data, error } = await client
-        .from('sessions')
-        .select('scheduled_local_date,status')
+      const { data: activeHabits, error: habitsError } = await client
+        .from('habits')
+        .select('id')
         .eq('user_id', owner.ownerId)
-        .gte('scheduled_local_date', range.startDate)
-        .lte('scheduled_local_date', range.endDate);
-      if (error) throw mapError(error);
+        .in('lifecycle_state', [...activeLifecycleStates])
+        .is('deleted_at', null);
+      if (habitsError) throw mapError(habitsError);
+
+      const activeHabitIds = (activeHabits ?? []).map((habit) => habit.id);
 
       const counts = new Map(
         range.dates.map((date) => [date, { completedCount: 0, totalCount: 0 }]),
       );
-      for (const row of data ?? []) {
-        const date = row.scheduled_local_date;
-        const count = counts.get(date);
-        if (!count) continue;
-        count.totalCount += 1;
-        if (row.status === 'full' || row.status === 'minimum') {
-          count.completedCount += 1;
+
+      if (activeHabitIds.length > 0) {
+        const { data, error } = await client
+          .from('sessions')
+          .select('habit_id,scheduled_local_date,status')
+          .eq('user_id', owner.ownerId)
+          .in('habit_id', activeHabitIds)
+          .gte('scheduled_local_date', range.startDate)
+          .lte('scheduled_local_date', range.endDate);
+        if (error) throw mapError(error);
+
+        for (const row of data ?? []) {
+          const date = row.scheduled_local_date;
+          const count = counts.get(date);
+          if (!count) continue;
+          count.totalCount += 1;
+          if (row.status === 'full' || row.status === 'minimum') {
+            count.completedCount += 1;
+          }
         }
       }
 

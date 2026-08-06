@@ -1090,18 +1090,6 @@ export function HabitsManagement(): React.JSX.Element {
                         >
                           <Pause className="size-3.5" />
                         </button>
-
-                        <Button
-                          size="compact"
-                          variant="primary"
-                          onClick={() => {
-                            setSelectedHabitId(habit.id);
-                            setCheckInDialogOpen(true);
-                          }}
-                          className="h-9 shrink-0 px-3 text-xs font-semibold whitespace-nowrap transition-transform duration-150 hover:scale-[1.03] active:scale-[0.97] motion-reduce:transform-none"
-                        >
-                          Check-in
-                        </Button>
                       </div>
                     </div>
                   ))}

@@ -21,17 +21,34 @@ function createFakeClient({
   const client = {
     from(table: string) {
       calls.push({ kind: 'from', name: table });
-      const response = { data: tableRows[table] ?? [], error: null };
+      const sourceRows = Array.isArray(tableRows[table])
+        ? (tableRows[table] as Array<Record<string, unknown>>)
+        : [];
+      const filters: Array<(row: Record<string, unknown>) => boolean> = [];
       const builder: Record<string, unknown> = {};
       builder.select = () => builder;
-      builder.eq = () => builder;
-      builder.is = () => builder;
-      builder.in = () => builder;
+      builder.eq = (column: string, value: unknown) => {
+        filters.push((row) => row[column] === value);
+        return builder;
+      };
+      builder.is = (column: string, value: unknown) => {
+        filters.push((row) => (value === null ? row[column] == null : row[column] === value));
+        return builder;
+      };
+      builder.in = (column: string, values: unknown[]) => {
+        filters.push((row) => values.includes(row[column]));
+        return builder;
+      };
       builder.gte = () => builder;
       builder.lte = () => builder;
       builder.order = () => builder;
-      builder.then = (resolve: (value: typeof response) => unknown) =>
-        Promise.resolve(response).then(resolve);
+      builder.then = (
+        resolve: (value: { data: Array<Record<string, unknown>>; error: null }) => unknown,
+      ) =>
+        Promise.resolve({
+          data: sourceRows.filter((row) => filters.every((filter) => filter(row))),
+          error: null,
+        }).then(resolve);
       return builder;
     },
     async rpc(name: string, args: unknown) {
@@ -99,6 +116,7 @@ describe('SupabaseProductRepository', () => {
         habits: [
           {
             id: '25000000-0000-4000-8000-000000000001',
+            user_id: owner.ownerId,
             title: 'Daily Grounding',
             category: 'Mindfulness',
             lifecycle_state: 'starting',
@@ -230,6 +248,7 @@ describe('SupabaseProductRepository', () => {
         habits: [
           {
             id: '25000000-0000-4000-8000-000000000001',
+            user_id: owner.ownerId,
             title: 'Morning Grounding',
             category: 'Mindfulness',
             lifecycle_state: 'starting',
@@ -297,28 +316,47 @@ describe('SupabaseProductRepository', () => {
   it('aggregates the authenticated owner sessions into a Monday-to-Sunday overview', async () => {
     const { client, calls } = createFakeClient({
       tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-4000-8000-000000000001',
+            lifecycle_state: 'active',
+            deleted_at: null,
+            user_id: owner.ownerId,
+          },
+          {
+            id: '25000000-0000-4000-8000-000000000002',
+            lifecycle_state: 'active',
+            deleted_at: null,
+            user_id: owner.ownerId,
+          },
+        ],
         sessions: [
           {
+            habit_id: '25000000-0000-4000-8000-000000000001',
             scheduled_local_date: '2026-08-03',
             status: 'full',
             user_id: owner.ownerId,
           },
           {
+            habit_id: '25000000-0000-4000-8000-000000000002',
             scheduled_local_date: '2026-08-03',
             status: 'unrecorded',
             user_id: owner.ownerId,
           },
           {
+            habit_id: '25000000-0000-4000-8000-000000000001',
             scheduled_local_date: '2026-08-04',
             status: 'minimum',
             user_id: owner.ownerId,
           },
           {
+            habit_id: '25000000-0000-4000-8000-000000000002',
             scheduled_local_date: '2026-08-04',
             status: 'manual_skipped',
             user_id: owner.ownerId,
           },
           {
+            habit_id: '25000000-0000-4000-8000-000000000001',
             scheduled_local_date: '2026-08-10',
             status: 'full',
             user_id: owner.ownerId,
@@ -345,5 +383,61 @@ describe('SupabaseProductRepository', () => {
       ],
     });
     expect(calls).toContainEqual({ kind: 'from', name: 'sessions' });
+  });
+
+  it('counts sessions only for active, non-deleted habits', async () => {
+    const { client } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-4000-8000-000000000001',
+            lifecycle_state: 'active',
+            deleted_at: null,
+            user_id: owner.ownerId,
+          },
+          {
+            id: '25000000-0000-4000-8000-000000000002',
+            lifecycle_state: 'paused',
+            deleted_at: null,
+            user_id: owner.ownerId,
+          },
+          {
+            id: '25000000-0000-4000-8000-000000000003',
+            lifecycle_state: 'active',
+            deleted_at: '2026-08-06T00:00:00.000Z',
+            user_id: owner.ownerId,
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-4000-8000-000000000001',
+            scheduled_local_date: '2026-08-06',
+            status: 'full',
+            user_id: owner.ownerId,
+          },
+          {
+            habit_id: '25000000-0000-4000-8000-000000000002',
+            scheduled_local_date: '2026-08-06',
+            status: 'minimum',
+            user_id: owner.ownerId,
+          },
+          {
+            habit_id: '25000000-0000-4000-8000-000000000003',
+            scheduled_local_date: '2026-08-06',
+            status: 'full',
+            user_id: owner.ownerId,
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const overview = await repository.getWeeklyOverview(owner, '2026-08-06');
+
+    expect(overview.days[3]).toMatchObject({
+      localDate: '2026-08-06',
+      completedCount: 1,
+      totalCount: 1,
+    });
   });
 });
