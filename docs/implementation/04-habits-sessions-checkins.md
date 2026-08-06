@@ -2,9 +2,9 @@
 
 > **Execution mode:** Single-agent sequential execution. Use the `executing-plans` workflow. Do not create, delegate to, or dispatch subagents. Complete one task, run its fresh verification commands, commit it, and only then continue. Steps use checkbox (`- [ ]`) syntax for progress tracking.
 
-**Goal:** Deliver the complete browser-local Guest core loop and signed-in-compatible application contracts for creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, and preserving immutable history.
+**Goal:** Deliver the authenticated account core loop for Free, Lite, and Premium users: creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, resolving expired sessions, and preserving immutable history.
 
-**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03. Guest mode uses a Dexie-backed repository as the canonical source, while a Supabase-backed repository implements the same interface for later authenticated wiring. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
+**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03A. Supabase PostgreSQL is canonical for authenticated account data; Dexie is limited to account cache, drafts, and pending operations. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, React Hook Form, Zod, `@hookform/resolvers`, Dexie, Supabase PostgreSQL functions and views, TanStack Query contracts, Tailwind CSS, shadcn/ui primitives, Lucide, Vitest, React Testing Library, `fake-indexeddb`, Playwright, pnpm.
 
@@ -25,11 +25,28 @@
 
 - Plan 01 Final Acceptance Checklist passes.
 - Plan 02 Final Acceptance Checklist passes.
-- Plan 03 Final Acceptance Checklist passes.
+- Plan 03A account-tier and identity amendment passes.
 - The repository is on a dedicated implementation branch or worktree.
 - `pnpm verify`, `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, and `pnpm build` pass before Task 1.
 
-**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, authentication screens, Guest-to-account transfer, Premium analytics, payment-provider integration, production monitoring, and release operations.
+**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, Guest-to-account transfer, Premium analytics, payment-provider integration, production monitoring, and release operations.
+
+---
+
+## Approved authenticated-account amendment — 2026-08-07
+
+The user selected the authenticated-account revision of Plan 04. This amendment supersedes conflicting Guest-only execution steps in Tasks 1–17 and the final acceptance checklist.
+
+- `ProductOwner.identityMode` is `account`; `ProductOwner.planTier` is `free | lite | premium`.
+- Supabase PostgreSQL is the canonical source for signed-in habits, versions, sessions, check-ins, history, and plan limits.
+- Dexie may provide signed-in cache, drafts, and pending-operation durability, but it is not the canonical account source.
+- Active limits are server-authoritative: Free `5`, Lite `10`, Premium `30`.
+- The signed-in repository must call transactional Supabase functions and owner-scoped views; it must never accept a Guest owner or service-role client.
+- Tasks 13–15 must complete authenticated same-day editing, immutable check-in history, and Automatic Skipped resolution through Supabase functions.
+- Task 16 replaces the Guest-only browser scenario with authenticated account coverage against local Supabase. Guest behavior remains covered only by its own browser-local tests and is not counted as account completion.
+- Task 17 may mark Plan 04 complete only after the authenticated acceptance suite, migrations, RLS tests, browser checks, and clean-checkout verification pass.
+
+The historical Guest implementation commits in this worktree remain preserved for domain and component reuse. They do not authorize new Guest-owned account behavior or change the approved account limits.
 
 ---
 
