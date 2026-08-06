@@ -260,7 +260,10 @@ export function renderHabitIcon(iconId?: string): React.JSX.Element {
 
 const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
 
-function getDynamicGreeting(now: Date = new Date()): { greeting: string; dateString: string } {
+function getDynamicGreeting(
+  now: Date = new Date(),
+  name: string = 'Alex',
+): { greeting: string; dateString: string } {
   const hour = now.getHours();
 
   let salutation = 'Good morning';
@@ -276,10 +279,11 @@ function getDynamicGreeting(now: Date = new Date()): { greeting: string; dateStr
     day: 'numeric',
   });
 
-  return { greeting: `${salutation}, Alex.`, dateString: formattedDate };
+  return { greeting: `${salutation}, ${name}.`, dateString: formattedDate };
 }
 
 export function TodayDashboard(): React.JSX.Element {
+  const account = useAccountState();
   const [dashboardDate, setDashboardDate] = useState(DESIGN_REFERENCE_DATE);
   const [habits, setHabits] = useState<HabitSession[]>(() => getTodayHabitSessions(DEFAULT_HABITS));
 
@@ -308,7 +312,7 @@ export function TodayDashboard(): React.JSX.Element {
   }, []);
 
   // Dynamic Time-Based Greeting (Good morning / afternoon / evening based on current hour)
-  const { greeting, dateString } = getDynamicGreeting(dashboardDate);
+  const { greeting, dateString } = getDynamicGreeting(dashboardDate, account.displayName || 'Alex');
 
   // Dialog States
   const [selectedHabitForDetail, setSelectedHabitForDetail] = useState<HabitSession | null>(null);
