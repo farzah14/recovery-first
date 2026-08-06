@@ -51,6 +51,8 @@ import {
   buildCreateHabitCommand,
   buildHabitVersionCommand,
 } from '@/lib/repositories/habit-command-builders';
+import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
+import type { WeeklyOverviewRead } from '@/lib/repositories/product-repository';
 import { mapSessionToTodayHabit } from '@/features/today/today-repository-mappers';
 
 export type OutcomeType = 'unrecorded' | 'full' | 'minimum' | 'skipped';
@@ -230,19 +232,6 @@ function createCommandId(): string {
   );
 }
 
-function getLocalDateForTimezone(timezone: string, now = new Date()): string {
-  try {
-    return new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(now);
-  } catch {
-    return now.toISOString().slice(0, 10);
-  }
-}
-
 function getDynamicGreeting(
   now: Date = new Date(),
   displayName = 'Alex',
@@ -311,9 +300,11 @@ export function TodayDashboard(): React.JSX.Element {
   const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
 
   const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [weeklyOverview, setWeeklyOverview] = useState<WeeklyOverviewRead | null>(null);
 
   const reloadRemoteToday = React.useCallback(async () => {
     if (!repository || !owner) {
+      setWeeklyOverview(null);
       setRemoteDataReady(true);
       return;
     }
@@ -321,8 +312,12 @@ export function TodayDashboard(): React.JSX.Element {
     try {
       setRemoteDataReady(false);
       setRemoteError(null);
-      await repository.ensureSessionHorizon(owner, localDate);
-      const today = await repository.getToday(owner, localDate);
+      const weekRange = getLocalWeekRange(localDate);
+      await repository.ensureSessionHorizon(owner, weekRange.endDate);
+      const [today, overview] = await Promise.all([
+        repository.getToday(owner, localDate),
+        repository.getWeeklyOverview(owner, localDate),
+      ]);
       setHabits(
         today.sessions.map((session) => {
           const mapped = mapSessionToTodayHabit(session);
@@ -332,9 +327,11 @@ export function TodayDashboard(): React.JSX.Element {
           };
         }),
       );
+      setWeeklyOverview(overview);
       setRemoteDataReady(true);
     } catch (error) {
       setRemoteDataReady(false);
+      setWeeklyOverview(null);
       setRemoteError(
         error instanceof Error ? error.message : 'Unable to load today from Supabase.',
       );
@@ -615,6 +612,7 @@ export function TodayDashboard(): React.JSX.Element {
       }}
       todayCompletedCount={completedCount}
       todayTotalCount={totalCount}
+      {...(weeklyOverview ? { weeklyOverview } : {})}
       currentDate={dashboardDate}
       reflectionNote={reflectionNote}
     >

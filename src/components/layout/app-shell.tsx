@@ -31,6 +31,7 @@ import {
 } from '@/components/account/account-state';
 import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
 import { addHabitToSync, getTodayDateStr } from '@/lib/storage/habits-sync';
+import type { WeeklyOverviewRead } from '@/lib/repositories/product-repository';
 
 const sidebarCollapsedStorageKey = 'recovery-first.sidebar-collapsed';
 const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
@@ -51,6 +52,7 @@ interface AppShellProps {
   onOpenReflectionModal?: () => void;
   todayCompletedCount?: number;
   todayTotalCount?: number;
+  weeklyOverview?: WeeklyOverviewRead;
   currentDate?: Date;
   reflectionNote?: string;
 }
@@ -60,8 +62,9 @@ export function AppShell({
   onOpenCreateHabit,
   showCreateHabitActions = true,
   onOpenReflectionModal,
-  todayCompletedCount = 2,
-  todayTotalCount = 3,
+  todayCompletedCount = 0,
+  todayTotalCount = 0,
+  weeklyOverview,
   currentDate,
   reflectionNote,
 }: AppShellProps): React.JSX.Element {
@@ -132,8 +135,8 @@ export function AppShell({
 
   const activeIndex = optimisticIndex !== null ? optimisticIndex : currentActiveIndex;
 
-  // Dynamic Weekly Overview Data based on Completed Habits by Days & Dates
-  // Calculate real day of week for current date (Monday = 0, ..., Sunday = 6)
+  // Build the seven displayed days from persisted counts when available.
+  // Without remote data, show zeroes rather than fabricated sample activity.
   const refDate = currentDate ?? resolvedCurrentDate;
   const jsDay = refDate.getDay();
   const currentDayIndex = jsDay === 0 ? 6 : jsDay - 1; // 0-indexed starting Monday
@@ -148,39 +151,31 @@ export function AppShell({
     { day: 'S', fullDay: 'Sunday' },
   ];
 
-  const samplePastCompletions = [2, 3, 0, 2, 3, 1, 0];
-
   const weeklyData: DayOverview[] = baseDaysConfig.map((config, idx) => {
-    const isToday = idx === currentDayIndex;
+    const fallbackTargetDate = new Date(refDate);
+    fallbackTargetDate.setDate(refDate.getDate() + idx - currentDayIndex);
+    const fallbackLocalDate = `${fallbackTargetDate.getFullYear()}-${String(
+      fallbackTargetDate.getMonth() + 1,
+    ).padStart(2, '0')}-${String(fallbackTargetDate.getDate()).padStart(2, '0')}`;
+    const persistedDay = weeklyOverview?.days[idx];
+    const localDate = persistedDay?.localDate ?? fallbackLocalDate;
+    const isToday = weeklyOverview
+      ? localDate === weeklyOverview.todayDate
+      : idx === currentDayIndex;
 
     let fullDay = config.fullDay;
     if (isToday) {
       fullDay = `${config.fullDay} (Today)`;
     }
 
-    // Calculate actual Date object for this day of the week
-    const dayOffset = idx - currentDayIndex;
-    const targetDate = new Date(refDate);
-    targetDate.setDate(refDate.getDate() + dayOffset);
-
-    // Format dateStr as e.g. "Aug 2" or "Jul 27"
-    const monthShort = targetDate.toLocaleDateString('en-US', { month: 'short' });
-    const dayNum = targetDate.getDate();
-    const dateStr = `${monthShort} ${dayNum}`;
-
-    let completed = 0;
-    let total = todayTotalCount;
-
-    if (isToday) {
-      completed = todayCompletedCount;
-      total = todayTotalCount;
-    } else if (idx < currentDayIndex) {
-      completed = Math.min(samplePastCompletions[idx] ?? 2, todayTotalCount);
-      total = todayTotalCount > 0 ? todayTotalCount : 3;
-    } else {
-      completed = 0;
-      total = todayTotalCount;
-    }
+    const [year, month, day] = localDate.split('-').map(Number);
+    const displayDate = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
+    const dateStr = displayDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+    const completed = persistedDay?.completedCount ?? (isToday ? todayCompletedCount : 0);
+    const total = persistedDay?.totalCount ?? (isToday ? todayTotalCount : 0);
 
     return {
       day: config.day,

@@ -58,7 +58,8 @@ import {
   buildCreateHabitCommand,
   buildHabitVersionCommand,
 } from '@/lib/repositories/habit-command-builders';
-import type { HabitListItem } from '@/lib/repositories/product-repository';
+import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
+import type { HabitListItem, WeeklyOverviewRead } from '@/lib/repositories/product-repository';
 
 export interface HabitItem {
   id: string;
@@ -317,20 +318,30 @@ export function HabitsManagement(): React.JSX.Element {
   );
   const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
   const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [weeklyOverview, setWeeklyOverview] = useState<WeeklyOverviewRead | null>(null);
 
   const reloadRemoteHabits = React.useCallback(async () => {
     if (!repository || !owner) {
+      setWeeklyOverview(null);
       setRemoteDataReady(true);
       return;
     }
     try {
       setRemoteDataReady(false);
       setRemoteError(null);
-      const remoteHabits = await repository.listHabits(owner);
+      const localDate = getLocalDateForTimezone(owner.timezone);
+      const weekRange = getLocalWeekRange(localDate);
+      await repository.ensureSessionHorizon(owner, weekRange.endDate);
+      const [remoteHabits, overview] = await Promise.all([
+        repository.listHabits(owner),
+        repository.getWeeklyOverview(owner, localDate),
+      ]);
       setHabitsList(remoteHabits.map(mapRepositoryHabit));
+      setWeeklyOverview(overview);
       setRemoteDataReady(true);
     } catch (error) {
       setRemoteDataReady(false);
+      setWeeklyOverview(null);
       setRemoteError(
         error instanceof Error ? error.message : 'Unable to load habits from Supabase.',
       );
@@ -667,7 +678,10 @@ export function HabitsManagement(): React.JSX.Element {
   const hasMoreActiveHabits = activeHabits.length > visibleActiveCount;
 
   return (
-    <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
+    <AppShell
+      onOpenCreateHabit={() => setCreateDialogOpen(true)}
+      {...(weeklyOverview ? { weeklyOverview } : {})}
+    >
       <span
         aria-hidden="true"
         className="sr-only"

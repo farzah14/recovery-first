@@ -111,6 +111,19 @@ export type TodayRepositoryRead = {
   activeHabitLimit: number;
 };
 
+export type WeeklyOverviewDay = {
+  localDate: string;
+  completedCount: number;
+  totalCount: number;
+};
+
+export type WeeklyOverviewRead = {
+  todayDate: string;
+  startDate: string;
+  endDate: string;
+  days: WeeklyOverviewDay[];
+};
+
 export type RecordCheckInRepositoryCommand = {
   commandId: string;
   owner: ProductOwner;
@@ -198,6 +211,7 @@ export interface ProductRepository {
   ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number>;
   resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number>;
   getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead>;
+  getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead>;
   recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult>;
   editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult>;
 }

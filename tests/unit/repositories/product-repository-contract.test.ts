@@ -17,6 +17,7 @@ describe('account ProductRepository contract', () => {
     expectTypeOf<ProductRepository>().toHaveProperty('createHabit');
     expectTypeOf<ProductRepository>().toHaveProperty('ensureSessionHorizon');
     expectTypeOf<ProductRepository>().toHaveProperty('getToday');
+    expectTypeOf<ProductRepository>().toHaveProperty('getWeeklyOverview');
     expectTypeOf<ProductRepository>().toHaveProperty('recordCheckIn');
     expectTypeOf<ProductRepository>().toHaveProperty('editCheckIn');
   });
