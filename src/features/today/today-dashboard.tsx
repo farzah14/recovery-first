@@ -384,7 +384,8 @@ export function TodayDashboard(): React.JSX.Element {
   }, []);
 
   // Dynamic Time-Based Greeting (Good morning / afternoon / evening based on current hour)
-  const accountName = account.displayName && account.displayName !== 'Account' ? account.displayName : 'Alex';
+  const accountName =
+    account.displayName && account.displayName !== 'Account' ? account.displayName : 'Alex';
   const { greeting, dateString } = getDynamicGreeting(dashboardDate, accountName);
 
   // Dialog States

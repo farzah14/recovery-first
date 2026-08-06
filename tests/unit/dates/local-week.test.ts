@@ -4,9 +4,9 @@ import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-we
 
 describe('getLocalDateForTimezone', () => {
   it('formats the date in the owner timezone instead of the browser UTC date', () => {
-    expect(
-      getLocalDateForTimezone('Asia/Jakarta', new Date('2026-08-06T23:00:00.000Z')),
-    ).toBe('2026-08-07');
+    expect(getLocalDateForTimezone('Asia/Jakarta', new Date('2026-08-06T23:00:00.000Z'))).toBe(
+      '2026-08-07',
+    );
   });
 });
 
