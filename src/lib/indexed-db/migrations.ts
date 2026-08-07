@@ -1,6 +1,7 @@
 import type { Transaction } from 'dexie';
 
-import type { LegacyLocalDataRecord, LocalHabitRecord } from '@/lib/indexed-db/types';
+import type { LegacyLocalDataRecord } from '@/lib/indexed-db/types';
+import type { LocalHabitRecord } from '@/lib/indexed-db/types';
 
 export async function migrateVersionOneToTwo(transaction: Transaction): Promise<void> {
   await transaction
@@ -55,14 +56,6 @@ export async function migrateVersionTwoToThree(transaction: Transaction): Promis
       legacyOwners.set(ownerId, `guest:${ownerId}`);
       profile.identityMode = 'legacy';
       profile.planTier = null;
-    });
-
-  await transaction
-    .table('checkIns')
-    .toCollection()
-    .modify((checkIn: Record<string, unknown>) => {
-      checkIn.replacedAt ??= null;
-      checkIn.replacedById ??= null;
     });
 
   const now = new Date().toISOString();

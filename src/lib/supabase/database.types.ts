@@ -1005,21 +1005,6 @@ export type Database = {
         }
         Returns: Json
       }
-      edit_same_day_check_in: {
-        Args: {
-          p_check_in_id: string
-          p_command_id: string
-          p_expected_check_in_revision: number
-          p_expected_session_revision: number
-          p_friction_code: string
-          p_friction_note: string
-          p_outcome: Database["public"]["Enums"]["check_in_outcome"]
-          p_recorded_local_at: string
-          p_session_id: string
-          p_timezone_snapshot: string
-        }
-        Returns: Json
-      }
       ensure_session: {
         Args: {
           p_command_id: string
@@ -1048,7 +1033,6 @@ export type Database = {
         }
         Returns: Json
       }
-      resolve_unrecorded_sessions: { Args: { p_now: string }; Returns: number }
       redesign_habit: {
         Args: {
           p_category: string
