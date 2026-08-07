@@ -61,6 +61,28 @@ This status applies to the approved authenticated-account amendment above. The h
 | Task 5 — authenticated acceptance coverage | Partially finished | Authenticated accessibility/E2E/visual coverage and local seed fixture committed as `fb81373`; database, focused suites, build, and authenticated E2E pass. | Supabase-backed browser coverage |
 | Task 5 quality handoff | Not finished | Global format gate fails on 38 pre-existing files; default full Vitest is `254 passed / 2 dashboard-component timeouts`; unrelated dirty files remain. | No completion claim |
 
+### Original Plan 04 task-by-task reconciliation
+
+| Original task | Authenticated revision status | Result |
+|---|---|---|
+| 1 — dependencies and focused commands | Finished supporting work | Tooling and scripts are present and the historical baseline is retained; no product data is stored here. |
+| 2 — account-neutral repository contracts | Finished supporting work | Shared repository contracts are used by both Guest and account providers. |
+| 3 — basic template catalog | Finished, static by design | Templates are deterministic product content, not user-owned Supabase records. |
+| 4 — wizard schema/defaults/mapping | Finished supporting work | Validation and mapping are reusable; account persistence is handled by the signed-in adapter. |
+| 5 — Guest Dexie repository | Finished for Guest only | Browser-local Guest data remains isolated; it is not the account canonical source. |
+| 6 — deterministic bounded sessions | Finished supporting work | The same deterministic horizon generator feeds the Supabase `ensure_session` boundary. |
+| 7 — draft and creation services | Partially finished for account | Habit creation is wired to Supabase; signed-in draft save/delete still require an approved server draft boundary. |
+| 8 — route-backed creation wizard | Partially finished for account | The wizard is routed and account-owned, but signed-in draft durability is still open. |
+| 9 — habit list/detail/history reads | Finished for account core reads | Account list/detail/history reads use owner-scoped Supabase tables/views; legacy static design components remain outside the route. |
+| 10 — Today read models/ordering | Finished for account core reads | Account Today reads use `today_session_view` and Supabase-owned versions/check-ins. |
+| 11 — Today dashboard/session states | Finished for account core surface | Account Today selects the Supabase repository; Guest remains a separate Dexie fallback. |
+| 12 — Full/Minimum/Skipped check-ins | Finished for account boundary | Account mutations call authoritative Supabase functions; accessibility semantics are covered. |
+| 13 — same-day edit/history | Finished via amendment Task 2 | Authenticated migration/RPC, adapter, and pgTAP history/cutoff/RLS checks pass. |
+| 14 — Automatic Skipped resolution | Finished via amendment Task 3 | Authenticated owner-scoped/idempotent migration/RPC and pgTAP checks pass. |
+| 15 — signed-in Supabase adapter | Finished via amendment Task 4 | Account provider wiring and repository reads/writes are committed and locally verified. |
+| 16 — Guest accessibility/E2E | Superseded; partially replaced | Authenticated accessibility/E2E/visual coverage exists; complete browser edit/resolution/tier coverage remains open. |
+| 17 — Plan 04 quality gate/handoff | Not finished | Format and default full-test gates are not green, and the worktree is not clean. |
+
 The account path is not considered fully verified until Task 5 quality-gate failures and the clean-tree/clean-checkout requirement are resolved. No hosted Supabase, production credentials, payment provider, or external authenticated E2E integration was verified in this worktree.
 
 ---
