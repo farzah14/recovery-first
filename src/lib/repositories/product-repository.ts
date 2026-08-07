@@ -6,9 +6,8 @@ import type { PlanTier } from '@/domain/shared/plan-tier';
 
 export type ProductOwner = {
   ownerId: string;
-  /** Guest values remain only for the historical browser-local repository boundary. */
-  identityMode: IdentityMode | 'guest';
-  planTier: PlanTier | 'guest';
+  identityMode: IdentityMode;
+  planTier: PlanTier;
   timezone: string;
 };
 
@@ -45,7 +44,7 @@ export type CreateHabitCommand = {
   minimumTarget: HabitTarget;
   recurrence: RecurrenceRule;
   cue: HabitCue;
-  presentation?: HabitPresentation;
+  presentation: HabitPresentation;
   reminderIntent: { enabled: boolean; localTime: string | null };
   startLocalDate: string;
   activate: boolean;
@@ -89,11 +88,11 @@ export type SessionSummary = {
   habitId: string;
   habitVersionId: string;
   title: string;
-  category?: string;
-  icon?: string;
-  timingContext?: string;
-  habitRevision?: number;
-  currentVersionId?: string | null;
+  category: string;
+  icon: string;
+  timingContext: string;
+  habitRevision: number;
+  currentVersionId: string | null;
   normalTarget: HabitTarget;
   minimumTarget: HabitTarget;
   cue: HabitCue;
@@ -103,8 +102,6 @@ export type SessionSummary = {
   status: 'unrecorded' | 'full' | 'minimum' | 'manual_skipped' | 'automatic_skipped' | 'excused';
   revision: number;
   synchronizationState: 'local_only' | 'pending' | 'synced' | 'failed' | 'conflict';
-  currentCheckInId?: string;
-  currentCheckInRevision?: number;
 };
 
 export type TodayRepositoryRead = {
@@ -154,24 +151,24 @@ export type EditCheckInRepositoryCommand = RecordCheckInRepositoryCommand & {
 export type HabitListItem = {
   id: string;
   title: string;
-  category?: string | null;
-  description?: string;
-  normalTarget?: HabitTarget;
-  minimumTarget?: HabitTarget;
-  schedule?: string;
-  cue?: string;
-  status?: 'Active' | 'Paused' | 'Archived';
-  iconName?: string;
-  fromTime?: string | null;
-  untilTime?: string | null;
-  startLocalDate?: string;
-  createdDate?: string;
-  version?: string;
-  streak?: number;
-  consistency?: number;
+  category: string | null;
+  description: string;
+  normalTarget: HabitTarget;
+  minimumTarget: HabitTarget;
+  schedule: string;
+  cue: string;
+  status: 'Active' | 'Paused' | 'Archived';
+  iconName: string;
+  fromTime: string | null;
+  untilTime: string | null;
+  startLocalDate: string;
+  createdDate: string;
+  version: string;
+  streak: number;
+  consistency: number;
   lifecycleState: HabitLifecycleState;
   currentVersionId: string | null;
-  revision?: number;
+  revision: number;
   updatedAt: string;
 };
 
@@ -184,9 +181,9 @@ export type HabitDetailRead = {
     minimumTarget: HabitTarget;
     recurrence: RecurrenceRule;
     cue: HabitCue;
-    metadata?: Record<string, unknown>;
+    metadata: Record<string, unknown>;
     createdAt: string;
-    revision?: number;
+    revision: number;
   };
   versions: Array<{
     id: string;
@@ -195,15 +192,6 @@ export type HabitDetailRead = {
     source: 'creation' | 'redesign' | 'recommendation' | 'restore';
   }>;
   sessions: SessionSummary[];
-  checkInHistory?: Array<{
-    id: string;
-    sessionId: string;
-    outcome: Exclude<SessionSummary['status'], 'automatic_skipped' | 'unrecorded'>;
-    frictionCode: string | null;
-    frictionNote: string | null;
-    replacedAt: string;
-    previousRevision: number;
-  }>;
 };
 
 export interface ProductRepository {

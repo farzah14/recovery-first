@@ -1,7 +1,5 @@
 import { expect, test } from './fixtures';
 
-import { hasAuthenticatedE2EConfig, signInSeedUser } from './support/authenticated-session';
-
 const mobileViewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'tablet', width: 834, height: 1112 },
@@ -14,16 +12,8 @@ const desktopViewports = [
 ] as const;
 
 test.describe('Responsive Navigation', () => {
-  test.beforeEach(() => {
-    test.skip(
-      !hasAuthenticatedE2EConfig(),
-      'Responsive authenticated routes require a running local Supabase environment.',
-    );
-  });
-
   for (const viewport of desktopViewports) {
-    test(`displays the sidebar at ${viewport.name} width`, async ({ context, page }) => {
-      await signInSeedUser(context);
+    test(`displays the sidebar at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/app/today');
 
@@ -34,8 +24,7 @@ test.describe('Responsive Navigation', () => {
   }
 
   for (const viewport of mobileViewports) {
-    test(`displays bottom navigation at ${viewport.name} width`, async ({ context, page }) => {
-      await signInSeedUser(context);
+    test(`displays bottom navigation at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/app/today');
 

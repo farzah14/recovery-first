@@ -5,12 +5,11 @@ import { cookies } from 'next/headers';
 
 import type { AuthenticatedAccount } from '@/lib/auth/require-account';
 import { serverEnv } from '@/lib/env/server-env';
-import type { Database } from '@/lib/supabase/database.types';
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     serverEnv.NEXT_PUBLIC_SUPABASE_URL,
     serverEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {

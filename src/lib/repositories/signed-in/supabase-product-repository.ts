@@ -5,7 +5,6 @@ import type {
   CreateHabitCommand,
   CreateHabitResult,
   EditCheckInRepositoryCommand,
-  HabitDetailRead,
   HabitListItem,
   HabitTarget,
   ProductOwner,
@@ -26,11 +25,9 @@ import {
   type DatabaseSessionStatus,
 } from '@/lib/repositories/habit-payload';
 
-export type SupabaseProductRepositoryClient = Pick<SupabaseClient<Database>, 'from' | 'rpc'>;
-type SupabaseDatabaseClient = SupabaseProductRepositoryClient;
+type SupabaseDatabaseClient = SupabaseClient<Database>;
 type HabitRow = Database['public']['Tables']['habits']['Row'];
 type HabitVersionRow = Database['public']['Tables']['habit_versions']['Row'];
-type CheckInRow = Database['public']['Tables']['check_ins']['Row'];
 type SessionViewRow = Database['public']['Views']['today_session_view']['Row'];
 
 const activeLifecycleStates = [
@@ -87,9 +84,7 @@ function formatTarget(target: HabitTarget): string {
   return target.action;
 }
 
-function mapLifecycleToUiStatus(
-  state: HabitRow['lifecycle_state'],
-): 'Active' | 'Paused' | 'Archived' {
+function mapLifecycleToUiStatus(state: HabitRow['lifecycle_state']): HabitListItem['status'] {
   if (state === 'paused' || state === 'draft' || state === 'stopped') return 'Paused';
   if (state === 'archived' || state === 'trash' || state === 'completed') return 'Archived';
   return 'Active';
@@ -100,9 +95,6 @@ function mapError(error: {
   message?: string | null;
 }): ProductRepositoryError {
   const code = error.code ?? '';
-  if (error.message === 'same_day_edit_closed') {
-    return new ProductRepositoryError('same_day_edit_closed', error.message);
-  }
   if (code === 'P0001' || error.message === 'active_limit_reached') {
     return new ProductRepositoryError(
       'active_limit_reached',
@@ -137,19 +129,6 @@ function jsonString(value: Json | undefined, fallback: string): string {
 
 function jsonNumber(value: Json | undefined, fallback: number): number {
   return typeof value === 'number' ? value : fallback;
-}
-
-function presentationForCommand(command: CreateHabitCommand) {
-  return (
-    command.presentation ?? {
-      description: `Target: ${formatTarget(command.normalTarget)}`,
-      icon: 'habit',
-      fromTime: '08:00',
-      untilTime: '09:00',
-      timingContext: '08:00 AM - 09:00 AM',
-      startLocalDate: command.startLocalDate,
-    }
-  );
 }
 
 function daysBetween(start: string, end: string): string[] {
@@ -296,7 +275,6 @@ export function createSupabaseProductRepository({
   return {
     async createHabit(command: CreateHabitCommand): Promise<CreateHabitResult> {
       assertOwner(command.owner);
-      const presentation = presentationForCommand(command);
       const { data, error } = await client.rpc('create_habit', {
         p_habit_id: command.habitId,
         p_title: command.title.trim(),
@@ -307,17 +285,17 @@ export function createSupabaseProductRepository({
         p_schedule_rule: {
           ...command.recurrence,
           startLocalDate: command.startLocalDate,
-          fromTime: presentation.fromTime,
-          untilTime: presentation.untilTime,
+          fromTime: command.presentation.fromTime,
+          untilTime: command.presentation.untilTime,
         },
         p_cue: command.cue,
         p_metadata: encodeHabitVersionPayload({
-          description: presentation.description,
-          icon: presentation.icon,
-          fromTime: presentation.fromTime,
-          untilTime: presentation.untilTime,
-          timingContext: presentation.timingContext,
-          startLocalDate: presentation.startLocalDate,
+          description: command.presentation.description,
+          icon: command.presentation.icon,
+          fromTime: command.presentation.fromTime,
+          untilTime: command.presentation.untilTime,
+          timingContext: command.presentation.timingContext,
+          startLocalDate: command.presentation.startLocalDate,
           recurrence: command.recurrence,
           cue: command.cue,
         }),
@@ -430,7 +408,7 @@ export function createSupabaseProductRepository({
           cue: currentPayload.cue,
           metadata: currentPayload,
           createdAt: current?.created_at ?? habit.updatedAt,
-          revision: habit.revision ?? 1,
+          revision: habit.revision,
         },
         versions: versions.map((version) => ({
           id: version.id,
@@ -594,28 +572,7 @@ export function createSupabaseProductRepository({
     },
 
     async editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult> {
-      assertOwner(command.owner);
-      const { data, error } = await client.rpc('edit_same_day_check_in', {
-        p_check_in_id: command.currentCheckInId,
-        p_session_id: command.sessionId,
-        p_outcome: command.outcome,
-        p_friction_code: command.frictionCode as string,
-        p_friction_note: command.frictionNote as string,
-        p_recorded_local_at: command.clientRecordedAt,
-        p_timezone_snapshot: owner.timezone,
-        p_expected_session_revision: command.expectedSessionRevision,
-        p_expected_check_in_revision: command.expectedCheckInRevision,
-        p_command_id: command.commandId,
-      });
-      if (error) throw mapError(error);
-      const result = parseJsonResult(data);
-      return {
-        checkInId: jsonString(result.checkInId, command.currentCheckInId),
-        sessionId: jsonString(result.sessionId, command.sessionId),
-        outcome: command.outcome,
-        sessionRevision: jsonNumber(result.sessionRevision, command.expectedSessionRevision + 1),
-        synchronizationState: 'synced',
-      };
+      return this.recordCheckIn(command);
     },
 
     async saveHabitDraft(): Promise<void> {
@@ -633,237 +590,8 @@ export function createSupabaseProductRepository({
       return undefined;
     },
 
-    async resolveExpiredUnrecorded(candidate: ProductOwner, now: string): Promise<number> {
-      assertOwner(candidate);
-      const { data, error } = await client.rpc('resolve_unrecorded_sessions', {
-        p_now: now,
-      });
-      if (error) throw mapError(error);
-      return typeof data === 'number' ? data : jsonNumber(data, 0);
+    async resolveExpiredUnrecorded(): Promise<number> {
+      return 0;
     },
   };
-}
-
-/**
- * Class-shaped adapter retained for the authenticated repository contract used
- * by the earlier Plan 04 integration boundary. New browser code uses the
- * factory above so the owner context is explicit at construction time.
- */
-export class SupabaseProductRepository implements ProductRepository {
-  constructor(
-    private readonly client: SupabaseProductRepositoryClient,
-    private readonly ownerId: string,
-  ) {
-    if (!ownerId) {
-      throw new Error('authenticated user identity is required');
-    }
-  }
-
-  private assertOwner(owner: ProductOwner): void {
-    if (owner.ownerId !== this.ownerId || owner.identityMode !== 'account') {
-      throw new ProductRepositoryError('repository_unavailable', 'repository_owner_mismatch');
-    }
-  }
-
-  private delegate(owner: ProductOwner): ProductRepository {
-    this.assertOwner(owner);
-    return createSupabaseProductRepository({ client: this.client, owner });
-  }
-
-  createHabit(command: CreateHabitCommand): Promise<CreateHabitResult> {
-    return this.delegate(command.owner).createHabit(command);
-  }
-
-  updateHabitVersion(command: UpdateHabitVersionCommand): Promise<void> {
-    return this.delegate(command.owner).updateHabitVersion(command);
-  }
-
-  setHabitLifecycle(command: SetHabitLifecycleCommand): Promise<void> {
-    return this.delegate(command.owner).setHabitLifecycle(command);
-  }
-
-  saveHabitDraft(
-    owner: ProductOwner,
-    draftId: string,
-    payload: unknown,
-    updatedAt: string,
-  ): Promise<void> {
-    return this.delegate(owner).saveHabitDraft(owner, draftId, payload, updatedAt);
-  }
-
-  getHabitDraft(owner: ProductOwner, draftId: string): Promise<unknown | null> {
-    return this.delegate(owner).getHabitDraft(owner, draftId);
-  }
-
-  deleteHabitDraft(owner: ProductOwner, draftId: string): Promise<void> {
-    return this.delegate(owner).deleteHabitDraft(owner, draftId);
-  }
-
-  listHabits(owner: ProductOwner): Promise<HabitListItem[]> {
-    return this.delegate(owner).listHabits(owner);
-  }
-
-  getHabitDetail(owner: ProductOwner, habitId: string): Promise<HabitDetailRead | null> {
-    return this.delegate(owner).getHabitDetail(owner, habitId);
-  }
-
-  ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number> {
-    return this.delegate(owner).ensureSessionHorizon(owner, throughLocalDate);
-  }
-
-  async resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number> {
-    this.assertOwner(owner);
-    const { data, error } = await this.client.rpc('resolve_unrecorded_sessions', {
-      p_now: now,
-    });
-    if (error) throw mapError(error);
-    return typeof data === 'number' ? data : jsonNumber(data, 0);
-  }
-
-  async getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead> {
-    this.assertOwner(owner);
-    const { data: rows, error: sessionError } = await this.client
-      .from('today_session_view')
-      .select('*')
-      .eq('user_id', owner.ownerId)
-      .eq('scheduled_local_date', localDate)
-      .order('scheduled_local_time', { ascending: true });
-    if (sessionError) throw mapError(sessionError);
-
-    const sessionRows = rows ?? [];
-    const habitIds = sessionRows
-      .map((row) => row.habit_id)
-      .filter((id): id is string => Boolean(id));
-    const sessionIds = sessionRows
-      .map((row) => row.session_id)
-      .filter((id): id is string => Boolean(id));
-    const [
-      { data: versions, error: versionError },
-      { data: checkIns, error: checkInError },
-      { data: habits, error: habitError },
-    ] = await Promise.all([
-      habitIds.length > 0
-        ? this.client.from('habit_versions').select('*').in('habit_id', habitIds)
-        : Promise.resolve({ data: [] as HabitVersionRow[], error: null }),
-      sessionIds.length > 0
-        ? this.client.from('check_ins').select('*').in('session_id', sessionIds)
-        : Promise.resolve({ data: [] as CheckInRow[], error: null }),
-      this.client.from('habits').select('id,lifecycle_state').eq('user_id', owner.ownerId),
-    ]);
-    if (versionError) throw mapError(versionError);
-    if (checkInError) throw mapError(checkInError);
-    if (habitError) throw mapError(habitError);
-
-    const versionById = new Map((versions ?? []).map((version) => [version.id, version]));
-    const checkInBySessionId = new Map(
-      (checkIns ?? []).map((checkIn) => [checkIn.session_id, checkIn]),
-    );
-    const sessions: SessionSummary[] = sessionRows.map((row) => {
-      const version = versionById.get(row.habit_version_id ?? '');
-      const checkIn = checkInBySessionId.get(row.session_id ?? '');
-      const payload = decodeHabitVersionPayload(version?.metadata);
-      return {
-        id: row.session_id ?? '',
-        habitId: row.habit_id ?? '',
-        habitVersionId: row.habit_version_id ?? '',
-        title: row.habit_title ?? 'Habit',
-        category: 'Other',
-        icon: payload.icon,
-        timingContext: payload.timingContext,
-        habitRevision: row.revision ?? 1,
-        currentVersionId: row.habit_version_id,
-        normalTarget: decodeTarget(version?.normal_target ?? {}),
-        minimumTarget: decodeTarget(version?.minimum_target ?? {}),
-        cue: payload.cue,
-        scheduledLocalDate: row.scheduled_local_date ?? '',
-        scheduledLocalTime: row.scheduled_local_time,
-        timezoneSnapshot: row.timezone_snapshot ?? owner.timezone,
-        status: (row.status ?? 'unrecorded') as SessionSummary['status'],
-        revision: row.revision ?? 1,
-        synchronizationState: 'synced',
-        ...(checkIn?.id ? { currentCheckInId: checkIn.id } : {}),
-        ...(typeof checkIn?.revision === 'number'
-          ? { currentCheckInRevision: checkIn.revision }
-          : {}),
-      };
-    });
-    const activeHabitCount = (habits ?? []).filter(
-      (habit) =>
-        habit.lifecycle_state === 'starting' ||
-        habit.lifecycle_state === 'building' ||
-        habit.lifecycle_state === 'active' ||
-        habit.lifecycle_state === 'stable' ||
-        habit.lifecycle_state === 'at_risk' ||
-        habit.lifecycle_state === 'recovery' ||
-        habit.lifecycle_state === 'rebuilding' ||
-        habit.lifecycle_state === 'needs_review',
-    ).length;
-    const activeHabitLimit =
-      owner.planTier === 'premium'
-        ? 30
-        : owner.planTier === 'lite'
-          ? 10
-          : owner.planTier === 'guest'
-            ? 3
-            : 5;
-    return { localDate, sessions, activeHabitCount, activeHabitLimit };
-  }
-
-  getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead> {
-    return this.delegate(owner).getWeeklyOverview(owner, localDate);
-  }
-
-  async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {
-    this.assertOwner(command.owner);
-    const { data, error } = await this.client.rpc('record_check_in', {
-      p_check_in_id: createId(),
-      p_session_id: command.sessionId,
-      p_outcome: command.outcome,
-      p_friction_code: command.frictionCode as string,
-      p_friction_note: command.frictionNote as string,
-      p_recorded_local_at: command.clientRecordedAt,
-      p_timezone_snapshot: command.owner.timezone,
-      p_expected_session_revision: command.expectedSessionRevision,
-      p_command_id: command.commandId,
-    });
-    if (error) throw mapError(error);
-    const result = parseJsonResult(data);
-    return {
-      checkInId: jsonString(result.checkInId, ''),
-      sessionId: jsonString(result.sessionId, command.sessionId),
-      outcome: command.outcome,
-      sessionRevision: jsonNumber(result.sessionRevision, command.expectedSessionRevision + 1),
-      synchronizationState: 'synced',
-    };
-  }
-
-  async editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult> {
-    this.assertOwner(command.owner);
-    const { data, error } = await this.client.rpc('edit_same_day_check_in', {
-      p_check_in_id: command.currentCheckInId,
-      p_session_id: command.sessionId,
-      p_outcome: command.outcome,
-      p_friction_code: command.frictionCode as string,
-      p_friction_note: command.frictionNote as string,
-      p_recorded_local_at: command.clientRecordedAt,
-      p_timezone_snapshot: command.owner.timezone,
-      p_expected_session_revision: command.expectedSessionRevision,
-      p_expected_check_in_revision: command.expectedCheckInRevision,
-      p_command_id: command.commandId,
-    });
-    if (error) {
-      if (error.message === 'same_day_edit_closed') {
-        throw new ProductRepositoryError('same_day_edit_closed');
-      }
-      throw mapError(error);
-    }
-    const result = parseJsonResult(data);
-    return {
-      checkInId: jsonString(result.checkInId, command.currentCheckInId),
-      sessionId: jsonString(result.sessionId, command.sessionId),
-      outcome: command.outcome,
-      sessionRevision: jsonNumber(result.sessionRevision, command.expectedSessionRevision + 1),
-      synchronizationState: 'synced',
-    };
-  }
 }

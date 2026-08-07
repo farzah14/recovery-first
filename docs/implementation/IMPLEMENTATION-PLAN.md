@@ -370,7 +370,7 @@ tests/indexed-db/
 
 **Detailed plan:** `docs/implementation/04-habits-sessions-checkins.md`
 
-**Objective:** Deliver the authenticated Free, Lite, and Premium account core loop for creating habits, viewing Today, recording outcomes, editing same-day check-ins, resolving expired sessions, and preserving history, with Supabase PostgreSQL canonical and Dexie limited to approved browser-local durability.
+**Objective:** Deliver the complete authenticated account core loop for Free, Lite, and Premium users: creating habits, viewing Today, recording outcomes, editing same-day check-ins, and preserving history.
 **Additional prerequisite:** Plan 03A must be verified complete before this plan begins; its account-tier and legacy-data boundary supersedes the historical Guest-first examples in the detailed plan.
 
 **Dependencies:** Plans 01–03 and Plan 03A.
@@ -867,8 +867,8 @@ The following rules must remain true after every plan:
 | 01 | `01-web-project-foundation.md` | Verified complete | Specifications approved |
 | 02 | `02-web-design-system-navigation.md` | Verified complete | Plan 01 verified |
 | 03 | `03-database-domain-model.md` | Verified | Plan 02 verified |
-| 04 | `04-habits-sessions-checkins.md` | In progress — authenticated amendment partially verified | Plans 03 and 03A verified; quality handoff remains open |
 | 03A | `docs/superpowers/plans/2026-08-02-remove-guest-add-lite.md` | In progress | Plans 01–03 verified |
+| 04 | `04-habits-sessions-checkins.md` | Not created | Plan 03A verified |
 | 05 | `05-offline-resilience-reminders.md` | Not created | Plan 04 verified |
 | 06 | `06-lifecycle-recovery-weekly-review.md` | Not created | Plan 05 verified |
 | 07 | `07-authentication-guest-conversion.md` | Not created | Plan 06 verified |
