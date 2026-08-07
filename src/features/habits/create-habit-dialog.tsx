@@ -32,6 +32,7 @@ import { cn } from '@/lib/cn';
 export interface CreateHabitFormData {
   name: string;
   category: string;
+  description?: string;
   normalTarget: string;
   minimumTarget: string;
   icon: string;
@@ -101,7 +102,7 @@ export const CLOCK_PRESETS = [
   { label: '05:00 PM - 06:00 PM', from: '17:00', until: '18:00' },
 ];
 
-function formatTime12(time24: string): string {
+export function formatTime12(time24: string): string {
   if (!time24) return '';
   const [hStr, mStr] = time24.split(':');
   let h = parseInt(hStr ?? '0', 10);
@@ -113,7 +114,7 @@ function formatTime12(time24: string): string {
   return `${formattedH}:${m} ${ampm}`;
 }
 
-function formatTimeRange(from24: string, until24: string): string {
+export function formatTimeRange(from24: string, until24: string): string {
   if (!from24 || !until24) return '';
   return `${formatTime12(from24)} - ${formatTime12(until24)}`;
 }
@@ -127,6 +128,7 @@ export function CreateHabitDialog({
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
   const [category, setCategory] = useState('mindfulness');
+  const [description, setDescription] = useState('');
   const [normalTarget, setNormalTarget] = useState('');
   const [minimumTarget, setMinimumTarget] = useState('');
   const [icon, setIcon] = useState('meditation');
@@ -158,6 +160,7 @@ export function CreateHabitDialog({
     const formData: CreateHabitFormData = {
       name: name.trim(),
       category: categoryLabel,
+      description: description.trim(),
       normalTarget: normalTarget.trim() || 'Normal version',
       minimumTarget: minimumTarget.trim() || 'Minimum version',
       icon,
@@ -175,6 +178,7 @@ export function CreateHabitDialog({
     setName('');
     setNameError('');
     setCategory('mindfulness');
+    setDescription('');
     setNormalTarget('');
     setMinimumTarget('');
     setIcon('meditation');
@@ -489,6 +493,21 @@ export function CreateHabitDialog({
               value={timingContext}
               onChange={(e) => setTimingContext(e.target.value)}
               className="h-10 w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white px-3 text-xs text-[#161A17] focus:border-[#004e27] focus:outline-none"
+            />
+          </div>
+
+          {/* Description & Notes */}
+          <div className="space-y-2 border-t border-[var(--color-border-standard,#DDE5E1)] pt-4">
+            <label className="text-xs font-semibold text-[#161A17]" htmlFor="habitDescription">
+              Description & Notes <span className="font-normal text-[#3f4940]">(optional)</span>
+            </label>
+            <textarea
+              id="habitDescription"
+              rows={2}
+              placeholder="e.g. Drink a full glass of water right after waking up..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-lg border border-[var(--color-border-standard,#DDE5E1)] bg-white p-3 text-xs text-[#161A17] focus:border-[#004e27] focus:outline-none"
             />
           </div>
 

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/supabase/server', () => ({ createSupabaseServerClient: vi.fn() }));
 
-import { getAccountContext } from '@/lib/auth/account-context';
+import { buildAccountContext, getAccountContext } from '@/lib/auth/account-context';
 
 describe('getAccountContext', () => {
   it('builds the ProductOwner from the authenticated profile tier and timezone', async () => {
@@ -86,5 +86,35 @@ describe('getAccountContext', () => {
         }),
       }),
     ).rejects.toThrow('account_profile_unavailable');
+  });
+});
+
+describe('buildAccountContext', () => {
+  it('prefers the persisted profile name and plan', () => {
+    expect(
+      buildAccountContext(
+        { id: 'user-1', email: 'alex@example.com' },
+        { display_name: 'Zah Febri', plan_code: 'lite', timezone: 'Asia/Jakarta' },
+      ),
+    ).toEqual({
+      accountId: 'user-1',
+      displayName: 'Zah Febri',
+      planTier: 'lite',
+      timezone: 'Asia/Jakarta',
+    });
+  });
+
+  it('falls back to the email local part when the profile is incomplete', () => {
+    expect(
+      buildAccountContext(
+        { id: 'user-2', email: 'alex@example.com' },
+        { display_name: null, plan_code: 'free', timezone: 'UTC' },
+      ),
+    ).toMatchObject({
+      accountId: 'user-2',
+      displayName: 'alex',
+      planTier: 'free',
+      timezone: 'UTC',
+    });
   });
 });

@@ -2,6 +2,7 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import type { PlanTier } from '@/domain/shared/plan-tier';
 import type { AuthenticatedAccount } from '@/lib/auth/require-account';
 import { requireAccount } from '@/lib/auth/require-account';
 import type { ProductOwner } from '@/lib/repositories/product-repository';
@@ -52,6 +53,7 @@ function planTierFromEntitlements(
 
 export type AuthenticatedAccountContext = {
   id: string;
+  accountId: string;
   email: string | null;
   displayName: string;
   planTier: Database['public']['Enums']['plan_tier'];
@@ -99,10 +101,39 @@ export async function getAccountContext(
 
   return {
     id: account.id,
+    accountId: account.id,
     email: account.email,
     displayName,
     planTier,
     timezone: profile.timezone,
     owner,
+  };
+}
+
+export type AccountContext = {
+  accountId: string;
+  displayName: string;
+  planTier: PlanTier;
+  timezone: string;
+};
+
+type AuthUser = {
+  id: string;
+  email: string | null;
+};
+
+type Profile = {
+  display_name: string | null;
+  plan_code: PlanTier;
+  timezone: string;
+};
+
+export function buildAccountContext(user: AuthUser, profile: Profile | null): AccountContext {
+  const fallbackName = user.email?.split('@')[0]?.trim() || 'Account';
+  return {
+    accountId: user.id,
+    displayName: profile?.display_name?.trim() || fallbackName,
+    planTier: profile?.plan_code ?? 'free',
+    timezone: profile?.timezone || 'UTC',
   };
 }

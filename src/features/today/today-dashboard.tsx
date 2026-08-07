@@ -30,23 +30,45 @@ import {
   Users,
 } from 'lucide-react';
 
+import { useAccountState } from '@/components/account/account-state';
 import { AppShell } from '@/components/layout/app-shell';
-import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
+import { CreateHabitDialog, type CreateHabitFormData } from '@/features/habits/create-habit-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { cn } from '@/lib/cn';
 import {
-  getStoredHabits,
   addHabitToSync,
+  archiveHabitToSync,
+  getLibraryHabitCountForDate,
+  getLibraryHabits,
   isTodayDate,
   getTodayDateStr,
+  updateHabitToSync,
+  type StoredHabit,
 } from '@/lib/storage/habits-sync';
+import {
+  createBrowserProductRepository,
+  getBrowserProductOwner,
+} from '@/lib/repositories/signed-in/browser-product-repository';
+import {
+  buildCreateHabitCommand,
+  buildHabitVersionCommand,
+} from '@/lib/repositories/habit-command-builders';
+import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
+import type { WeeklyOverviewRead } from '@/lib/repositories/product-repository';
+import { mapSessionToTodayHabit } from '@/features/today/today-repository-mappers';
+import { DEFAULT_HABITS } from '@/domain/habits/default-habits';
 
 export type OutcomeType = 'unrecorded' | 'full' | 'minimum' | 'skipped';
 
 export interface HabitSession {
   id: string;
+  habitId?: string;
+  habitVersionId?: string;
+  currentVersionId?: string | null;
+  habitRevision?: number;
+  sessionRevision?: number;
   name: string;
   category: string;
   timingContext: string;
@@ -56,6 +78,52 @@ export interface HabitSession {
   needsReview?: boolean;
   recoveryAvailable?: boolean;
   icon: string;
+}
+
+function getTodayIcon(iconName: string): string {
+  const normalized = iconName.toLowerCase();
+  if (normalized === 'water' || normalized.includes('💧') || normalized.includes('water')) {
+    return 'water';
+  }
+  if (normalized === 'reading' || normalized.includes('📚') || normalized.includes('book')) {
+    return 'reading';
+  }
+  if (normalized === 'exercise' || normalized.includes('dumbbell')) return 'exercise';
+  if (normalized === 'running' || normalized.includes('foot')) return 'running';
+  if (normalized === 'sleep' || normalized.includes('moon')) return 'sleep';
+  if (normalized === 'coding' || normalized.includes('code')) return 'coding';
+  if (normalized === 'writing' || normalized.includes('pencil')) return 'writing';
+  if (normalized === 'nutrition' || normalized.includes('apple')) return 'nutrition';
+  return normalized || 'meditation';
+}
+
+function toHabitSession(record: StoredHabit, previous?: HabitSession): HabitSession {
+  return {
+    id: record.id,
+    name: record.name,
+    category: record.category,
+    timingContext: record.timingContext || record.schedule || '08:00 AM - 09:00 AM',
+    minimumSummary: record.minimumTarget.startsWith('Minimum')
+      ? record.minimumTarget
+      : `Minimum ${record.minimumTarget}`,
+    fullSummary: record.normalTarget.startsWith('Full')
+      ? record.normalTarget
+      : `Full ${record.normalTarget}`,
+    outcome: previous?.outcome ?? 'unrecorded',
+    needsReview: previous?.needsReview ?? record.id === 'h1',
+    recoveryAvailable: previous?.recoveryAvailable ?? record.id === 'h1',
+    icon: getTodayIcon(record.iconName),
+  };
+}
+
+function getTodayHabitSessions(
+  records: ReadonlyArray<StoredHabit>,
+  existing: ReadonlyArray<HabitSession> = [],
+): HabitSession[] {
+  const existingById = new Map(existing.map((h) => [h.id, h]));
+  return records
+    .filter((record) => record.status === 'Active' && isTodayDate(record.createdDate))
+    .map((record) => toHabitSession(record, existingById.get(record.id)));
 }
 
 export const CLOCK_PRESETS = [
@@ -208,7 +276,17 @@ export function renderHabitIcon(iconId?: string): React.JSX.Element {
 
 const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
 
-function getDynamicGreeting(now: Date = new Date()): { greeting: string; dateString: string } {
+function createCommandId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `today-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+}
+
+function getDynamicGreeting(
+  now: Date = new Date(),
+  name: string = 'Alex',
+): { greeting: string; dateString: string } {
   const hour = now.getHours();
 
   let salutation = 'Good morning';
@@ -224,92 +302,78 @@ function getDynamicGreeting(now: Date = new Date()): { greeting: string; dateStr
     day: 'numeric',
   });
 
-  return { greeting: `${salutation}, Alex.`, dateString: formattedDate };
+  return { greeting: `${salutation}, ${name}.`, dateString: formattedDate };
 }
 
 export function TodayDashboard(): React.JSX.Element {
+  const account = useAccountState();
+  const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
+  const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
   const [dashboardDate, setDashboardDate] = useState(DESIGN_REFERENCE_DATE);
-  const [habits, setHabits] = useState<HabitSession[]>([
-    {
-      id: 'h1',
-      name: 'Daily Meditation',
-      category: 'Mindfulness',
-      timingContext: '08:00 AM - 09:00 AM',
-      minimumSummary: 'Minimum 2 mins',
-      fullSummary: 'Full 10 mins',
-      outcome: 'unrecorded',
-      needsReview: true,
-      recoveryAvailable: true,
-      icon: 'meditation',
-    },
-    {
-      id: 'h2',
-      name: 'Morning Hydration',
-      category: 'Health',
-      timingContext: '09:00 AM - 10:00 AM',
-      minimumSummary: 'Minimum 250ml',
-      fullSummary: 'Full 500ml',
-      outcome: 'minimum',
-      icon: 'water',
-    },
-    {
-      id: 'h3',
-      name: 'Read 5 Pages',
-      category: 'Personal Growth',
-      timingContext: '05:00 PM - 06:00 PM',
-      minimumSummary: 'Minimum 1 page',
-      fullSummary: 'Full 5 pages',
-      outcome: 'full',
-      icon: 'reading',
-    },
-  ]);
+  const [habits, setHabits] = useState<HabitSession[]>(() => getTodayHabitSessions(DEFAULT_HABITS));
 
-  // Sync active habits from storage (automatically shows habits created for today and excludes future start dates)
+  const [remoteDataReady, setRemoteDataReady] = useState(!repository || !owner);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [weeklyOverview, setWeeklyOverview] = useState<WeeklyOverviewRead | null>(null);
+
+  const reloadRemoteToday = React.useCallback(async () => {
+    if (!repository || !owner) {
+      setWeeklyOverview(null);
+      setRemoteDataReady(true);
+      return;
+    }
+    const localDate = getLocalDateForTimezone(owner.timezone);
+    try {
+      setRemoteDataReady(false);
+      setRemoteError(null);
+      const weekRange = getLocalWeekRange(localDate);
+      await repository.ensureSessionHorizon(owner, weekRange.endDate);
+      const [today, overview] = await Promise.all([
+        repository.getToday(owner, localDate),
+        repository.getWeeklyOverview(owner, localDate),
+      ]);
+      setHabits(
+        today.sessions.map((session) => {
+          const mapped = mapSessionToTodayHabit(session);
+          return {
+            ...mapped,
+            outcome: mapped.outcome as OutcomeType,
+          };
+        }),
+      );
+      setWeeklyOverview(overview);
+      setRemoteDataReady(true);
+    } catch (error) {
+      setRemoteDataReady(false);
+      setWeeklyOverview(null);
+      setRemoteError(
+        error instanceof Error ? error.message : 'Unable to load today from Supabase.',
+      );
+    }
+  }, [owner, repository]);
+
+  // Rebuild Today from Supabase for signed-in users and from local library records otherwise.
   React.useEffect(() => {
-    const syncFromStorage = () => {
-      const stored = getStoredHabits();
-      if (stored.length > 0) {
-        setHabits((prev) => {
-          const nonTodayIds = new Set(
-            stored
-              .filter((s) => s.status !== 'Active' || !isTodayDate(s.createdDate))
-              .map((s) => s.id),
-          );
+    if (repository && owner) {
+      const loadTimer = window.setTimeout(() => {
+        void reloadRemoteToday();
+      }, 0);
+      return () => window.clearTimeout(loadTimer);
+    }
 
-          const todaySessions: HabitSession[] = stored
-            .filter((s) => s.status === 'Active' && isTodayDate(s.createdDate))
-            .map((s) => ({
-              id: s.id,
-              name: s.name,
-              category: s.category,
-              timingContext: s.schedule || '08:00 AM - 09:00 AM',
-              minimumSummary: s.minimumTarget.startsWith('Minimum')
-                ? s.minimumTarget
-                : `Minimum ${s.minimumTarget}`,
-              fullSummary: s.normalTarget.startsWith('Full')
-                ? s.normalTarget
-                : `Full ${s.normalTarget}`,
-              outcome: 'unrecorded',
-              icon: s.iconName === '💧' ? 'water' : s.iconName === '📚' ? 'reading' : 'meditation',
-            }));
-
-          const remainingPrev = prev.filter((p) => !nonTodayIds.has(p.id));
-          const existingIds = new Set(remainingPrev.map((h) => h.id));
-          const unadded = todaySessions.filter((ns) => !existingIds.has(ns.id));
-
-          return [...remainingPrev, ...unadded];
-        });
-      }
+    const syncFromLibrary = () => {
+      const libraryHabits = getLibraryHabits();
+      setHabits((previous) => getTodayHabitSessions(libraryHabits, previous));
     };
 
-    syncFromStorage();
-    window.addEventListener('habits-updated', syncFromStorage);
-    window.addEventListener('storage', syncFromStorage);
+    syncFromLibrary();
+    window.addEventListener('habits-updated', syncFromLibrary);
+    window.addEventListener('storage', syncFromLibrary);
     return () => {
-      window.removeEventListener('habits-updated', syncFromStorage);
-      window.removeEventListener('storage', syncFromStorage);
+      window.removeEventListener('habits-updated', syncFromLibrary);
+      window.removeEventListener('storage', syncFromLibrary);
     };
-  }, []);
+  }, [owner, reloadRemoteToday, repository]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -320,7 +384,9 @@ export function TodayDashboard(): React.JSX.Element {
   }, []);
 
   // Dynamic Time-Based Greeting (Good morning / afternoon / evening based on current hour)
-  const { greeting, dateString } = getDynamicGreeting(dashboardDate);
+  const accountName =
+    account.displayName && account.displayName !== 'Account' ? account.displayName : 'Alex';
+  const { greeting, dateString } = getDynamicGreeting(dashboardDate, accountName);
 
   // Dialog States
   const [selectedHabitForDetail, setSelectedHabitForDetail] = useState<HabitSession | null>(null);
@@ -364,11 +430,34 @@ export function TodayDashboard(): React.JSX.Element {
     }, 3000);
   };
 
-  const handleRecordOutcome = (id: string, newOutcome: OutcomeType) => {
-    setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, outcome: newOutcome } : h)));
-
+  const handleRecordOutcome = async (id: string, newOutcome: OutcomeType) => {
     const habit = habits.find((h) => h.id === id);
     if (!habit) return;
+
+    if (repository && owner && habit.habitId) {
+      if (newOutcome === 'unrecorded') {
+        showToast('The saved check-in remains unchanged.');
+        return;
+      }
+      try {
+        await repository.recordCheckIn({
+          commandId: createCommandId(),
+          owner,
+          sessionId: habit.id,
+          outcome: newOutcome === 'skipped' ? 'manual_skipped' : newOutcome,
+          frictionCode: null,
+          frictionNote: null,
+          expectedSessionRevision: habit.sessionRevision ?? 1,
+          clientRecordedAt: new Date().toISOString(),
+        });
+        await reloadRemoteToday();
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to save check-in.');
+        return;
+      }
+    } else {
+      setHabits((prev) => prev.map((h) => (h.id === id ? { ...h, outcome: newOutcome } : h)));
+    }
 
     if (newOutcome === 'full') {
       showToast(`Full target recorded for ${habit.name}! Completed! 🎉`);
@@ -379,6 +468,56 @@ export function TodayDashboard(): React.JSX.Element {
     } else {
       showToast(`Session reset to unrecorded.`);
     }
+  };
+
+  const handleCreateHabit = async (data: CreateHabitFormData) => {
+    const startDate = data.startDate || getTodayDateStr();
+    const isForToday = isTodayDate(startDate);
+
+    if (repository && owner) {
+      try {
+        await repository.createHabit(
+          buildCreateHabitCommand(data, owner, {
+            habitId: createCommandId(),
+            habitVersionId: createCommandId(),
+            commandId: createCommandId(),
+            now: new Date().toISOString(),
+          }),
+        );
+        await reloadRemoteToday();
+        showToast(
+          isForToday
+            ? `New habit "${data.name}" created for today!`
+            : `Habit "${data.name}" scheduled for ${startDate} (available in Habits Library)!`,
+        );
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to create habit.');
+      }
+      return;
+    }
+
+    const habitId = `h-${Date.now()}`;
+    addHabitToSync({
+      id: habitId,
+      name: data.name,
+      category: data.category,
+      normalTarget: data.normalTarget,
+      minimumTarget: data.minimumTarget,
+      schedule: `${data.category} (${data.timingContext})`,
+      cue: data.timingContext,
+      timingContext: data.timingContext,
+      fromTime: data.fromTime,
+      untilTime: data.untilTime,
+      status: 'Active',
+      createdDate: startDate,
+      iconName: data.icon === 'water' ? '💧' : data.icon === 'reading' ? '📚' : '🧘‍♂️',
+    });
+
+    showToast(
+      isForToday
+        ? `New habit "${data.name}" created for today!`
+        : `Habit "${data.name}" scheduled for ${startDate} (available in Habits Library)!`,
+    );
   };
 
   const handleOpenEdit = (habit: HabitSession) => {
@@ -397,36 +536,89 @@ export function TodayDashboard(): React.JSX.Element {
     setEditIcon(habit.icon || 'meditation');
   };
 
-  const handleSaveEditSubmit = (e: React.FormEvent) => {
+  const handleSaveEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingHabit || !editName.trim()) return;
 
     const categoryLabel =
       CATEGORY_OPTIONS.find((c) => c.id === editCategory)?.label || editingHabit.category;
 
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === editingHabit.id
-          ? {
-              ...h,
-              name: editName.trim(),
+    if (repository && owner && editingHabit.habitId) {
+      try {
+        const from = editFromTime || extractTimeRange24FromContext(editTiming).from;
+        const until = editUntilTime || extractTimeRange24FromContext(editTiming).until;
+        await repository.updateHabitVersion(
+          buildHabitVersionCommand(
+            {
+              name: editName,
               category: categoryLabel,
-              timingContext: editTiming.trim() || h.timingContext,
-              minimumSummary: editMin.trim() || h.minimumSummary,
-              fullSummary: editFull.trim() || h.fullSummary,
+              normalTarget: editFull.replace(/^Full\s+/i, '').trim(),
+              minimumTarget: editMin.replace(/^Minimum\s+/i, '').trim(),
               icon: editIcon,
-            }
-          : h,
-      ),
-    );
+              startDate: getLocalDateForTimezone(owner.timezone),
+              fromTime: from,
+              untilTime: until,
+              timingContext: editTiming.trim() || formatTimeRange(from, until),
+            },
+            owner,
+            {
+              habitId: editingHabit.habitId,
+              habitVersionId: createCommandId(),
+              commandId: createCommandId(),
+              expectedRevision: editingHabit.habitRevision ?? 1,
+            },
+          ),
+        );
+        await reloadRemoteToday();
+        showToast(`Habit "${editName.trim()}" updated successfully!`);
+        setEditingHabit(null);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to update habit.');
+      }
+      return;
+    }
+
+    const libraryHabit = getLibraryHabits().find((habit) => habit.id === editingHabit.id);
+    if (libraryHabit) {
+      updateHabitToSync(editingHabit.id, {
+        name: editName.trim(),
+        category: categoryLabel,
+        schedule: editTiming.trim() || libraryHabit.schedule,
+        timingContext: editTiming.trim() || libraryHabit.timingContext || libraryHabit.schedule,
+        minimumTarget: editMin.trim().replace(/^Minimum\s+/i, '') || libraryHabit.minimumTarget,
+        normalTarget: editFull.trim().replace(/^Full\s+/i, '') || libraryHabit.normalTarget,
+        iconName: editIcon,
+        fromTime: editFromTime,
+        untilTime: editUntilTime,
+      });
+    }
 
     showToast(`Habit "${editName.trim()}" updated successfully!`);
     setEditingHabit(null);
   };
 
-  const handleDeleteHabit = (id: string) => {
+  const handleDeleteHabit = async (id: string) => {
     const habit = habits.find((h) => h.id === id);
-    setHabits((prev) => prev.filter((h) => h.id !== id));
+
+    if (repository && owner && habit?.habitId) {
+      try {
+        await repository.setHabitLifecycle({
+          commandId: createCommandId(),
+          owner,
+          habitId: habit.habitId,
+          expectedRevision: habit.habitRevision ?? 1,
+          nextState: 'trash',
+        });
+        await reloadRemoteToday();
+        setEditingHabit(null);
+        showToast(`Habit "${habit.name}" deleted.`);
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Unable to delete habit.');
+      }
+      return;
+    }
+
+    archiveHabitToSync(id);
     setEditingHabit(null);
     showToast(`Habit "${habit?.name ?? 'Habit'}" deleted.`);
   };
@@ -452,9 +644,25 @@ export function TodayDashboard(): React.JSX.Element {
       }}
       todayCompletedCount={completedCount}
       todayTotalCount={totalCount}
+      {...(weeklyOverview ? { weeklyOverview } : {})}
       currentDate={dashboardDate}
+      habitCountForDate={getLibraryHabitCountForDate}
       reflectionNote={reflectionNote}
     >
+      <span
+        aria-hidden="true"
+        className="sr-only"
+        data-ready={remoteDataReady ? 'true' : 'false'}
+        data-testid="today-data-ready"
+      />
+      {remoteError ? (
+        <p
+          role="alert"
+          className="mx-auto max-w-5xl px-4 pt-4 text-xs text-red-700 sm:px-6 lg:px-8"
+        >
+          {remoteError}
+        </p>
+      ) : null}
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Toast Notification Banner (Centered Bottom Text-Only with Entrance & Exit Animations - No Rectangle Box) */}
         {toastMessage && (
@@ -1220,6 +1428,10 @@ export function TodayDashboard(): React.JSX.Element {
         open={createHabitDialogOpen}
         onOpenChange={setCreateHabitDialogOpen}
         onCreated={(data) => {
+          if (repository && owner) {
+            void handleCreateHabit(data);
+            return;
+          }
           const startDate = data.startDate || getTodayDateStr();
           const isForToday = isTodayDate(startDate);
           const habitId = `h-${Date.now()}`;
@@ -1232,25 +1444,15 @@ export function TodayDashboard(): React.JSX.Element {
             minimumTarget: data.minimumTarget,
             schedule: `${data.category} (${data.timingContext})`,
             cue: data.timingContext,
+            timingContext: data.timingContext,
+            fromTime: data.fromTime,
+            untilTime: data.untilTime,
             status: 'Active',
             createdDate: startDate,
             iconName: data.icon === 'water' ? '💧' : data.icon === 'reading' ? '📚' : '🧘‍♂️',
           });
 
           if (isForToday) {
-            const created: HabitSession = {
-              id: habitId,
-              name: data.name,
-              category: data.category,
-              timingContext: data.timingContext || '08:00 AM - 09:00 AM',
-              minimumSummary: `Minimum ${data.minimumTarget}`,
-              fullSummary: `Full ${data.normalTarget}`,
-              outcome: 'unrecorded',
-              icon: data.icon,
-            };
-            setHabits((prev) =>
-              prev.some((habit) => habit.id === created.id) ? prev : [...prev, created],
-            );
             showToast(`New habit "${data.name}" created for today!`);
           } else {
             showToast(

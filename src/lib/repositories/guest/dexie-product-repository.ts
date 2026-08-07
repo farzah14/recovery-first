@@ -12,7 +12,10 @@ import type {
   RecordCheckInRepositoryCommand,
   RecordCheckInResult,
   SessionSummary,
+  SetHabitLifecycleCommand,
   TodayRepositoryRead,
+  UpdateHabitVersionCommand,
+  WeeklyOverviewRead,
 } from '@/lib/repositories/product-repository';
 import type { RecurrenceRule } from '@/domain/habits/recurrence';
 import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
@@ -204,6 +207,22 @@ export class DexieProductRepository implements ProductRepository {
         await this.database.commandResults.put(replayRecord);
         return result;
       },
+    );
+  }
+
+  async updateHabitVersion(_command: UpdateHabitVersionCommand): Promise<void> {
+    void _command;
+    throw new ProductRepositoryError(
+      'repository_unavailable',
+      'guest_habit_redesign_is_not_available_at_this_boundary',
+    );
+  }
+
+  async setHabitLifecycle(_command: SetHabitLifecycleCommand): Promise<void> {
+    void _command;
+    throw new ProductRepositoryError(
+      'repository_unavailable',
+      'guest_habit_lifecycle_is_not_available_at_this_boundary',
     );
   }
 
@@ -519,6 +538,50 @@ export class DexieProductRepository implements ProductRepository {
         };
       },
     );
+  }
+
+  async getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead> {
+    const date = new Date(`${localDate}T00:00:00.000Z`);
+    const weekday = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() - weekday + 1);
+    const dates = Array.from({ length: 7 }, (_, index) => {
+      const current = new Date(date);
+      current.setUTCDate(date.getUTCDate() + index);
+      return current.toISOString().slice(0, 10);
+    });
+    const activeHabits = await this.database.habits
+      .where('[ownerType+ownerId]')
+      .equals([owner.identityMode, owner.ownerId])
+      .filter(
+        (habit) => habit.deletedAt === null && isSlotConsumingHabitState(habit.lifecycleState),
+      )
+      .toArray();
+    const activeHabitIds = new Set(activeHabits.map((habit) => habit.id));
+    const sessions = await this.database.sessions
+      .where('[ownerType+ownerId]')
+      .equals([owner.identityMode, owner.ownerId])
+      .filter(
+        (session) =>
+          activeHabitIds.has(session.habitId) && dates.includes(session.scheduledLocalDate),
+      )
+      .toArray();
+    const counts = new Map(dates.map((item) => [item, { completedCount: 0, totalCount: 0 }]));
+    for (const session of sessions) {
+      const count = counts.get(session.scheduledLocalDate);
+      if (!count) continue;
+      count.totalCount += 1;
+      if (session.status === 'full' || session.status === 'minimum') count.completedCount += 1;
+    }
+    return {
+      todayDate: localDate,
+      startDate: dates[0] ?? localDate,
+      endDate: dates[6] ?? localDate,
+      days: dates.map((item) => ({
+        localDate: item,
+        completedCount: counts.get(item)?.completedCount ?? 0,
+        totalCount: counts.get(item)?.totalCount ?? 0,
+      })),
+    };
   }
 
   async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {

@@ -2,11 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `executing-plans` to implement this plan task-by-task. This project uses one agent only; do not dispatch subagents. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement server-authorized Premium program access, a safe three-day simulation for Guest and Free users, adaptive program and reminder recommendations that require approval, and accessible aggregate and habit-level Insights.
+**Goal:** Implement server-authorized Premium program access, a safe three-day simulation for authenticated Free and Lite users, adaptive program and reminder recommendations that require approval, and accessible aggregate and habit-level Insights.
 
-**Architecture:** Premium access is resolved on the server through an internal capability service backed by authoritative entitlement rows; browser state may render a pending or locked presentation but never grant access. Program previews run in an isolated non-persistent simulation domain, while real enrollments use versioned PostgreSQL records and explicit recommendation decisions. Insights are calculated from privacy-safe aggregate functions, preserve current-version versus lifetime boundaries, and expose the same information through charts and accessible tables.
+**Architecture:** Premium access is resolved on the server through an internal capability service backed by authoritative entitlement rows; browser state may render a pending or locked presentation but never grant access. Program previews run in an isolated non-persistent simulation domain for Free and Lite accounts, while real enrollments use versioned PostgreSQL records and explicit recommendation decisions. Insights are calculated from privacy-safe aggregate functions, preserve current-version versus lifetime boundaries, and expose the same information through charts and accessible tables.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase PostgreSQL and RLS, Server Components, Route Handlers, TanStack Query, Dexie schema version 7, Recharts, React Hook Form, Vitest, React Testing Library, Playwright, pgTAP, axe-core, pnpm.
+
+**03A amendment:** The active identity model is authenticated accounts with the ordered tiers Free, Lite, and Premium. Guest is not a supported runtime identity. Any Guest wording or repository examples later in this historical plan are migration context only and must not be implemented. Free/Lite previews remain non-persistent; pre-change browser data is handled only by the legacy-local-data recovery/export service.
 
 ---
 
@@ -20,8 +22,8 @@ Begin only after Plans 01–07 are verified complete. The repository must alread
 - the approved emerald, gold, purple, blue, amber, coral, and neutral design tokens;
 - desktop sidebar, mobile bottom navigation, route metadata, feedback components, dialogs, drawers, skeletons, and accessible tables;
 - PostgreSQL habits, immutable habit versions, sessions, check-ins, history, recommendations, Recovery Plans, Weekly Reviews, reminders, entitlements, idempotency records, and RLS;
-- Guest and account repositories, Dexie schema version 6, pending-operation ownership, conflict handling, and cross-tab coordination;
-- Today, Habits, check-in, lifecycle, Recovery, Weekly Review, authentication, Guest conversion, and signed-in synchronization;
+- account repositories, Dexie cache/draft/outbox ownership, legacy-local-data recovery, conflict handling, and cross-tab coordination;
+- Today, Habits, check-in, lifecycle, Recovery, Weekly Review, authentication, legacy-local-data recovery, and signed-in synchronization;
 - server, browser, and privileged Supabase clients with enforced import boundaries.
 
 ## Explicit exclusions
@@ -36,15 +38,15 @@ This plan does not implement:
 
 ## Product invariants
 
-- Guest and Free users may browse and simulate Premium programs but cannot start a real Premium program.
-- A browser flag, query parameter, redirect value, local-storage value, or cached entitlement can never authorize Premium access.
+- Authenticated Free and Lite users may browse and simulate Premium programs but cannot start a real Premium program.
+- A browser flag, query parameter, redirect value, local-storage value, or cached entitlement can never authorize Lite or Premium access.
 - A three-day preview is clearly labeled as simulation and never creates habits, sessions, check-ins, reminders, recommendations, active-slot usage, or analytics derived from real user outcomes.
 - Preview activity is cleared when reset, closed, or expired and is not uploaded as operational habit data.
 - Each simulated or real adaptation changes at most one of: Normal target, Minimum version, cue, or reminder.
 - Real program changes require Apply, Customize, or Keep Current according to the standard decision contract.
 - Premium programs use structured 7-, 14-, or 30-day definitions.
 - Starting a real program consumes an active-habit slot and uses the server-authoritative Premium limit of 20.
-- Expired or revoked Premium access blocks new Premium actions but does not delete historical program, Recovery, reminder-trial, or Insights data.
+- Expired or revoked paid-tier access blocks new paid-tier actions but does not delete historical program, Recovery, reminder-trial, or Insights data.
 - Minimum counts as a successful outcome for consistency and continuity.
 - Current-version metrics reset at a version boundary while lifetime metrics remain intact.
 - Insights never expose habit names, notes, friction free text, or other sensitive free text through analytics events.
@@ -191,7 +193,7 @@ Accepted.
 
 ## Decision
 
-Premium capabilities are resolved on the server from authoritative entitlement data and returned as a bounded capability set. Guest and Free previews use an isolated non-persistent simulation domain. Real program enrollments are versioned, idempotent, and subject to active-slot limits. Insights are produced by privacy-safe aggregate functions and always include an accessible textual or tabular representation.
+Paid-tier capabilities are resolved on the server from authoritative entitlement data and returned as a bounded capability set. Free and Lite previews use an isolated non-persistent simulation domain. Real program enrollments are versioned, idempotent, and subject to active-slot limits. Insights are produced by privacy-safe aggregate functions and always include an accessible textual or tabular representation.
 
 ## Consequences
 
@@ -2422,7 +2424,7 @@ git commit -m "test: verify premium programs and insights"
 
 Plan 08 is complete only when all statements below have current evidence:
 
-- [ ] Guest and Free users can browse every published Premium program and see a truthful Preview action.
+- [ ] Free and Lite users can browse every published Premium program and see a truthful Preview action.
 - [ ] The preview exposes description, benefits, Days 1–3, simulated outcomes, and simulated decisions.
 - [ ] Days after Day 3 remain locked in preview.
 - [ ] Preview activity does not create real habits, sessions, check-ins, reminders, active-slot usage, or operational analytics.
@@ -2441,7 +2443,7 @@ Plan 08 is complete only when all statements below have current evidence:
 - [ ] Friction charts use category codes only and withhold low-sample conclusions.
 - [ ] Insight URL filters survive refresh and browser navigation.
 - [ ] Every chart has an accessible summary or table equivalent.
-- [ ] Guest and Free locked screens do not receive hidden advanced result payloads.
+- [ ] Free and Lite locked screens do not receive hidden advanced result payloads.
 - [ ] Expired or revoked Premium access blocks new actions without deleting history.
 - [ ] RLS denies cross-user program and insight access.
 - [ ] Dexie version 7 preserves all version 6 Guest and account data.

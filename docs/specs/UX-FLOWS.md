@@ -27,7 +27,7 @@
 3. [Route and Screen Inventory](#3-route-and-screen-inventory)
 4. [Global Website Shell](#4-global-website-shell)
 5. [Public Website Flows](#5-public-website-flows)
-6. [Application Entry and Guest Onboarding](#6-application-entry-and-guest-onboarding)
+6. [Application Entry and Account Onboarding](#6-application-entry-and-account-onboarding)
 7. [Habit Creation](#7-habit-creation)
 8. [Today and Daily Check-ins](#8-today-and-daily-check-ins)
 9. [Unrecorded Sessions and Check-in Review](#9-unrecorded-sessions-and-check-in-review)
@@ -36,7 +36,7 @@
 12. [Weekly Review and Recommendations](#12-weekly-review-and-recommendations)
 13. [Habit Management and Versioning](#13-habit-management-and-versioning)
 14. [Premium Program Preview](#14-premium-program-preview)
-15. [Authentication and Guest Data Transfer](#15-authentication-and-guest-data-transfer)
+15. [Authentication and Legacy Local Data Recovery](#15-authentication-and-legacy-local-data-recovery)
 16. [Subscription and Entitlements](#16-subscription-and-entitlements)
 17. [Insights](#17-insights)
 18. [Offline Resilience, Synchronization, and Multiple Tabs](#18-offline-resilience-synchronization-and-multiple-tabs)
@@ -79,7 +79,7 @@
 | Needs Review | `This habit needs a decision`. |
 | Decision Required | `Choose what happens next`. |
 | Pending sync | `Saved on this browser — waiting to sync`. |
-| Guest data | `Stored only in this browser`. |
+| Legacy local data | `Stored only in this browser until transferred or exported`. |
 
 ## 1.3 Standard decision pattern
 
@@ -221,10 +221,7 @@ flowchart TD
     Public --> Auth[Sign In]
     Public --> Start[Start Free]
 
-    Start --> Guest[Continue as Guest]
     Start --> Auth
-
-    Guest --> App[Application Shell]
     Auth --> Callback[Authentication Callback]
     Callback --> App
 
@@ -249,7 +246,7 @@ flowchart TD
 - Every first-level application destination has a stable URL.
 - Habit Detail, Weekly Review, Recovery, Check-in Review, Subscription, and Settings subsections support direct URLs.
 - A valid authenticated deep link resumes after sign-in.
-- A Guest deep link that requires an account shows the contextual account surface and preserves the intended destination.
+- An unauthenticated deep link shows the sign-in surface and preserves the intended destination.
 - A deleted, expired, or inaccessible resource shows a recoverable not-found state, not a blank page.
 - Browser Back and Forward restore the correct route, selected tab, filter state where safe, and scroll position where practical.
 
@@ -261,7 +258,7 @@ flowchart TD
 |---|---|---|---|
 | PUB-001 | `/` | Landing | Product promise, key benefits, product preview, primary CTA. |
 | PUB-002 | `/how-it-works` | How It Works | Design, Do, Check-in, Adapt, Recover loop. |
-| PUB-003 | `/pricing` | Pricing | Guest, Free, and Premium comparison. |
+| PUB-003 | `/pricing` | Pricing | Free, Lite, and Premium comparison. |
 | PUB-004 | `/help` | Help | Searchable help categories and contact path. |
 | PUB-005 | `/status` | Status | Service availability and incident history. |
 | PUB-006 | `/sign-in` | Sign In | Google and email authentication. |
@@ -274,7 +271,7 @@ flowchart TD
 
 | **ID** | **Route** | **Screen** | **Primary content** |
 |---|---|---|---|
-| APP-001 | `/app` | Entry Resolver | Session restoration, Guest restoration, and default redirect. |
+| APP-001 | `/app` | Entry Resolver | Session restoration, legacy-local recovery, and default redirect. |
 | APP-002 | `/app/today` | Today | Current sessions and attention items. |
 | APP-003 | `/app/habits` | Habits | Active and inactive habit lists. |
 | APP-004 | `/app/review` | Review | Recovery, Weekly Review, Check-in Review, and decisions. |
@@ -329,13 +326,13 @@ When an application route loads, the shell resolves:
 
 1. browser support;
 2. connectivity state;
-3. authenticated session or Guest state;
+3. authenticated account session;
 4. local pending operations;
 5. user timezone and locale;
 6. current route permission;
 7. entitlement state where an account exists.
 
-The shell renders a branded loading surface only while the minimum required state is unresolved. It must not block cached Guest data merely because a cloud service is unavailable.
+The shell renders a branded loading surface only while the minimum required state is unresolved. It must not block cached account data merely because a cloud service is unavailable.
 
 ## 4.2 Desktop sidebar
 
@@ -387,24 +384,12 @@ The profile control has the accessible label `Open account menu`.
 
 ## 4.5 Profile and account menu
 
-### Guest
-
-```text
-Guest
-Stored only in this browser
-Create Account / Sign In
-Settings
-Help
-Export Guest Data
-Clear Guest Data
-```
-
 ### Free account
 
 ```text
 User name or email
 Free Plan
-Upgrade to Premium
+Upgrade to Lite or Premium
 Account
 Subscription
 Settings
@@ -420,6 +405,19 @@ User name or email
 Premium
 Account
 Manage Subscription
+Settings
+Help
+Export Data
+Sign Out
+```
+
+### Lite account
+
+```text
+User name or email
+Lite
+Manage Subscription
+Account
 Settings
 Help
 Export Data
@@ -480,17 +478,17 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 2. The visitor can review the recovery-first concept without signing in.
 3. Product examples explain Full, Minimum, Skipped, and Recovery using neutral language.
 4. The visitor may open How It Works or Pricing.
-5. Selecting `Start Free` opens the application-entry choice.
+5. Selecting `Start Free` opens account creation or sign-in.
 
 **Alternate paths**
 
 - Selecting `Sign In` opens `/sign-in`.
 - Selecting a Premium CTA while signed out opens plan information, then requires authentication before checkout.
-- If the application has a recoverable Guest state in this browser, the primary action may read `Continue` with a secondary `Start Fresh` path.
+- If legacy local data exists in this browser, the authenticated user receives a transfer or export choice before the account workspace opens.
 
 **Exit states**
 
-- Guest entry choice.
+- Account creation or sign-in flow.
 - Sign-in flow.
 - Pricing.
 - Help or legal page.
@@ -509,15 +507,15 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 **Primary path**
 
 1. The visitor opens `/pricing`.
-2. Guest, Free, and Premium limits are shown side by side.
-3. Monthly and annual Premium prices are presented without a preselected purchase option.
+2. Free, Lite, and Premium limits are shown side by side.
+3. Monthly and annual Lite and Premium prices are presented without a preselected purchase option.
 4. Trial terms are summarized with links to full policies.
 5. The visitor selects a plan-related CTA.
 6. If not signed in, the website explains that an account is required before starting a trial or purchasing.
 
 **UX rules**
 
-- Recovery basics remain visibly available on Guest and Free.
+- Recovery basics remain visibly available on Free; Lite and Premium show their additional recovery capabilities.
 - Annual savings are stated factually and not through countdown pressure.
 - Final billing details are repeated before checkout confirmation.
 - Illustrative pricing is not displayed as final unless approved in product configuration.
@@ -529,7 +527,7 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 **Help path**
 
 1. The visitor searches or browses help categories.
-2. Articles distinguish Guest browser storage from account cloud storage.
+2. Articles distinguish legacy browser-local data from account cloud storage.
 3. Browser notification, offline, payment, export, and deletion limitations are explained.
 4. A support contact path is shown when self-service does not resolve the issue.
 
@@ -541,7 +539,7 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 
 **Requirement references:** FR-PUB-01.
 
-# 6. Application Entry and Guest Onboarding
+# 6. Application Entry and Account Onboarding
 
 ## 6.1 UX-APP-01 — Resolve application entry
 
@@ -549,30 +547,27 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 flowchart TD
     Visit[Open application route] --> Support{Supported browser?}
     Support -- No --> Unsupported[Unsupported browser guidance]
-    Support -- Yes --> Local{Existing local state?}
-    Local -- Guest --> RestoreGuest[Restore Guest state]
-    Local -- Account --> Session{Valid account session?}
-    Local -- None --> Choice[Continue as Guest or Sign In]
+    Support -- Yes --> Session{Valid account session?}
     Session -- Yes --> RestoreAccount[Restore account state]
     Session -- Expired --> Reauth[Session expired flow]
-    RestoreGuest --> Destination[Requested route or Today]
     RestoreAccount --> Destination
-    Choice --> GuestStart[Create Guest profile]
-    Choice --> SignIn[Sign In]
+    Session -- No --> SignIn[Sign In or Create Account]
+    SignIn --> Callback[Authentication Callback]
+    Callback --> Destination
 ```
 
 **Primary path: first visit**
 
 1. The website validates minimum browser capabilities.
-2. The visitor sees two actions: `Continue as Guest` and `Sign In`.
-3. `Continue as Guest` creates a browser-local Guest profile without email or payment.
-4. The website discloses: `Your progress is stored only in this browser until you create an account.`
-5. The first-habit onboarding begins.
+2. The visitor sees `Create Account` and `Sign In`.
+3. Successful authentication creates or restores a Free account.
+4. If legacy local data exists, the website offers transfer or export before opening the account workspace.
+5. The first-habit onboarding begins after account resolution.
 
-**Primary path: returning Guest**
+**Primary path: returning account user**
 
-1. The local Guest profile is restored.
-2. Pending local operations are checked.
+1. The account session is validated.
+2. Cached content and pending local operations are checked.
 3. The requested route opens, or the user is sent to Today.
 
 **Primary path: returning account user**
@@ -584,9 +579,9 @@ flowchart TD
 
 **Alternate paths**
 
-- Private browsing or cleared storage results in no recoverable Guest state.
+- Private browsing or cleared storage may remove local cache, while canonical account data remains in PostgreSQL.
 - Expired account session opens the session-expired flow.
-- Offline first visit cannot create an authenticated session, but may continue as Guest only if the required application shell is available.
+- Offline first visit cannot create an authenticated session and must show the account-required state.
 
 **Requirement references:** FR-PUB-02, FR-ONB-01, FR-ONB-05, FR-ONB-07, FR-OFF-01.
 
@@ -606,7 +601,7 @@ flowchart TD
 
 **Alternate path**
 
-- `Continue as Guest` is offered only if account-owned data will not be misrepresented as local Guest data.
+- No unauthenticated application entry is offered; legacy local data is handled only after authentication.
 - `Sign Out` clears the expired session but does not silently erase local pending records that require reconciliation.
 
 **UX rules**
@@ -619,7 +614,7 @@ flowchart TD
 
 ## 6.3 UX-APP-03 — First-time orientation
 
-After Guest entry or first account sign-in with no habits:
+After first account sign-in with no habits:
 
 1. Today displays a focused empty state.
 2. The message explains that a habit has a Normal and Minimum version.
@@ -755,7 +750,7 @@ Rules:
 - A saved Draft does not consume an active slot.
 - A Draft cannot generate sessions or reminders.
 - Returning to the Draft restores the last locally or cloud-saved step.
-- Guest Drafts are disclosed as browser-local.
+- Legacy drafts are disclosed as browser-local until transferred or exported.
 
 **Requirement references:** FR-HAB-05.
 
@@ -767,24 +762,24 @@ flowchart TD
     Limit -- Yes --> Success[Activate habit]
     Limit -- No --> Resolve[Active limit surface]
     Resolve --> Pause[Pause an active habit]
-    Resolve --> Upgrade[Create account or upgrade]
+    Resolve --> Upgrade[Upgrade tier]
     Resolve --> Draft[Keep new habit as Draft]
     Resolve --> Cancel[Cancel activation]
 ```
 
-**Guest state**
-
-- Explain the limit of three active habits.
-- Offer `Pause an Active Habit`, `Create Account`, `Keep as Draft`, and `Cancel`.
-
 **Free account state**
 
 - Explain the limit of five active habits.
+- Offer `Pause an Active Habit`, `View Lite or Premium`, `Keep as Draft`, and `Cancel`.
+
+**Lite account state**
+
+- Explain the limit of ten active habits.
 - Offer `Pause an Active Habit`, `View Premium`, `Keep as Draft`, and `Cancel`.
 
 **Premium state**
 
-- Explain the limit of twenty active habits.
+- Explain the limit of thirty active habits.
 - Offer `Pause an Active Habit`, `Keep as Draft`, and `Cancel`.
 
 **UX rules**
@@ -1105,7 +1100,7 @@ flowchart TD
 
 **UX rules**
 
-- Do not request permission on landing, first page load, or Guest entry.
+- Do not request permission on landing, first page load, or account entry.
 - Do not imitate the browser permission prompt.
 - Do not claim delivery is guaranteed.
 - The product records permission state but respects browser-controlled revocation.
@@ -1489,7 +1484,7 @@ flowchart TD
 
 1. Any user opens the Premium Program catalogue.
 2. Program cards show title, intended benefit, duration, and Premium status.
-3. Guest and Free users see `Preview` rather than a disabled card.
+3. Free and Lite users see `Preview` rather than a disabled card.
 4. Premium users see `Start Program` where eligible.
 
 **Requirement references:** FR-PRG-01, FR-PRG-02.
@@ -1531,29 +1526,27 @@ flowchart TD
 4. The program becomes an active habit with versioned program configuration.
 5. Adaptive changes remain subject to the standard decision contract where required.
 
-# 15. Authentication and Guest Data Transfer
+# 15. Authentication and Legacy Local Data Recovery
 
 ## 15.1 Contextual account prompts
 
-An account prompt may appear when the Guest:
+An account prompt may appear when the authenticated user has legacy local data:
 
-- selects cloud backup;
-- attempts cross-device access;
-- reaches the Guest active-habit limit;
-- starts a Premium trial or purchase;
-- selects email reminders;
-- explicitly selects Sign In.
+- signs in on a browser containing a legacy local dataset;
+- requests a transfer or export;
+- starts a Lite or Premium trial or purchase;
+- selects an account-only capability.
 
 The prompt states:
 
 ```text
 Why an account is needed
-What Guest data is currently stored
+What legacy local data is currently stored
 What will happen after sign-in
 [Continue] [Not Now]
 ```
 
-No prompt claims that local Guest data is already backed up.
+No prompt claims that legacy local data is already backed up.
 
 **Requirement references:** FR-ONB-03, FR-ONB-05.
 
@@ -1565,7 +1558,7 @@ No prompt claims that local Guest data is already backed up.
 4. The callback is validated.
 5. The session is established.
 6. The website resumes the original context.
-7. If Guest data exists, the transfer review begins.
+7. If legacy local data exists, the recovery review begins.
 
 **Failure states**
 
@@ -1574,7 +1567,7 @@ No prompt claims that local Guest data is already backed up.
 - Provider account has no usable email under product policy.
 - Network fails before completion.
 
-Each failure returns to a stable sign-in surface without deleting Guest data.
+Each failure returns to a stable sign-in surface without deleting legacy local data.
 
 **Requirement references:** FR-ONB-06.
 
@@ -1590,18 +1583,18 @@ Each failure returns to a stable sign-in surface without deleting Guest data.
 **Cross-device link behavior**
 
 - If the magic link opens in another browser, the account session may be established there.
-- Browser-local Guest data from the original browser is not implied to exist on the new browser.
-- The user receives clear guidance to return to the original browser to transfer its Guest data.
+- Browser-local legacy data from the original browser is not implied to exist on the new browser.
+- The user receives clear guidance to return to the original browser to transfer its legacy data.
 
 **Requirement references:** FR-ONB-06.
 
-## 15.4 UX-AUTH-03 — Transfer Guest data to an empty account
+## 15.4 UX-AUTH-03 — Recover legacy local data into an empty account
 
 ```mermaid
 flowchart TD
-    SignedIn[Authentication succeeds] --> Guest{Guest data exists?}
-    Guest -- No --> Continue[Continue to account]
-    Guest -- Yes --> Cloud{Cloud account has habit data?}
+    SignedIn[Authentication succeeds] --> Legacy{Legacy local data exists?}
+    Legacy -- No --> Continue[Continue to account]
+    Legacy -- Yes --> Cloud{Cloud account has habit data?}
     Cloud -- No --> Summary[Show transfer summary]
     Summary --> Confirm{Confirm transfer?}
     Confirm -- Yes --> Transfer[Transactional transfer]
@@ -1611,7 +1604,7 @@ flowchart TD
 
 **Primary path**
 
-1. The website counts local Guest habits, check-ins, drafts, settings, and pending operations.
+1. The website counts legacy local habits, check-ins, drafts, settings, and pending operations.
 2. A transfer summary is shown.
 3. The user confirms.
 4. Data is copied transactionally to the account.
@@ -1621,9 +1614,9 @@ flowchart TD
 
 **Requirement references:** FR-ONB-03, FR-DAT-02.
 
-## 15.5 UX-AUTH-04 — Merge Guest data with an existing account
+## 15.5 UX-AUTH-04 — Merge legacy local data with an existing account
 
-1. The website detects both local Guest data and existing cloud data.
+1. The website detects both legacy local data and existing cloud data.
 2. A merge summary lists counts and potential conflicts.
 3. Duplicate detection uses stable identifiers and supported matching rules.
 4. The user confirms the merge.
@@ -1637,10 +1630,10 @@ flowchart TD
 - Never discard a check-in silently.
 - Do not require the user to manually inspect every non-conflicting item.
 
-## 15.6 Guest transfer failure
+## 15.6 Legacy local data recovery failure
 
 - Show which stage failed.
-- Preserve browser-local Guest data.
+- Preserve browser-local legacy data.
 - Provide `Retry` and `Continue without transfer` where safe.
 - Do not claim cloud backup succeeded.
 - Do not create duplicate data on retry.
@@ -1740,13 +1733,13 @@ The application provides notices three days and one day before first billing. El
 
 **Requirement references:** FR-SUB-06.
 
-## 16.6 UX-SUB-06 — Premium expiry and active-limit resolution
+## 16.6 UX-SUB-06 — Paid-tier expiry and active-limit resolution
 
 ```mermaid
 flowchart TD
-    Expire[Premium entitlement expires] --> Count{Active habits greater than five?}
+    Expire[Paid entitlement expires] --> Count{Active habits greater than new tier limit?}
     Count -- No --> Programs{Adaptive programs active?}
-    Count -- Yes --> Select[Select up to five active habits]
+    Count -- Yes --> Select[Select up to new tier limit]
     Select --> Pause[Pause remaining habits]
     Pause --> Programs
     Programs -- Yes --> Decide[Continue as Static or Pause Program]
@@ -1762,7 +1755,7 @@ flowchart TD
 4. Adaptive programs enter Decision Required.
 5. The user selects `Continue as Static` or `Pause Program` for each program.
 6. The downgrade summary is confirmed.
-7. The account enters Free state.
+7. The account enters the selected lower tier: Lite or Free.
 
 **Requirement references:** FR-SUB-07, FR-SUB-08, FR-SUB-09.
 
@@ -1792,7 +1785,7 @@ flowchart TD
 - Skipped and Unrecorded classifications are distinguishable where useful.
 - Charts include textual summaries and accessible data tables or equivalent descriptions.
 - The website avoids competitive ranking and punitive streak framing.
-- Guest Insights are limited to data still available in the current browser.
+- Legacy local Insights are limited to data still available in the current browser until transfer or export.
 
 **Requirement references:** FR-MET-01, FR-MET-02.
 
@@ -1837,10 +1830,10 @@ Your insights will appear after you record eligible sessions.
 There is not enough information to show a reliable friction pattern yet.
 ```
 
-### Guest storage unavailable
+### Legacy local storage unavailable
 
 ```text
-Insights are unavailable because this browser no longer contains the Guest history.
+Insights are unavailable because this browser no longer contains the legacy local history.
 ```
 
 # 18. Offline Resilience, Synchronization, and Multiple Tabs
@@ -1985,7 +1978,7 @@ Accessibility
 
 Privacy and Data
 ├── Export data
-├── Clear Guest data
+├── Clear legacy local data
 ├── Cookie and analytics preferences
 └── Account deletion
 
@@ -1996,13 +1989,13 @@ Account
 └── Sign out
 ```
 
-Guest and account users see only applicable sections.
+Free, Lite, and Premium account users see only applicable sections.
 
-## 19.2 UX-DAT-01 — Export Guest data
+## 19.2 UX-DAT-01 — Export legacy local data
 
-1. The Guest opens Privacy and Data.
+1. The authenticated user opens Privacy and Data while legacy local data is detected.
 2. The page explains that data is stored only in the current browser.
-3. The user selects `Export Guest Data`.
+3. The user selects `Export Legacy Local Data`.
 4. The website prepares a documented machine-readable file locally where technically possible.
 5. The browser download begins.
 6. A success message states the included categories.
@@ -2021,11 +2014,11 @@ Guest and account users see only applicable sections.
 
 **Requirement references:** FR-DAT-01.
 
-## 19.4 UX-DAT-03 — Clear local Guest data
+## 19.4 UX-DAT-03 — Clear legacy local data
 
 ```mermaid
 flowchart TD
-    Clear[Select Clear Guest Data] --> Offer[Offer export first]
+    Clear[Select Clear Legacy Local Data] --> Offer[Offer export first]
     Offer --> Confirm[Explicit confirmation]
     Confirm --> Delete[Delete local product data]
     Delete --> Result[Return to fresh public or application entry]
@@ -2163,7 +2156,7 @@ Required for:
 - stop habit;
 - move habit to Trash;
 - permanent habit deletion;
-- clear Guest data;
+- clear legacy local data;
 - account deletion;
 - subscription cancellation where provider policy requires confirmation.
 
@@ -2268,7 +2261,7 @@ Event names describe product behavior without sensitive content:
 
 ```text
 public_cta_selected
-guest_started
+account_started
 habit_creation_started
 habit_created
 habit_draft_saved
@@ -2283,8 +2276,8 @@ weekly_review_completed
 recommendation_decision_recorded
 account_prompt_opened
 authentication_completed
-guest_transfer_started
-guest_transfer_completed
+legacy_data_transfer_started
+legacy_data_transfer_completed
 premium_preview_started
 premium_preview_completed
 plan_selected
@@ -2349,8 +2342,8 @@ Never include:
 ## 23.2 Public website and entry
 
 - [ ] Public pages expose no private habit data.
-- [ ] Start Free allows Guest entry without email, payment, or notification permission.
-- [ ] Returning Guest and account sessions restore safely.
+- [ ] Start Free leads to account creation or sign-in before private application access.
+- [ ] Returning account sessions restore safely.
 - [ ] Session expiration preserves pending local actions.
 - [ ] Deep links resume after authentication where permitted.
 
@@ -2367,7 +2360,7 @@ Never include:
 - [ ] Basic Template, Custom Habit, and Premium Program routes are visible.
 - [ ] Normal and Minimum versions are required.
 - [ ] Drafts do not consume active slots.
-- [ ] Guest, Free, and Premium limits resolve without deletion.
+- [ ] Free, Lite, and Premium limits resolve without deletion.
 - [ ] Reminder permission is contextual and optional.
 
 ## 23.5 Daily check-ins
@@ -2403,17 +2396,17 @@ Never include:
 - [ ] Paused, Stopped, Completed, Archived, and Trash do not consume active slots.
 - [ ] Trash shows the 30-day retention period.
 
-## 23.9 Authentication and Guest transfer
+## 23.9 Authentication and legacy local data recovery
 
 - [ ] Account prompts explain the contextual benefit.
 - [ ] Google and email authentication resume the intended route.
-- [ ] Guest data remains local until transfer is confirmed.
+- [ ] Legacy local data remains local until transfer or export is confirmed.
 - [ ] Existing cloud data produces a safe merge summary.
 - [ ] Transfer retries are idempotent.
 
 ## 23.10 Premium and subscription
 
-- [ ] Premium preview is visible to Guest and Free users.
+- [ ] Premium preview is visible to Free and Lite users.
 - [ ] Simulation does not affect real metrics.
 - [ ] No plan is preselected.
 - [ ] Trial and billing terms appear before checkout.
@@ -2432,8 +2425,8 @@ Never include:
 
 ## 23.12 Privacy, deletion, and accessibility
 
-- [ ] Guest and account exports are available according to entitlement and storage state.
-- [ ] Clear Guest Data offers export first.
+- [ ] Account and legacy local exports are available according to entitlement and storage state.
+- [ ] Clear Legacy Local Data offers export first.
 - [ ] Account deletion explains subscription and retention consequences.
 - [ ] Habit names and notes are excluded from analytics.
 - [ ] All controls are keyboard accessible.
@@ -2446,10 +2439,9 @@ Never include:
 
 | **State** | **Today** | **Habits** | **Review** | **Insights** | **Reminders** | **Settings** |
 |---|---|---|---|---|---|---|
-| Guest | Full basic use | Up to 3 active | Basic | Local history | In-app and supported Web Push | Guest privacy and export |
 | Free | Full basic use | Up to 5 active | Basic | Cloud-backed basic | Web Push and basic email | Account and subscription |
-| Premium | Full use | Up to 20 active | Enhanced | Advanced | Adaptive analysis | Full account controls |
-| Offline Guest | Cached/local use | Cached/local use | Cached items | Cached data | No guaranteed delivery changes | Local settings only |
+| Lite | Full basic use | Up to 10 active | Enhanced | Cloud-backed basic | Web Push and supported reminder features | Account and subscription |
+| Premium | Full use | Up to 30 active | Advanced | Advanced | Adaptive analysis | Full account controls |
 | Offline account | Cached and queued | Cached and queued | Cached items | Cached data | Cloud changes blocked or queued only where supported | Cloud actions blocked |
 | Session expired | Re-auth required for cloud data | Re-auth required | Re-auth required | Re-auth required | Re-auth required | Sign-in path |
 | Decision Required | Banner | Status visible | Primary resolution | History visible | Existing settings visible | Subscription context visible |
@@ -2463,7 +2455,7 @@ Never include:
 4. Habits list and Habit Detail
 5. Recovery recommendation and progress
 6. Weekly Review and batch confirmation
-7. Authentication and Guest transfer
+7. Authentication and legacy local data recovery
 8. Subscription selection and processing
 9. Reminders and permission states
 10. Insights and accessible charts
@@ -2496,7 +2488,7 @@ The website UX specification is ready for UI specification when:
 
 - all MVP routes and responsive navigation states are inventoried;
 - every core PRD journey has a primary path, alternate path, and exit state;
-- Guest, Free, and Premium differences are explicit;
+- Free, Lite, and Premium differences are explicit;
 - browser Back, Forward, refresh, deep-link, offline, and multiple-tab behavior are defined;
 - loading, empty, locked, error, pending, and conflict states are defined;
 - destructive actions state consequences and reversibility;

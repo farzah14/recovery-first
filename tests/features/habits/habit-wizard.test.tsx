@@ -37,6 +37,8 @@ function repository(): ProductRepository {
       activeCount: 1,
       firstEligibleSessionId: 'session-1',
     })),
+    updateHabitVersion: vi.fn(async () => undefined),
+    setHabitLifecycle: vi.fn(async () => undefined),
     saveHabitDraft: vi.fn(async () => undefined),
     getHabitDraft: vi.fn(async () => null),
     deleteHabitDraft: vi.fn(async () => undefined),
@@ -52,6 +54,12 @@ function repository(): ProductRepository {
     })),
     recordCheckIn: vi.fn(),
     editCheckIn: vi.fn(),
+    getWeeklyOverview: vi.fn(async () => ({
+      todayDate: '2026-08-03',
+      startDate: '2026-07-27',
+      endDate: '2026-08-02',
+      days: [],
+    })),
   };
 }
 

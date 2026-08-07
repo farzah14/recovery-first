@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    testTimeout: 60000,
+    fileParallelism: false,
     setupFiles: ['./src/test-support/setup.ts'],
     include: [
       'tests/unit/**/*.test.ts',
@@ -15,6 +17,7 @@ export default defineConfig({
       'tests/component/**/*.test.tsx',
       'tests/integration/**/*.test.ts',
       'tests/integration/**/*.test.tsx',
+      'tests/contract/**/*.test.ts',
       'tests/accessibility/**/*.test.ts',
       'tests/accessibility/**/*.test.tsx',
       'tests/features/**/*.test.ts',

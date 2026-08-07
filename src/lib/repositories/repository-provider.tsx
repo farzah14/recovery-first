@@ -12,7 +12,7 @@ export function ProductRepositoryProvider({
 }: {
   repository: ProductRepository;
   children: ReactNode;
-}) {
+}): React.JSX.Element {
   return (
     <ProductRepositoryContext.Provider value={repository}>
       {children}

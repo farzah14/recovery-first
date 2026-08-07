@@ -6,12 +6,7 @@ import type { PlanTier } from '@/domain/shared/plan-tier';
 
 export type ProductOwner = {
   ownerId: string;
-  /**
-   * Account ownership is the only supported cloud boundary. The legacy Guest
-   * values remain in this transport contract so the historical browser-local
-   * repository and its migration tests stay type-safe while account routes
-   * move to Supabase.
-   */
+  /** Guest values remain only for the historical browser-local repository boundary. */
   identityMode: IdentityMode | 'guest';
   planTier: PlanTier | 'guest';
   timezone: string;
@@ -22,11 +17,21 @@ export type HabitTarget = {
   quantity: number | null;
   unit: string | null;
   estimatedMinutes: number | null;
+  label?: string;
 };
 
 export type HabitCue = {
   type: 'time' | 'after_activity' | 'location' | 'none';
   value: string | null;
+};
+
+export type HabitPresentation = {
+  description: string;
+  icon: string;
+  fromTime: string;
+  untilTime: string;
+  timingContext: string;
+  startLocalDate: string;
 };
 
 export type CreateHabitCommand = {
@@ -40,13 +45,35 @@ export type CreateHabitCommand = {
   minimumTarget: HabitTarget;
   recurrence: RecurrenceRule;
   cue: HabitCue;
-  reminderIntent: {
-    enabled: boolean;
-    localTime: string | null;
-  };
+  presentation?: HabitPresentation;
+  reminderIntent: { enabled: boolean; localTime: string | null };
   startLocalDate: string;
   activate: boolean;
   clientCreatedAt: string;
+};
+
+export type UpdateHabitVersionCommand = {
+  commandId: string;
+  habitId: string;
+  habitVersionId: string;
+  owner: ProductOwner;
+  title: string;
+  category: string;
+  expectedRevision: number;
+  normalTarget: HabitTarget;
+  minimumTarget: HabitTarget;
+  recurrence: RecurrenceRule;
+  cue: HabitCue;
+  presentation: HabitPresentation;
+  source: 'redesign' | 'recommendation' | 'restore';
+};
+
+export type SetHabitLifecycleCommand = {
+  commandId: string;
+  owner: ProductOwner;
+  habitId: string;
+  expectedRevision: number;
+  nextState: HabitLifecycleState;
 };
 
 export type CreateHabitResult = {
@@ -62,6 +89,11 @@ export type SessionSummary = {
   habitId: string;
   habitVersionId: string;
   title: string;
+  category?: string;
+  icon?: string;
+  timingContext?: string;
+  habitRevision?: number;
+  currentVersionId?: string | null;
   normalTarget: HabitTarget;
   minimumTarget: HabitTarget;
   cue: HabitCue;
@@ -80,6 +112,19 @@ export type TodayRepositoryRead = {
   sessions: SessionSummary[];
   activeHabitCount: number;
   activeHabitLimit: number;
+};
+
+export type WeeklyOverviewDay = {
+  localDate: string;
+  completedCount: number;
+  totalCount: number;
+};
+
+export type WeeklyOverviewRead = {
+  todayDate: string;
+  startDate: string;
+  endDate: string;
+  days: WeeklyOverviewDay[];
 };
 
 export type RecordCheckInRepositoryCommand = {
@@ -109,8 +154,24 @@ export type EditCheckInRepositoryCommand = RecordCheckInRepositoryCommand & {
 export type HabitListItem = {
   id: string;
   title: string;
+  category?: string | null;
+  description?: string;
+  normalTarget?: HabitTarget;
+  minimumTarget?: HabitTarget;
+  schedule?: string;
+  cue?: string;
+  status?: 'Active' | 'Paused' | 'Archived';
+  iconName?: string;
+  fromTime?: string | null;
+  untilTime?: string | null;
+  startLocalDate?: string;
+  createdDate?: string;
+  version?: string;
+  streak?: number;
+  consistency?: number;
   lifecycleState: HabitLifecycleState;
   currentVersionId: string | null;
+  revision?: number;
   updatedAt: string;
 };
 
@@ -123,7 +184,9 @@ export type HabitDetailRead = {
     minimumTarget: HabitTarget;
     recurrence: RecurrenceRule;
     cue: HabitCue;
+    metadata?: Record<string, unknown>;
     createdAt: string;
+    revision?: number;
   };
   versions: Array<{
     id: string;
@@ -145,6 +208,8 @@ export type HabitDetailRead = {
 
 export interface ProductRepository {
   createHabit(command: CreateHabitCommand): Promise<CreateHabitResult>;
+  updateHabitVersion(command: UpdateHabitVersionCommand): Promise<void>;
+  setHabitLifecycle(command: SetHabitLifecycleCommand): Promise<void>;
   saveHabitDraft(
     owner: ProductOwner,
     draftId: string,
@@ -158,6 +223,7 @@ export interface ProductRepository {
   ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number>;
   resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number>;
   getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead>;
+  getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead>;
   recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult>;
   editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult>;
 }

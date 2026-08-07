@@ -1,16 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { ClipboardCheck, Sparkles, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { CreateHabitDialog } from '@/features/habits/create-habit-dialog';
+import { ClipboardCheck, Sparkles } from 'lucide-react';
 
 export default function ReviewPage(): React.JSX.Element {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
   return (
-    <AppShell onOpenCreateHabit={() => setCreateDialogOpen(true)}>
+    <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
@@ -25,18 +21,7 @@ export default function ReviewPage(): React.JSX.Element {
               Reflect on your routine, adjust minimum baselines, and reset without shame.
             </p>
           </div>
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-            size="compact"
-            variant="primary"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold shadow-xs"
-          >
-            <Plus className="size-4 shrink-0" />
-            <span>Add Habit</span>
-          </Button>
         </div>
-
-        <CreateHabitDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
 
         <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
           <div className="flex items-center gap-3">

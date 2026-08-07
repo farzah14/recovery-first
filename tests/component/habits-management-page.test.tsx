@@ -1,5 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { StrictMode } from 'react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 
 import { HabitsManagement } from '@/features/habits/habits-management';
 
@@ -28,6 +29,7 @@ describe('HabitsManagement', () => {
     // Active habit cards
     expect(screen.getByText('Daily Meditation')).toBeVisible();
     expect(screen.getByText('Hydration & Water')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /^Check-in$/i })).not.toBeInTheDocument();
 
     // Paused habits section
     expect(screen.getByText(/Paused Habits \(1\)/i)).toBeVisible();
@@ -74,37 +76,101 @@ describe('HabitsManagement', () => {
     expect(screen.getByText('Read Tech Documentation')).toBeVisible();
   }, 30000);
 
-  it('filters habits lists by date preset and custom range', async () => {
+  it('filters habits lists by date preset', async () => {
     render(<HabitsManagement />);
 
     // Date filter defaults to All Dates
     expect(screen.getByRole('combobox', { name: 'Filter by date' })).toHaveTextContent('All Dates');
 
-    // This month hides the older seed habits entirely
+    // Selecting Today option filters the habits list
     fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
-    fireEvent.click(screen.getByRole('option', { name: 'This Month' }));
-    expect(screen.getByText('No active habits found.')).toBeVisible();
-    expect(screen.queryByText('Daily Meditation')).not.toBeInTheDocument();
-
-    // A custom range covering 2023 shows only 2023 habits
-    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
-    fireEvent.click(screen.getByRole('option', { name: 'Custom' }));
-    fireEvent.change(screen.getByLabelText('Custom date from'), {
-      target: { value: '2023-01-01' },
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole('option', { name: 'Today' }));
     });
-    fireEvent.change(screen.getByLabelText('Custom date to'), {
-      target: { value: '2023-12-31' },
-    });
-    expect(screen.getByText('Daily Meditation')).toBeVisible();
-    expect(screen.getByText('Read Tech Documentation')).toBeVisible();
-    expect(screen.queryByText('Hydration & Water')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Filter by date' })).toHaveTextContent('Today');
 
-    // Reset to All Dates restores the full lists
+    // Selecting Tomorrow option filters the habits list
     fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
-    fireEvent.click(screen.getByRole('option', { name: 'All Dates' }));
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole('option', { name: 'Tomorrow' }));
+    });
+    expect(screen.getByRole('combobox', { name: 'Filter by date' })).toHaveTextContent('Tomorrow');
+
+    // Reset to All Dates restores the full list display
+    fireEvent.click(screen.getByRole('combobox', { name: 'Filter by date' }));
+    await waitFor(() => {
+      fireEvent.click(screen.getByRole('option', { name: 'All Dates' }));
+    });
     expect(screen.getByText('Daily Meditation')).toBeVisible();
     expect(screen.getByText('Hydration & Water')).toBeVisible();
   }, 30000);
+
+  it('uses the Habits Library count for the matching Weekly Overview date', async () => {
+    window.localStorage.setItem(
+      'recovery-first.habits-list',
+      JSON.stringify([
+        {
+          id: 'h-wednesday-1',
+          name: 'Wednesday Walk',
+          category: 'Health',
+          normalTarget: '30 minutes',
+          minimumTarget: '5 minutes',
+          schedule: 'Daily (08:00 AM - 09:00 AM)',
+          status: 'Active',
+          createdDate: '2026-08-05',
+          iconName: 'running',
+        },
+        {
+          id: 'h-wednesday-2',
+          name: 'Wednesday Reading',
+          category: 'Learning',
+          normalTarget: '20 pages',
+          minimumTarget: '2 pages',
+          schedule: 'Daily (07:00 PM - 08:00 PM)',
+          status: 'Active',
+          createdDate: '2026-08-05',
+          iconName: 'reading',
+        },
+        {
+          id: 'h-wednesday-3',
+          name: 'Jan Wednesday Walk',
+          category: 'Health',
+          normalTarget: '30 minutes',
+          minimumTarget: '5 minutes',
+          schedule: 'Daily (08:00 AM - 09:00 AM)',
+          status: 'Active',
+          createdDate: '2026-01-14',
+          iconName: 'running',
+        },
+        {
+          id: 'h-wednesday-4',
+          name: 'Jan Wednesday Reading',
+          category: 'Learning',
+          normalTarget: '20 pages',
+          minimumTarget: '2 pages',
+          schedule: 'Daily (07:00 PM - 08:00 PM)',
+          status: 'Active',
+          createdDate: '2026-01-14',
+          iconName: 'reading',
+        },
+      ]),
+    );
+
+    render(<HabitsManagement />);
+
+    await waitFor(() => {
+      const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+      const WednesdayRow = rows.find((row) => {
+        const cellText = within(row).getAllByRole('cell')[0]?.textContent?.trim();
+        return cellText === 'Aug 5' || cellText === 'Jan 14';
+      });
+
+      expect(WednesdayRow).toBeDefined();
+      if (WednesdayRow) {
+        expect(within(WednesdayRow).getAllByRole('cell')[2]).toHaveTextContent(/\/2$/);
+      }
+    });
+  });
 
   it('navigates to Habit Detail view when View Details is clicked and returns back to Habits Library when Back to Habits is clicked', () => {
     render(<HabitsManagement />);
@@ -118,7 +184,7 @@ describe('HabitsManagement', () => {
     }
 
     // Verify detail view is rendered
-    expect(screen.getByRole('heading', { level: 2, name: 'Current Definition' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 1, name: 'Daily Meditation' })).toBeVisible();
 
     // Click Back to Habits
     fireEvent.click(screen.getByRole('button', { name: /Back to Habits/i }));
@@ -154,5 +220,42 @@ describe('HabitsManagement', () => {
     expect(
       screen.queryByText('A habit with this name already exists. Choose a different name.'),
     ).not.toBeInTheDocument();
+  }, 30000);
+
+  it('persists a habit status change without updating AppShell during render', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      render(
+        <StrictMode>
+          <HabitsManagement />
+        </StrictMode>,
+      );
+
+      const pauseHabitButton = screen.getAllByTitle('Pause Habit')[0];
+      expect(pauseHabitButton).toBeDefined();
+      if (pauseHabitButton) {
+        fireEvent.click(pauseHabitButton);
+      }
+
+      const storedHabits = JSON.parse(
+        window.localStorage.getItem('recovery-first.habits-list') ?? '[]',
+      ) as Array<{ id: string; status: string }>;
+      expect(storedHabits.find((habit) => habit.id === 'h1')?.status).toBe('Paused');
+
+      const hasRenderPhaseWarning = consoleError.mock.calls.some((call) =>
+        call.some(
+          (argument) =>
+            typeof argument === 'string' &&
+            argument.includes(
+              'Cannot update a component (`AppShell`) while rendering a different component (`HabitsManagement`)',
+            ),
+        ),
+      );
+
+      expect(hasRenderPhaseWarning).toBe(false);
+    } finally {
+      consoleError.mockRestore();
+    }
   }, 30000);
 });

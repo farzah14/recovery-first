@@ -11,6 +11,15 @@ export function mapHabitFormToCreateCommand(
     now: string;
   },
 ): CreateHabitCommand {
+  const presentation = {
+    description: `Target: ${values.normalAction} (Min: ${values.minimumAction})`,
+    icon: 'habit',
+    fromTime: values.reminderLocalTime ?? '08:00',
+    untilTime: values.reminderLocalTime ?? '09:00',
+    timingContext: values.cueValue || 'Daily',
+    startLocalDate: values.startLocalDate,
+  };
+
   return {
     commandId: context.commandId,
     habitId: context.habitId,
@@ -41,6 +50,7 @@ export function mapHabitFormToCreateCommand(
               placement: values.weekdays,
             },
     cue: { type: values.cueType, value: values.cueValue },
+    presentation,
     reminderIntent: {
       enabled: values.reminderEnabled,
       localTime: values.reminderLocalTime,

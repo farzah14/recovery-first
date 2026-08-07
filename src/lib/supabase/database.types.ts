@@ -230,6 +230,7 @@ export type Database = {
           effective_from_session_id: string | null
           habit_id: string
           id: string
+          metadata: Json
           minimum_target: Json
           normal_target: Json
           parent_version_id: string | null
@@ -245,6 +246,7 @@ export type Database = {
           effective_from_session_id?: string | null
           habit_id: string
           id: string
+          metadata?: Json
           minimum_target: Json
           normal_target: Json
           parent_version_id?: string | null
@@ -260,6 +262,7 @@ export type Database = {
           effective_from_session_id?: string | null
           habit_id?: string
           id?: string
+          metadata?: Json
           minimum_target?: Json
           normal_target?: Json
           parent_version_id?: string | null
@@ -970,6 +973,23 @@ export type Database = {
         }
         Returns: Json
       }
+      create_habit: {
+        Args: {
+          p_activate: boolean
+          p_category: string
+          p_command_id: string
+          p_cue: Json
+          p_habit_id: string
+          p_metadata: Json
+          p_minimum_target: Json
+          p_normal_target: Json
+          p_recovery_structure: Json
+          p_schedule_rule: Json
+          p_title: string
+          p_version_id: string
+        }
+        Returns: Json
+      }
       create_habit_version: {
         Args: {
           p_command_id: string
@@ -1029,11 +1049,39 @@ export type Database = {
         Returns: Json
       }
       resolve_unrecorded_sessions: { Args: { p_now: string }; Returns: number }
+      redesign_habit: {
+        Args: {
+          p_category: string
+          p_command_id: string
+          p_cue: Json
+          p_expected_revision: number
+          p_habit_id: string
+          p_metadata: Json
+          p_minimum_target: Json
+          p_normal_target: Json
+          p_recovery_structure: Json
+          p_schedule_rule: Json
+          p_source: string
+          p_title: string
+          p_version_id: string
+        }
+        Returns: Json
+      }
+      set_habit_lifecycle: {
+        Args: {
+          p_command_id: string
+          p_expected_revision: number
+          p_habit_id: string
+          p_next_state: Database["public"]["Enums"]["habit_lifecycle_state"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
       check_in_outcome: "full" | "minimum" | "manual_skipped" | "excused"
       entitlement_status:
         | "trial_active"
+        | "trial_cancelled"
         | "active"
         | "grace_period"
         | "past_due"
@@ -1208,6 +1256,7 @@ export const Constants = {
       check_in_outcome: ["full", "minimum", "manual_skipped", "excused"],
       entitlement_status: [
         "trial_active",
+        "trial_cancelled",
         "active",
         "grace_period",
         "past_due",
@@ -1260,4 +1309,3 @@ export const Constants = {
     },
   },
 } as const
-

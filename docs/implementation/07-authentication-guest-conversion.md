@@ -1,12 +1,14 @@
-# Authentication and Guest Conversion Implementation Plan
+# Authentication and Legacy Local Data Recovery Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `executing-plans` to implement this plan task-by-task. This project uses one agent only; do not dispatch subagents. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement secure Google and email authentication, SSR session handling, account-scoped cloud persistence, idempotent Guest-to-account conversion, and cross-browser synchronization without losing browser-local progress.
+**Goal:** Implement secure Google and email authentication, SSR session handling, account-scoped cloud persistence, idempotent recovery of legacy local data, and cross-browser synchronization without losing browser-local progress.
 
-**Architecture:** Supabase Auth establishes PKCE-compatible sessions through secure SSR cookies. Lightweight request gating occurs in `proxy.ts`, while server operations and PostgreSQL RLS remain authoritative. Guest conversion is a bounded, hashed, idempotent command: the browser preserves its original IndexedDB source until the server transaction commits, the local account cache verifies the imported mapping, and the user explicitly resolves any Free-plan active-habit excess.
+**Architecture:** Supabase Auth establishes PKCE-compatible sessions through secure SSR cookies. Lightweight request gating occurs in `proxy.ts`, while server operations and PostgreSQL RLS remain authoritative. Legacy local-data recovery is a bounded, hashed, idempotent command: the browser preserves its original IndexedDB source until the server transaction commits, the local account cache verifies the imported mapping, and the user explicitly resolves any Free/Lite active-habit excess.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase Auth, `@supabase/ssr`, PostgreSQL functions and RLS, Dexie, TanStack Query, Web Crypto, Vitest, React Testing Library, Playwright, pgTAP, pnpm.
+
+**03A amendment:** The original Guest-capable route and conversion steps are historical notes. The active implementation requires authentication before private application access. Rewrite the task-level route classification, recovery package names, and acceptance checks as legacy local-data recovery before executing Plan 07.
 
 ---
 
@@ -18,7 +20,7 @@ Begin only after Plans 01–06 are verified complete. The repository must alread
 
 - deterministic clock and UUID services;
 - responsive public and application shells;
-- Guest-mode IndexedDB persistence through Dexie schema version 5;
+- account-cache and legacy-local IndexedDB persistence through Dexie schema version 5;
 - durable account pending-operation envelopes, queue leases, synchronization cursors, and conflict records;
 - account-neutral `ProductRepository` contracts;
 - Supabase database schema, generated types, security-invoker reads, and RLS;
@@ -37,12 +39,12 @@ This plan does not implement:
 
 ## Product invariants
 
-- Guest is a browser-local identity, never an anonymous Supabase Auth account.
-- Authentication is required only when the user explicitly signs in or requests account-only value.
+- All normal application access requires an authenticated Supabase account.
+- Legacy browser-local data is a recoverable dataset, never an anonymous Supabase Auth account or entitlement.
 - Google and email OTP or magic-link flows return to the initiating safe context.
 - Return paths are internal application paths only; external redirects are rejected.
-- Guest data remains readable and recoverable until conversion is committed and locally verified.
-- Retrying an identical conversion manifest creates no duplicate records.
+- Legacy data remains readable and recoverable until transfer/export is committed and locally verified.
+- Retrying an identical recovery manifest creates no duplicate records.
 - Existing account data is never overwritten because a Guest habit has the same name.
 - No check-in history is silently discarded.
 - Free accounts may have at most five active habits.

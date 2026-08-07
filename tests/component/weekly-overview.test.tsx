@@ -1,9 +1,57 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AppShell } from '@/components/layout/app-shell';
 
 describe('AppShell Weekly Overview', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('uses persisted weekly counts instead of inventing sample completions', () => {
+    const ThursdayDate = new Date(2026, 7, 6);
+
+    render(
+      <AppShell currentDate={ThursdayDate}>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(screen.getByText('0 Completed')).toBeInTheDocument();
+    expect(screen.getAllByText('0/0')).toHaveLength(7);
+  });
+
+  it('renders the same persisted counts supplied by the repository', () => {
+    const ThursdayDate = new Date(2026, 7, 6);
+
+    render(
+      <AppShell
+        currentDate={ThursdayDate}
+        weeklyOverview={{
+          todayDate: '2026-08-06',
+          startDate: '2026-08-03',
+          endDate: '2026-08-09',
+          days: [
+            { localDate: '2026-08-03', completedCount: 1, totalCount: 2 },
+            { localDate: '2026-08-04', completedCount: 2, totalCount: 2 },
+            { localDate: '2026-08-05', completedCount: 0, totalCount: 2 },
+            { localDate: '2026-08-06', completedCount: 1, totalCount: 3 },
+            { localDate: '2026-08-07', completedCount: 0, totalCount: 0 },
+            { localDate: '2026-08-08', completedCount: 0, totalCount: 0 },
+            { localDate: '2026-08-09', completedCount: 0, totalCount: 0 },
+          ],
+        }}
+      >
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(screen.getByText('4 Completed')).toBeInTheDocument();
+    expect(screen.getByText(/4\s*\/\s*9 Sessions/)).toBeInTheDocument();
+    expect(screen.getByText('1/3')).toBeInTheDocument();
+    expect(screen.getByText('Thursday (Today)')).toBeInTheDocument();
+  });
+
   it('dynamically marks the ONE real current day as Today and the next day as Tomorrow', () => {
     // Mock date to a known Friday: July 31, 2026
     const FridayDate = new Date(2026, 6, 31); // July 31, 2026 is a Friday
@@ -63,6 +111,75 @@ describe('AppShell Weekly Overview', () => {
     expect(screen.getByText('Sunday (Today)')).toBeInTheDocument();
     expect(screen.getByText('Aug 2')).toBeInTheDocument();
     expect(screen.queryByText('Thursday (Today)')).toBeNull();
+  });
+
+  it('uses each habit start date when calculating the total for each overview day', async () => {
+    const MondayDate = new Date(2026, 7, 3);
+
+    window.localStorage.setItem(
+      'recovery-first.habits-list',
+      JSON.stringify([
+        {
+          id: 'h-tomorrow',
+          name: 'Tomorrow Habit',
+          category: 'Health',
+          normalTarget: '10 minutes',
+          minimumTarget: '2 minutes',
+          schedule: 'Daily (08:00 AM - 09:00 AM)',
+          status: 'Active',
+          createdDate: '2026-08-04',
+          iconName: 'target',
+        },
+      ]),
+    );
+
+    render(
+      <AppShell currentDate={MondayDate} todayCompletedCount={2} todayTotalCount={3}>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    await waitFor(() => {
+      const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+
+      expect(rows).toHaveLength(7);
+      expect(rows.map((row) => within(row).getAllByRole('cell')[2]?.textContent?.trim())).toEqual([
+        '2/3',
+        '0/4',
+        '0/4',
+        '0/4',
+        '0/4',
+        '0/4',
+        '0/4',
+      ]);
+    });
+  });
+
+  it('uses exact route-provided library counts for each calendar date', () => {
+    const MondayDate = new Date(2026, 7, 3);
+
+    render(
+      <AppShell
+        currentDate={MondayDate}
+        todayCompletedCount={2}
+        todayTotalCount={3}
+        habitCountForDate={(date) => (date.getDate() === 3 ? 3 : date.getDate() === 5 ? 2 : 0)}
+      >
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+
+    expect(rows.map((row) => within(row).getAllByRole('cell')[2]?.textContent?.trim())).toEqual([
+      '2/3',
+      '0/0',
+      '0/2',
+      '0/0',
+      '0/0',
+      '0/0',
+      '0/0',
+    ]);
   });
 
   it('renders Daily Reflection text with prompt text', () => {

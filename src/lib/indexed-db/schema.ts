@@ -24,6 +24,7 @@ export const recoveryFirstStoresV2 = {
 export const recoveryFirstStoresV3 = {
   ...recoveryFirstStoresV2,
   commandResults: 'id, [ownerType+ownerId], operationType, expiresAt',
+  legacyLocalData: 'id, [sourceOwnerType+sourceOwnerId], status, updatedAt',
 } as const;
 
 export const currentIndexedDbVersion = 3;

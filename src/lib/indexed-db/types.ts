@@ -7,12 +7,26 @@ import type { IdentityMode } from '@/domain/shared/identity-mode';
 import type { PlanTier } from '@/domain/shared/plan-tier';
 import type { SynchronizationState } from '@/domain/shared/sync-state';
 
-export type LocalOwnerType = 'guest' | 'account';
+/** Guest is retained only for historical browser-local records during migration. */
+export type LocalOwnerType = 'account' | 'legacy' | 'guest';
+
+export type LegacyLocalDataStatus = 'pending_recovery' | 'exported' | 'transferred' | 'cleared';
+
+export type LegacyLocalDataRecord = {
+  id: string;
+  sourceOwnerType: 'guest';
+  sourceOwnerId: string;
+  status: LegacyLocalDataStatus;
+  manifestVersion: number;
+  createdAt: string;
+  updatedAt: string;
+  clearedAt: string | null;
+};
 
 export type LocalProfileRecord = {
   id: string;
-  identityMode: IdentityMode;
-  planTier: PlanTier;
+  identityMode: IdentityMode | 'legacy';
+  planTier: PlanTier | null;
   locale: string;
   timezone: string;
   weekStart: 1 | 2 | 3 | 4 | 5 | 6 | 7;

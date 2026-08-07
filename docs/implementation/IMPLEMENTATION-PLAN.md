@@ -7,7 +7,7 @@
 
 **Goal:** Build and release a responsive, website-only Recovery-First Habit Tracker from an empty repository through a sequence of independently verifiable implementation plans.
 
-**Architecture:** The product uses Next.js App Router, React, and strict TypeScript for the web application; Supabase Auth and PostgreSQL for signed-in canonical data; IndexedDB through Dexie for Guest data, drafts, durable cache, and pending operations; and server-authoritative workflows for authorization, billing, export, deletion, and external callbacks. Each phase establishes a stable contract required by the next phase.
+**Architecture:** The product uses Next.js App Router, React, and strict TypeScript for the web application; Supabase Auth and PostgreSQL for authenticated canonical data; IndexedDB through Dexie for account cache, drafts, durable cache, and pending operations; and server-authoritative workflows for authorization, billing, export, deletion, and external callbacks. Legacy browser-local data is recoverable or exportable but is not a normal product identity. Each phase establishes a stable contract required by the next phase.
 
 **Tech Stack:** Next.js App Router, React, TypeScript, pnpm, Tailwind CSS, shadcn/ui, Lucide, TanStack Query, React Hook Form, Zod, Zustand where explicitly required, Dexie, Supabase, PostgreSQL, Vitest, React Testing Library, Playwright, Vercel, Web Push, transactional email, error monitoring, and privacy-safe product analytics.
 
@@ -44,7 +44,7 @@ A detailed plan may sequence approved work but may not redefine product, UX, UI,
 - Early phases may define typed interfaces and test doubles for later systems, but must not fake production success.
 - Keep secrets and provider credentials outside source control.
 - Keep `pnpm-lock.yaml`, database migrations, generated types, and documentation synchronized with implementation changes.
-- Preserve Guest, Free, and Premium business rules throughout all phases.
+- Preserve Free, Lite, and Premium business rules throughout all phases.
 - Preserve Recovery-First language and data-history guarantees throughout all phases.
 
 ---
@@ -101,7 +101,7 @@ flowchart TD
     P04[04 Habits, Sessions, and Check-ins]
     P05[05 Offline Resilience and Reminders]
     P06[06 Lifecycle, Recovery, and Weekly Review]
-    P07[07 Authentication and Guest Conversion]
+    P07[07 Authentication and Legacy Data Recovery]
     P08[08 Premium Programs and Insights]
     P09[09 Web Billing and Entitlements]
     P10[10 Security, Observability, and Data Lifecycle]
@@ -230,7 +230,7 @@ README.md
 - CI workflow syntax is valid;
 - no secret or machine-specific file is tracked.
 
-**Explicitly excluded:** Design-system components, complete navigation, product database schema, Guest data, authentication, habits, check-ins, reminders, recovery, billing, and production deployment.
+**Explicitly excluded:** Design-system components, complete navigation, product database schema, legacy local data recovery, authentication, habits, check-ins, reminders, recovery, billing, and production deployment.
 
 ---
 
@@ -298,14 +298,14 @@ tests/visual/
 **Required scope:**
 
 - Define framework-independent domain types for identity mode, plan tier, habit lifecycle, check-in outcome, friction reason, recommendation decision, recovery status, subscription status, and synchronization state.
-- Implement deterministic active-slot rules for Guest, Free, and Premium.
+- Implement deterministic active-slot rules for Free, Lite, and Premium.
 - Implement recurrence, timezone, habit-version, session-identity, consistency, continuity, and recovery-counter functions.
 - Create PostgreSQL migrations for profiles, browser installations, habits, habit versions, sessions, check-ins, history, recommendations, recovery plans, reviews, reminders, push subscriptions, email preferences, entitlements, payment events, idempotency records, and audit events.
 - Add constraints, indexes, timestamps, immutable identifiers, ownership fields, and soft-deletion fields.
 - Create transactional database functions for active-limit checks, habit activation, version creation, session generation, check-in recording, and idempotent command application.
 - Implement RLS policies and denial tests for every user-owned table.
 - Establish generated Supabase TypeScript types and a reproducible regeneration command.
-- Define Dexie Guest, cache, draft, and pending-operation schemas with explicit versions and migration tests.
+- Define Dexie account-cache, draft, and pending-operation schemas with explicit versions and legacy-data migration tests.
 - Add deterministic seed fixtures containing no real personal data.
 
 **Primary deliverables:**
@@ -331,11 +331,38 @@ tests/indexed-db/
 - database constraints reject invalid states;
 - RLS permits owner access and rejects cross-user access;
 - duplicate command IDs do not duplicate state;
-- Dexie schema migrations preserve representative Guest data;
+- Dexie schema migrations preserve representative account-cache and legacy local data;
 - generated types match the migrated schema;
 - lint, typecheck, tests, and build pass.
 
 **Explicitly excluded:** User-facing creation forms, live synchronization, authentication UI, reminder delivery, Premium screens, and payment-provider integration.
+
+## Plan 03A — Account Tiers and Legacy Local Data Boundary
+
+**Detailed plan:** `docs/superpowers/plans/2026-08-02-remove-guest-add-lite.md`
+
+**Objective:** Replace the obsolete Guest/Free/Premium contract with an authenticated Free/Lite/Premium account model, preserve legacy browser-local data for explicit recovery or export, and align domain, database, application-boundary, UI, and billing contracts before the account core loop is implemented.
+
+**Dependencies:** Plans 01–03 verified.
+
+**Required scope:**
+
+- Approve Free, Lite, and Premium limits and commercial entitlements as the active product contract.
+- Replace Guest identity and plan-tier runtime contracts with authenticated account tiers.
+- Add Lite to the database enum and entitlement model through an append-only migration.
+- Remove new Guest runtime ownership without deleting existing browser-local data.
+- Make private application routes require an authenticated account session.
+- Align the core-loop, navigation, pricing, entitlement, and release contracts with Free/Lite/Premium.
+- Define explicit legacy local-data recovery/export behavior and verification evidence.
+
+**Plan boundary quality gate:**
+
+- No active specification or master-plan requirement still treats Guest as a supported plan.
+- Domain and database contracts agree on Free/Lite/Premium and limits 5/10/30.
+- Legacy browser-local data is preserved and never silently attached to an account.
+- Required focused tests and full repository gates pass before Plan 04 begins.
+
+**Explicitly excluded:** habit workflow implementation, full authentication provider UX, payment-provider integration, and production deployment.
 
 ---
 
@@ -343,26 +370,27 @@ tests/indexed-db/
 
 **Detailed plan:** `docs/implementation/04-habits-sessions-checkins.md`
 
-**Objective:** Deliver the authenticated account core loop for creating habits, viewing Today, recording outcomes, editing same-day check-ins, resolving expired sessions, and preserving history, with Supabase PostgreSQL canonical and Dexie limited to approved browser-local durability.
+**Objective:** Deliver the authenticated Free, Lite, and Premium account core loop for creating habits, viewing Today, recording outcomes, editing same-day check-ins, resolving expired sessions, and preserving history, with Supabase PostgreSQL canonical and Dexie limited to approved browser-local durability.
+**Additional prerequisite:** Plan 03A must be verified complete before this plan begins; its account-tier and legacy-data boundary supersedes the historical Guest-first examples in the detailed plan.
 
-**Dependencies:** Plans 01–03.
+**Dependencies:** Plans 01–03 and Plan 03A.
 
 **Required scope:**
 
 - Implement basic habit templates and custom-habit creation.
 - Implement progressive creation forms with React Hook Form and Zod.
 - Implement Normal and Minimum definitions, recurrence, timezone, reminder intent, and draft preservation.
-- Enforce active limits transactionally for Guest and through server contracts for account tiers.
+- Enforce active limits transactionally for Free, Lite, and Premium account tiers.
 - Implement habit list, habit detail, lifecycle summary, version-history display, and draft handling.
-- Implement bounded session generation for Guest and server-backed users.
+- Implement bounded session generation for authenticated account users.
 - Implement Today grouping and ordering.
 - Implement one-action Full and Minimum check-ins.
 - Implement Skipped with optional friction capture.
 - Implement same-day edit with immutable check-in history.
 - Implement Unrecorded display and three-day resolution rules.
 - Implement optimistic local confirmation and idempotent server command interfaces.
-- Implement account-neutral repository contracts so Guest uses IndexedDB and signed-in mode can use Supabase later.
-- Add accessibility, component, integration, and end-to-end coverage for the full Guest core loop.
+- Implement account repository contracts so Supabase is canonical and IndexedDB provides cache, drafts, and pending operations.
+- Add accessibility, component, integration, and end-to-end coverage for the full authenticated core loop.
 
 **Primary deliverables:**
 
@@ -381,17 +409,17 @@ tests/e2e/guest-core-loop.spec.ts
 
 **Plan boundary quality gate:**
 
-- a first-time Guest can create and activate a habit;
-- a Guest cannot activate a fourth habit;
+- a first-time Free account can create and activate a habit;
+- a Free account cannot activate a sixth habit;
 - Full, Minimum, and Skipped remain semantically distinct;
 - Minimum counts toward consistency and continuity as specified;
 - duplicate submissions do not create duplicate check-ins;
 - same-day edits preserve prior history;
-- page reload preserves Guest progress;
+- page reload preserves account progress;
 - desktop and mobile-web flows pass Playwright;
 - lint, typecheck, unit, component, integration, E2E, and build checks pass.
 
-**Explicitly excluded:** Cloud authentication, cross-device synchronization, Web Push, email reminders, automated Recovery Mode, Premium analytics, and billing.
+**Explicitly excluded:** Cross-device synchronization processing, Web Push, email reminders, automated Recovery Mode, Premium analytics, and billing. Authentication is a prerequisite supplied before this plan.
 
 ---
 
@@ -505,11 +533,11 @@ tests/e2e/recovery-flow.spec.ts
 
 ---
 
-## Plan 07 — Authentication and Guest Conversion
+## Plan 07 — Authentication and Legacy Data Recovery
 
 **Detailed plan:** `docs/implementation/07-authentication-guest-conversion.md`
 
-**Objective:** Add secure account identity, SSR session handling, Free account cloud persistence, idempotent Guest conversion, and cross-device synchronization without losing browser-local progress.
+**Objective:** Add secure account identity, SSR session handling, Free account cloud persistence, idempotent legacy local-data recovery, and cross-device synchronization without losing browser-local progress.
 
 **Dependencies:** Plans 01–06.
 
@@ -521,11 +549,11 @@ tests/e2e/recovery-flow.spec.ts
 - Implement server-side route gating while retaining RLS as the authorization authority.
 - Implement account profile and installation registration.
 - Implement contextual account requests based on user benefit.
-- Implement Guest conversion package creation from IndexedDB.
+- Implement legacy local-data recovery package creation from IndexedDB.
 - Implement conversion preview, active-limit conflict resolution, idempotent server import, local acknowledgement, and rollback-safe behavior.
 - Implement signed-in repositories using Supabase canonical data and IndexedDB durable cache.
 - Implement pull synchronization, server revisions, change cursors, conflict detection, and explicit conflict presentation.
-- Enforce Free active limit of five on server and client presentation.
+- Enforce Free, Lite, and Premium active limits of five, ten, and thirty on server and client presentation.
 - Preserve account data across sign-out while removing sensitive session material.
 - Add cross-user RLS, auth callback, conversion retry, partial-failure, multiple-device, and cross-device synchronization tests.
 
@@ -552,9 +580,9 @@ tests/e2e/account-conversion.spec.ts
 - Google and email authentication complete securely in the staging environment;
 - open redirects are rejected;
 - expired sessions recover according to UX flows;
-- Guest conversion can be retried without duplicating records;
+- Legacy local-data recovery can be retried without duplicating records;
 - limit conflicts require an explicit user decision;
-- Guest data is not removed until server acknowledgement is durable;
+- Legacy local data is not removed until server acknowledgement is durable;
 - cross-user reads and writes are denied by RLS;
 - signed-in changes appear on another browser after synchronization;
 - offline signed-in check-ins synchronize safely after reconnect;
@@ -575,7 +603,7 @@ tests/e2e/account-conversion.spec.ts
 **Required scope:**
 
 - Implement server-authorized entitlement queries through an internal capability contract.
-- Implement Premium preview surfaces for Guest and Free users.
+- Implement Premium preview surfaces for Free and Lite users.
 - Implement basic versus advanced Weekly Review presentation.
 - Implement Premium adaptive programs and enhanced Recovery guidance according to PRD limits.
 - Implement Premium adaptive reminder analysis without replacing user approval.
@@ -601,7 +629,7 @@ tests/e2e/premium-preview.spec.ts
 
 **Plan boundary quality gate:**
 
-- Guest and Free previews never expose Premium-only result data as unlocked functionality;
+- Free and Lite previews never expose Premium-only result data as unlocked functionality;
 - direct URL access cannot bypass server authorization;
 - Premium users receive the correct capability set;
 - expired entitlements disable Premium actions without deleting data;
@@ -618,7 +646,7 @@ tests/e2e/premium-preview.spec.ts
 
 **Detailed plan:** `docs/implementation/09-web-billing-entitlements.md`
 
-**Objective:** Integrate the approved web payment provider through a provider-neutral interface and derive Premium access only from verified backend entitlement state.
+**Objective:** Integrate the approved web payment provider through a provider-neutral interface and derive Lite and Premium access only from verified backend entitlement state, with Free as the default account tier.
 
 **Dependencies:** Plans 01–08.
 
@@ -632,7 +660,7 @@ tests/e2e/premium-preview.spec.ts
 - Implement Trial Active, Trial Cancelled, Active, Grace Period, Past Due, Cancelled, Expired, Refunded, and Revoked entitlement transitions.
 - Implement subscription-management and cancellation links or provider portal integration where supported.
 - Implement delayed, duplicate, reordered, malformed, and replayed webhook handling.
-- Implement downgrade workflow for users above the Free active-habit limit without deleting data.
+- Implement downgrade workflow for users above the applicable Free or Lite active-habit limit without deleting data.
 - Implement payment-status UI, retry guidance, cancellation disclosure, expiry disclosure, and entitlement refresh.
 - Add staging provider fixtures and contract tests without using production credentials.
 - Add audit events and operational diagnostics that omit payment instruments and sensitive payload fields.
@@ -687,7 +715,7 @@ docs/operations/PAYMENT-INCIDENTS.md
 - Integrate error monitoring through an adapter with sensitive-field redaction.
 - Integrate privacy-safe product analytics through an adapter and consent rules.
 - Implement operational metrics, health endpoints, and alerts for synchronization, reminders, auth, billing, export, deletion, and database failures.
-- Implement signed-in export generation and browser-local Guest export.
+- Implement signed-in export generation and legacy local-data export.
 - Implement Trash retention and eligible permanent deletion.
 - Implement account-deletion confirmation, reauthentication where required, asynchronous execution, cancellation window where specified, and final sign-out.
 - Implement deletion across product tables, push subscriptions, analytics identity, and provider-linked data while retaining only legally required minimized records.
@@ -718,7 +746,7 @@ docs/operations/
 - browser bundles contain no server-only values;
 - rate limits reject abusive requests without blocking normal tested flows;
 - logs and monitoring omit tokens, cookies, email addresses, habit names, notes, friction text, push endpoints, and raw payment details;
-- Guest and signed-in exports contain the required data and no cross-user data;
+- Legacy-local and signed-in exports contain the required data and no cross-user data;
 - account deletion removes or anonymizes data according to the specification;
 - backup restore is rehearsed in a non-production environment;
 - security, privacy, database, integration, E2E, and build checks pass.
@@ -796,10 +824,10 @@ docs/release/GO-LIVE-CHECKLIST.md
 | M1 — Engineering baseline | Plan 01 | Greenfield project installs, tests, builds, resets Supabase, and passes CI. |
 | M2 — Navigable product shell | Plan 02 | Responsive public and application shells match the approved visual system. |
 | M3 — Trusted data foundation | Plan 03 | Domain rules, schemas, RLS, and IndexedDB contracts are executable and tested. |
-| M4 — Guest core loop | Plan 04 | A Guest can create habits and complete daily check-ins in one browser. |
+| M4 — Account core loop | Plan 04 | An authenticated Free account can create habits and complete daily check-ins. |
 | M5 — Browser resilience | Plan 05 | Supported actions survive temporary offline use and reminders respect browser capabilities. |
 | M6 — Recovery-First experience | Plan 06 | Lifecycle, Recovery, Check-in Review, and Weekly Review work end to end. |
-| M7 — Account continuity | Plan 07 | Users can sign in, convert Guest data, and synchronize across browsers. |
+| M7 — Account continuity | Plan 07 | Users can sign in, recover legacy local data, and synchronize across browsers. |
 | M8 — Premium product value | Plan 08 | Premium programs and advanced insights are implemented behind authoritative gates. |
 | M9 — Commercial readiness | Plan 09 | Website checkout and backend entitlement lifecycle work in provider test mode. |
 | M10 — Operational readiness | Plan 10 | Security, observability, export, deletion, retention, and runbooks meet release requirements. |
@@ -811,9 +839,9 @@ docs/release/GO-LIVE-CHECKLIST.md
 
 The following rules must remain true after every plan:
 
-1. Guest data is browser-local unless the user explicitly creates or signs in to an account.
+1. Legacy local data is browser-local unless the user explicitly transfers or exports it after sign-in.
 2. Signed-in PostgreSQL data is canonical; IndexedDB provides cache, drafts, and pending-operation durability.
-3. Guest, Free, and Premium active-habit limits remain 3, 5, and 20.
+3. Free, Lite, and Premium active-habit limits remain 5, 10, and 30.
 4. Full, Minimum, and Skipped are distinct outcomes.
 5. Minimum is a valid success and supports continuity.
 6. Manual and automatic Skipped outcomes remain distinguishable.
@@ -839,7 +867,8 @@ The following rules must remain true after every plan:
 | 01 | `01-web-project-foundation.md` | Verified complete | Specifications approved |
 | 02 | `02-web-design-system-navigation.md` | Verified complete | Plan 01 verified |
 | 03 | `03-database-domain-model.md` | Verified | Plan 02 verified |
-| 04 | `04-habits-sessions-checkins.md` | In progress — authenticated amendment partially verified | Plan 03 verified; quality handoff remains open |
+| 04 | `04-habits-sessions-checkins.md` | In progress — authenticated amendment partially verified | Plans 03 and 03A verified; quality handoff remains open |
+| 03A | `docs/superpowers/plans/2026-08-02-remove-guest-add-lite.md` | In progress | Plans 01–03 verified |
 | 05 | `05-offline-resilience-reminders.md` | Not created | Plan 04 verified |
 | 06 | `06-lifecycle-recovery-weekly-review.md` | Not created | Plan 05 verified |
 | 07 | `07-authentication-guest-conversion.md` | Not created | Plan 06 verified |

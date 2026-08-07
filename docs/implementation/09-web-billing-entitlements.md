@@ -1,12 +1,22 @@
 # Web Billing and Entitlements Implementation Plan
 
+## DOKU provider amendment
+
+The active provider for this application is DOKU, not Paddle or Xendit. The product uses IDR prices, DOKU Checkout for hosted payment, DOKU Account Billing for subscription scheduling, and recurring capability paths for Direct Debit BRI, OVO, and Credit Card. The original provider-specific Paddle sections below are historical implementation context and must be interpreted through the active DOKU adapter and ADR-014.
+
+The DOKU Account Billing scheduler and activated SNAP channel contracts are merchant-specific. Do not mark recurring, refund, cancellation, or production release tasks complete until sandbox credentials, notification verification, and the DOKU merchant configuration have been tested.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `executing-plans` to implement this plan task-by-task. This project uses one agent only; do not dispatch subagents. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Implement monthly and annual website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative Premium entitlement, subscription management, and non-destructive downgrade handling.
+**Goal:** Implement monthly and annual Lite and Premium website subscriptions with an explicit 14-day trial, Paddle Billing sandbox checkout, verified webhook reconciliation, backend-authoritative entitlement, subscription management, and non-destructive downgrade handling.
 
-**Architecture:** Product code depends on a provider-neutral `PaymentProvider` interface. The initial adapter uses Paddle Billing in sandbox and production environments, while domain code consumes normalized billing events rather than Paddle-specific payloads. Checkout attempts are created by the authenticated server, the browser opens Paddle Checkout with a server-created transaction, and Premium capabilities change only after a verified webhook or authoritative provider reconciliation updates PostgreSQL.
+**Architecture:** Product code depends on a provider-neutral `PaymentProvider` interface. The initial adapter uses Paddle Billing in sandbox and production environments, while domain code consumes normalized billing events rather than Paddle-specific payloads. Checkout attempts are created by the authenticated server, the browser opens Paddle Checkout with a server-created transaction, and Lite or Premium capabilities change only after a verified webhook or authoritative provider reconciliation updates PostgreSQL.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, Zod, Supabase Auth and PostgreSQL, Supabase Edge Functions, Paddle Node.js SDK, Paddle.js, React Hook Form, TanStack Query, Vitest, React Testing Library, Playwright, pgTAP, axe-core, pnpm.
+
+**03A amendment:** Billing must support both paid tiers. Free is the default account tier; Lite and Premium entitlements are resolved only from verified backend events. The active limits are Free `5`, Lite `10`, and Premium `30`; any original Premium-only task examples must be expanded to cover Lite before execution.
+
+Guest is not a supported billing or entitlement identity. Historical Guest examples elsewhere in this plan are migration context and must not be reintroduced into checkout, subscription, downgrade, or capability code.
 
 ---
 
@@ -21,7 +31,7 @@ Begin only after Plans 01–08 are verified complete. The repository must alread
 - PostgreSQL `entitlements`, private `payment_events`, private `idempotency_records`, private `audit_events`, and subscription status read views;
 - the Plan 08 capability contract in `src/domain/entitlements/` and server-side capability resolution;
 - Premium routes and actions that already reject missing authoritative capability;
-- active-habit limits of 3 for Guest, 5 for Free, and 20 for Premium;
+- active-habit limits of 5 for Free, 10 for Lite, and 30 for Premium;
 - lifecycle, versioning, Recovery, Weekly Review, Premium program, reminder, and Insights data that must survive downgrade;
 - accessible buttons, cards, banners, dialogs, tables, skeletons, focus management, and responsive application shell.
 
@@ -50,7 +60,7 @@ This plan does not implement:
 
 - No plan is selected by default.
 - A trial begins only after an authenticated user explicitly selects monthly or annual, accepts the displayed terms, confirms checkout, and the backend receives authoritative provider evidence.
-- Checkout return parameters, browser storage, Paddle.js events, or client-side receipts never grant Premium.
+- Checkout return parameters, browser storage, Paddle.js events, or client-side receipts never grant Lite or Premium.
 - The application displays `Processing` until authoritative entitlement exists.
 - Duplicate valid provider events produce one state transition.
 - Events are ordered by provider `occurredAt`, not HTTP arrival time.
@@ -230,7 +240,7 @@ Accepted.
 
 ## Decision
 
-The initial website billing adapter uses Paddle Billing. Product code depends only on internal payment-provider and normalized-event contracts. Checkout return state is informational; Premium access is projected only from verified webhook events or authoritative provider reconciliation stored in PostgreSQL.
+The initial website billing adapter uses Paddle Billing. Product code depends only on internal payment-provider and normalized-event contracts. Checkout return state is informational; Lite or Premium access is projected only from verified webhook events or authoritative provider reconciliation stored in PostgreSQL.
 
 ## Consequences
 
@@ -904,7 +914,7 @@ Expected: PASS.
 - Create: `src/app/api/billing/checkout/route.ts`
 - Create: `tests/integration/checkout-service.test.ts`
 
-- [ ] **Step 1: Write failing checkout-service tests**
+- [x] **Step 1: Write failing checkout-service tests**
 
 Create `tests/integration/checkout-service.test.ts` verifying:
 
@@ -917,7 +927,7 @@ Create `tests/integration/checkout-service.test.ts` verifying:
 - checkout metadata contains authenticated user ID rather than client-supplied ownership;
 - the return URL is allow-listed and same-origin.
 
-- [ ] **Step 2: Implement the checkout service**
+- [x] **Step 2: Implement the checkout service**
 
 Create `src/features/subscriptions/checkout-service.ts` with dependencies:
 
@@ -944,19 +954,19 @@ const checkoutInput = z.object({
 });
 ```
 
-- [ ] **Step 3: Implement server composition**
+- [x] **Step 3: Implement server composition**
 
 Create `src/server/billing/create-checkout.ts` that:
 
 1. reads the authenticated user from the server Supabase client;
-2. rejects Guest and anonymous callers;
+2. rejects anonymous callers;
 3. reads the email from verified auth identity;
 4. resolves server plan configuration;
 5. creates a same-origin return URL containing only the checkout-attempt UUID;
 6. records a private audit event containing plan code and attempt ID only;
 7. returns `{ attemptId, providerTransactionId }`.
 
-- [ ] **Step 4: Implement the route handler**
+- [x] **Step 4: Implement the route handler**
 
 Create `src/app/api/billing/checkout/route.ts`:
 
@@ -972,7 +982,7 @@ export async function POST(request: Request) {
 
 Apply origin validation, CSRF protection, authenticated rate limiting, and `Cache-Control: no-store` using shared Plan 01/07 utilities.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/checkout-service.test.ts
@@ -995,7 +1005,7 @@ Expected: PASS.
 - Create: `tests/component/plan-selector.test.tsx`
 - Create: `tests/component/checkout-confirmation.test.tsx`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Verify:
 
@@ -1007,7 +1017,7 @@ Verify:
 - unauthenticated confirmation redirects to sign-in with a safe return path;
 - keyboard users can select plans and confirm.
 
-- [ ] **Step 2: Implement the plan selector**
+- [x] **Step 2: Implement the plan selector**
 
 Use radio semantics, not clickable cards alone:
 
@@ -1021,7 +1031,7 @@ Use radio semantics, not clickable cards alone:
 
 No `defaultValue` is allowed.
 
-- [ ] **Step 3: Implement explicit confirmation**
+- [x] **Step 3: Implement explicit confirmation**
 
 The confirmation view must include:
 
@@ -1034,11 +1044,11 @@ The confirmation view must include:
 - connectivity requirement;
 - checkbox text explicitly authorizing the trial and recurring charge.
 
-- [ ] **Step 4: Integrate the public Pricing page**
+- [x] **Step 4: Integrate the public Pricing page**
 
 The page may display illustrative values `$5.99/month` and `$47.99/year` only when returned by the server catalog. Provider-localized pricing replaces hypotheses once available. Do not hardcode a client-authoritative charge amount.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/plan-selector.test.tsx tests/component/checkout-confirmation.test.tsx
@@ -1058,7 +1068,7 @@ Expected: PASS.
 - Modify: `src/features/subscriptions/components/checkout-confirmation.tsx`
 - Create: `tests/component/billing-processing-state.test.tsx`
 
-- [ ] **Step 1: Write a failing launcher test**
+- [x] **Step 1: Write a failing launcher test**
 
 Verify that:
 
@@ -1069,7 +1079,7 @@ Verify that:
 - `checkout.completed` navigates to `/billing/return?attempt=<uuid>` but does not set Premium state;
 - close or error leaves the user Free and displays retry guidance.
 
-- [ ] **Step 2: Implement the launcher**
+- [x] **Step 2: Implement the launcher**
 
 Create a client component using `initializePaddle` and keep one shared initialization promise. Open checkout with:
 
@@ -1084,7 +1094,7 @@ paddle.Checkout.open({
 });
 ```
 
-- [ ] **Step 3: Preserve state honesty**
+- [x] **Step 3: Preserve state honesty**
 
 The client callback may update only local presentation:
 
@@ -1094,7 +1104,7 @@ type CheckoutPresentationState = 'opening' | 'open' | 'processing' | 'closed' | 
 
 It must not call the capability provider with an optimistic Premium grant.
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/billing-processing-state.test.tsx
@@ -1117,7 +1127,7 @@ Expected: PASS.
 - Create: `supabase/functions/payment-webhook/index.ts`
 - Create: `tests/integration/webhook-processing.test.ts`
 
-- [ ] **Step 1: Write failing webhook tests**
+- [x] **Step 1: Write failing webhook tests**
 
 Verify:
 
@@ -1129,7 +1139,7 @@ Verify:
 - the route never uses browser cookies or CSRF tokens;
 - the response does not expose parser, SQL, or provider secrets.
 
-- [ ] **Step 2: Implement the raw webhook envelope**
+- [x] **Step 2: Implement the raw webhook envelope**
 
 Create `src/lib/payments/webhook-envelope.ts`:
 
@@ -1142,7 +1152,7 @@ export const readRawWebhook = async (request: Request) => ({
 
 Do not call `request.json()` before verification.
 
-- [ ] **Step 3: Implement processing orchestration**
+- [x] **Step 3: Implement processing orchestration**
 
 Create `src/server/billing/process-webhook.ts` that:
 
@@ -1155,15 +1165,15 @@ Create `src/server/billing/process-webhook.ts` that:
 7. returns success for a valid duplicate event;
 8. emits only redacted logs.
 
-- [ ] **Step 4: Implement the Next.js route**
+- [x] **Step 4: Implement the Next.js route**
 
 Create `src/app/api/billing/webhook/route.ts` with Node.js runtime and no session dependency.
 
-- [ ] **Step 5: Implement the Supabase Edge Function entrypoint**
+- [x] **Step 5: Implement the Supabase Edge Function entrypoint**
 
 Create `supabase/functions/payment-webhook/index.ts` as an alternative deployment target that delegates to the same normalized contract. Keep one authoritative public webhook URL per environment; do not activate both simultaneously.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/webhook-processing.test.ts
@@ -1183,7 +1193,7 @@ Expected: PASS.
 - Create: `supabase/migrations/20260729061000_billing_event_processing.sql`
 - Create: `supabase/tests/00180_billing_event_ordering.test.sql`
 
-- [ ] **Step 1: Implement the processing function**
+- [x] **Step 1: Implement the processing function**
 
 Create `supabase/migrations/20260729061000_billing_event_processing.sql` with a private security-definer function:
 
@@ -1220,7 +1230,7 @@ The function must:
 11. insert a minimized audit event;
 12. return result, subscription revision, and entitlement revision.
 
-- [ ] **Step 2: Write event-ordering pgTAP tests**
+- [x] **Step 2: Write event-ordering pgTAP tests**
 
 Create `supabase/tests/00180_billing_event_ordering.test.sql` covering:
 
@@ -1234,7 +1244,7 @@ Create `supabase/tests/00180_billing_event_ordering.test.sql` covering:
 - concurrent processing produces one final revision;
 - audit metadata excludes raw payload and payment details.
 
-- [ ] **Step 3: Run database tests and commit**
+- [x] **Step 3: Run database tests and commit**
 
 ```bash
 supabase db reset
@@ -1256,7 +1266,7 @@ Expected: PASS.
 - Create: `src/features/entitlements/billing-entitlement-projector.ts`
 - Create: `tests/integration/entitlement-reconciliation.test.ts`
 
-- [ ] **Step 1: Implement SQL entitlement projection**
+- [x] **Step 1: Implement SQL entitlement projection**
 
 Create `supabase/migrations/20260729062000_entitlement_projection.sql` with:
 
@@ -1283,15 +1293,15 @@ Required behavior:
 - refunded/revoked events may shorten validity only when authoritative occurrence is newer;
 - capability resolution continues using Plan 08 contracts.
 
-- [ ] **Step 2: Write pgTAP transition tests**
+- [x] **Step 2: Write pgTAP transition tests**
 
 Cover all nine internal statuses, valid-window boundaries, cancellation at period end, immediate refund, immediate revocation, and revision increments.
 
-- [ ] **Step 3: Implement the TypeScript projector boundary**
+- [x] **Step 3: Implement the TypeScript projector boundary**
 
 Create `src/features/entitlements/billing-entitlement-projector.ts` that accepts only `NormalizedBillingEvent`, calls the SQL function through the privileged server client, and returns a bounded entitlement snapshot. It must never accept a status from a browser request.
 
-- [ ] **Step 4: Write integration tests**
+- [x] **Step 4: Write integration tests**
 
 Verify that:
 
@@ -1301,7 +1311,7 @@ Verify that:
 - expired access blocks Plan 08 Premium actions;
 - historical Premium data remains queryable according to Plan 08 policy.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 supabase db reset
@@ -1324,7 +1334,7 @@ Expected: PASS.
 - Create: `src/features/subscriptions/subscription-query.ts`
 - Modify: `src/features/subscriptions/components/billing-processing-state.tsx`
 
-- [ ] **Step 1: Add return-page tests**
+- [x] **Step 1: Add return-page tests**
 
 Extend `tests/component/billing-processing-state.test.tsx` to verify:
 
@@ -1336,7 +1346,7 @@ Extend `tests/component/billing-processing-state.test.tsx` to verify:
 - failed/cancelled checkout displays retry guidance;
 - the layout remains stable across processing, success, and error states.
 
-- [ ] **Step 2: Implement bounded subscription query**
+- [x] **Step 2: Implement bounded subscription query**
 
 Create `src/features/subscriptions/subscription-query.ts` returning:
 
@@ -1354,7 +1364,7 @@ type SubscriptionSnapshot = {
 
 Do not return provider payload, customer ID, subscription ID, raw event, or portal URL.
 
-- [ ] **Step 3: Implement the status route**
+- [x] **Step 3: Implement the status route**
 
 `GET /api/billing/status?attempt=<uuid>` must:
 
@@ -1365,11 +1375,11 @@ Do not return provider payload, customer ID, subscription ID, raw event, or port
 - derive `premium` from Plan 08 capability resolution;
 - never derive it from checkout-attempt status alone.
 
-- [ ] **Step 4: Implement the return page**
+- [x] **Step 4: Implement the return page**
 
 Poll with increasing intervals: 1s, 2s, 3s, then 5s up to a 60-second active window. Stop when the tab is hidden and resume when visible. After the active window, show a manual Refresh status button.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/component/billing-processing-state.test.tsx
@@ -1394,7 +1404,7 @@ Expected: PASS.
 - Create: `tests/integration/customer-portal.test.ts`
 - Create: `tests/component/subscription-status-card.test.tsx`
 
-- [ ] **Step 1: Write failing management tests**
+- [x] **Step 1: Write failing management tests**
 
 Verify:
 
@@ -1407,19 +1417,19 @@ Verify:
 - `Past Due` links to payment management and does not threaten data loss;
 - `Expired`, `Refunded`, and `Revoked` explain access changes without deleting history.
 
-- [ ] **Step 2: Implement portal creation**
+- [x] **Step 2: Implement portal creation**
 
 Create `src/server/billing/create-portal-session.ts` that loads the authenticated user's private provider IDs and calls `provider.createCustomerPortal()`.
 
-- [ ] **Step 3: Implement the portal route**
+- [x] **Step 3: Implement the portal route**
 
 `POST /api/billing/portal` must validate origin/CSRF, require authentication, apply rate limiting, and return a same-provider HTTPS URL. Set `Cache-Control: no-store` and `Referrer-Policy: no-referrer`.
 
-- [ ] **Step 4: Implement the subscription status card**
+- [x] **Step 4: Implement the subscription status card**
 
 Render status with icon, text label, dates, explanation, and action. Do not rely on color alone.
 
-- [ ] **Step 5: Integrate the Subscription page**
+- [x] **Step 5: Integrate the Subscription page**
 
 The page includes:
 
@@ -1431,7 +1441,7 @@ The page includes:
 - downgrade-resolution link when required;
 - no display of payment instrument details from local storage.
 
-- [ ] **Step 6: Run tests and commit**
+- [x] **Step 6: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/customer-portal.test.ts tests/component/subscription-status-card.test.tsx
@@ -1452,7 +1462,7 @@ Expected: PASS.
 - Create: `src/app/api/billing/refresh/route.ts`
 - Create: `tests/integration/entitlement-reconciliation.test.ts`
 
-- [ ] **Step 1: Add reconciliation tests**
+- [x] **Step 1: Add reconciliation tests**
 
 Verify:
 
@@ -1464,7 +1474,7 @@ Verify:
 - one user cannot refresh another user's subscription;
 - refresh is rate limited and audited.
 
-- [ ] **Step 2: Implement reconciliation**
+- [x] **Step 2: Implement reconciliation**
 
 Create `src/server/billing/reconcile-subscription.ts`:
 
@@ -1477,15 +1487,15 @@ export async function reconcileSubscription(userId: string) {
 }
 ```
 
-- [ ] **Step 3: Implement manual refresh route**
+- [x] **Step 3: Implement manual refresh route**
 
 `POST /api/billing/refresh` requires authentication, origin/CSRF validation, and a strict per-user rate limit. Return the bounded subscription snapshot after reconciliation.
 
-- [ ] **Step 4: Define scheduled reconciliation entrypoint**
+- [x] **Step 4: Define scheduled reconciliation entrypoint**
 
 Add a server entrypoint that scans a bounded batch of active, trialing, grace, past-due, or recently cancelled subscriptions. It must use the configured batch size, cursor pagination, advisory locking, and safe retry codes. Scheduling itself is configured in Plan 11.
 
-- [ ] **Step 5: Run tests and commit**
+- [x] **Step 5: Run tests and commit**
 
 ```bash
 pnpm vitest run tests/integration/entitlement-reconciliation.test.ts

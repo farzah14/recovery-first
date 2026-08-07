@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 import { hasAuthenticatedE2EConfig, signInSeedUser } from './support/authenticated-session';
 
@@ -36,6 +36,10 @@ test.describe('Visual Baselines', () => {
     await page.clock.install({ time: new Date('2026-01-15T10:00:00Z') });
     await page.goto('/app/today');
     await expect(page.getByRole('main')).toBeVisible({ timeout: 30_000 });
+    await page.clock.runFor(1_000);
+    await expect(page.getByTestId('today-data-ready')).toHaveAttribute('data-ready', 'true', {
+      timeout: 30_000,
+    });
     await expect(page.getByRole('heading', { level: 1, name: 'A steady next step' })).toBeVisible({
       timeout: 30_000,
     });
@@ -58,6 +62,11 @@ test.describe('Visual Baselines', () => {
     );
     await page.clock.install({ time: new Date('2026-01-15T10:00:00Z') });
     await page.goto('/app/habits');
+    await expect(page.getByRole('main')).toBeVisible({ timeout: 30_000 });
+    await page.clock.runFor(1_000);
+    await expect(page.getByTestId('habits-data-ready')).toHaveAttribute('data-ready', 'true', {
+      timeout: 30_000,
+    });
     await expect(page.getByRole('heading', { level: 1, name: 'Habits Library' })).toBeVisible({
       timeout: 30_000,
     });
