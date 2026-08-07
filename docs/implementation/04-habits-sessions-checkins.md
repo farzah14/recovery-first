@@ -48,6 +48,21 @@ The user selected the authenticated-account revision of Plan 04. This amendment 
 
 The historical Guest implementation commits in this worktree remain preserved for domain and component reuse. They do not authorize new Guest-owned account behavior or change the approved account limits.
 
+## Authenticated Plan 04 status — 2026-08-07
+
+This status applies to the approved authenticated-account amendment above. The historical Guest task checkboxes below are retained as history and are not evidence of account completion.
+
+| Amendment task | Status | Evidence | Persistence classification |
+|---|---|---|---|
+| Task 1 — amendment and checkpoint | Finished | Amendment committed as `385d2e2`; worktree and plan checkpoint recorded. | Documentation only |
+| Task 2 — same-day edit and immutable history | Finished | Migration `20260807010000_authenticated_same_day_check_in_edit.sql`; pgTAP edit/history/cutoff/RLS tests; signed-in RPC adapter; commit `2de96df`. | Supabase PostgreSQL canonical |
+| Task 3 — Automatic Skipped resolution | Finished | Migration `20260807020000_authenticated_automatic_skipped.sql`; owner-scoped/idempotent resolver and pgTAP tests; commit `82c0610`. | Supabase PostgreSQL canonical |
+| Task 4 — account repository/UI wiring | Finished | Account context derives verified entitlement tier; Today/Habits select the signed-in Supabase repository; Free/Lite/Premium limits use the shared policy; commit `0a14c4b`. | Supabase PostgreSQL canonical; Dexie only Guest fallback/cache boundary |
+| Task 5 — authenticated acceptance coverage | Partially finished | Authenticated accessibility/E2E/visual coverage and local seed fixture committed as `fb81373`; database, focused suites, build, and authenticated E2E pass. | Supabase-backed browser coverage |
+| Task 5 quality handoff | Not finished | Global format gate fails on 38 pre-existing files; default full Vitest is `254 passed / 2 dashboard-component timeouts`; unrelated dirty files remain. | No completion claim |
+
+The account path is not considered fully verified until Task 5 quality-gate failures and the clean-tree/clean-checkout requirement are resolved. No hosted Supabase, production credentials, payment provider, or external authenticated E2E integration was verified in this worktree.
+
 ---
 
 # 1. Locked Product Contracts

@@ -343,7 +343,7 @@ tests/indexed-db/
 
 **Detailed plan:** `docs/implementation/04-habits-sessions-checkins.md`
 
-**Objective:** Deliver the complete Guest core loop and signed-in-compatible application interfaces for creating habits, viewing Today, recording outcomes, editing same-day check-ins, and preserving history.
+**Objective:** Deliver the authenticated account core loop for creating habits, viewing Today, recording outcomes, editing same-day check-ins, resolving expired sessions, and preserving history, with Supabase PostgreSQL canonical and Dexie limited to approved browser-local durability.
 
 **Dependencies:** Plans 01–03.
 
@@ -839,7 +839,7 @@ The following rules must remain true after every plan:
 | 01 | `01-web-project-foundation.md` | Verified complete | Specifications approved |
 | 02 | `02-web-design-system-navigation.md` | Verified complete | Plan 01 verified |
 | 03 | `03-database-domain-model.md` | Verified | Plan 02 verified |
-| 04 | `04-habits-sessions-checkins.md` | In progress | Plan 03 verified |
+| 04 | `04-habits-sessions-checkins.md` | In progress — authenticated amendment partially verified | Plan 03 verified; quality handoff remains open |
 | 05 | `05-offline-resilience-reminders.md` | Not created | Plan 04 verified |
 | 06 | `06-lifecycle-recovery-weekly-review.md` | Not created | Plan 05 verified |
 | 07 | `07-authentication-guest-conversion.md` | Not created | Plan 06 verified |

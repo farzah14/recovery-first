@@ -20,15 +20,15 @@
 - Modify: `docs/implementation/IMPLEMENTATION-PLAN.md` only if the active Plan 04 row needs the amendment reference
 - Create: `docs/superpowers/plans/2026-08-07-authenticated-plan04.md`
 
-- [ ] **Step 1: Add the amendment to the active detailed plan**
+- [x] **Step 1: Add the amendment to the active detailed plan**
 
 State that account identity is required, Supabase is canonical, Dexie is cache/drafts/pending-only for signed-in users, and active limits are Free `5`, Lite `10`, Premium `30`.
 
-- [ ] **Step 2: Verify the worktree checkpoint**
+- [x] **Step 2: Verify the worktree checkpoint**
 
 Run `git status --short`, `git log --oneline -18`, and the Plan 04 checkbox count. Do not reset or discard existing dirty changes.
 
-- [ ] **Step 3: Commit only the documentation amendment**
+- [x] **Step 3: Commit only the documentation amendment**
 
 Use `git add docs/implementation docs/superpowers/plans/2026-08-07-authenticated-plan04.md` and commit with `docs: amend plan 04 for authenticated account core loop` after the documentation check passes.
 
@@ -46,27 +46,27 @@ Use `git add docs/implementation docs/superpowers/plans/2026-08-07-authenticated
 - Modify: `src/features/today/components/today-session-card.tsx`
 - Create or modify: signed-in adapter and database tests
 
-- [ ] **Step 1: Write failing adapter and database tests**
+- [x] **Step 1: Write failing adapter and database tests**
 
 Prove that an authenticated edit calls `edit_same_day_check_in` with the current check-in revision, rejects a stale revision, rejects edits after the session timezone's local-day cutoff, appends `check_in_history`, and updates only the current projection.
 
-- [ ] **Step 2: Run the focused tests and confirm the expected failure**
+- [x] **Step 2: Run the focused tests and confirm the expected failure**
 
 Run the adapter test and the focused Supabase database test. The failure must identify the missing RPC/behavior.
 
-- [ ] **Step 3: Add the transactional SQL function**
+- [x] **Step 3: Add the transactional SQL function**
 
 Lock the owner-scoped session and current check-in in a consistent order, validate `auth.uid()`, expected session/check-in revisions, same-day eligibility using the session timezone snapshot, friction rules, and idempotency, then append history and update the current projection atomically.
 
-- [ ] **Step 4: Wire the signed-in repository adapter**
+- [x] **Step 4: Wire the signed-in repository adapter**
 
 Call the new RPC, map provider errors to `same_day_edit_closed`, `stale_revision`, `idempotency_conflict`, and `repository_unavailable`, and return authoritative IDs/revisions.
 
-- [ ] **Step 5: Run focused and regression checks**
+- [x] **Step 5: Run focused and regression checks**
 
 Run the adapter tests, signed-in integration test, database reset/tests, typecheck, lint, and affected Today/check-in suites.
 
-- [ ] **Step 6: Commit the authenticated edit boundary**
+- [x] **Step 6: Commit the authenticated edit boundary**
 
 Commit with `feat: support authenticated same day check in edits`.
 
@@ -82,27 +82,27 @@ Commit with `feat: support authenticated same day check in edits`.
 - Modify: account Today/Review entry points as required by the approved flow
 - Create or modify: signed-in adapter and database tests
 
-- [ ] **Step 1: Write failing resolution tests**
+- [x] **Step 1: Write failing resolution tests**
 
 Prove that only expired owner-scoped `unrecorded` sessions become `automatic_skipped`, the operation is idempotent, no Manual Skipped check-in or Recovery counter increment is created, and another user's sessions are denied.
 
-- [ ] **Step 2: Run the focused tests and confirm failure**
+- [x] **Step 2: Run the focused tests and confirm failure**
 
 Run the focused database and adapter tests and capture the expected missing-function failure.
 
-- [ ] **Step 3: Add the authoritative SQL function**
+- [x] **Step 3: Add the authoritative SQL function**
 
 Use a short transaction, lock eligible sessions deterministically, update status/source/revision, preserve timezone/version references, and return the count. Grant execution only to the approved server/authenticated boundary.
 
-- [ ] **Step 4: Wire and map the signed-in adapter**
+- [x] **Step 4: Wire and map the signed-in adapter**
 
 Call the function, return the authoritative count, and map authorization and provider failures without exposing private details.
 
-- [ ] **Step 5: Run focused and regression checks**
+- [x] **Step 5: Run focused and regression checks**
 
 Run database reset/tests, adapter tests, sessions/domain/Today tests, typecheck, and lint.
 
-- [ ] **Step 6: Commit Automatic Skipped resolution**
+- [x] **Step 6: Commit Automatic Skipped resolution**
 
 Commit with `feat: resolve authenticated expired sessions`.
 
@@ -117,23 +117,23 @@ Commit with `feat: resolve authenticated expired sessions`.
 - Modify: account-compatible component tests
 - Do not add new Guest canonical writes to account routes
 
-- [ ] **Step 1: Write failing account-boundary tests**
+- [x] **Step 1: Write failing account-boundary tests**
 
 Prove that authenticated Today/Habits creation, reads, Full/Minimum/Skipped actions, edits, and resolution use Supabase; Guest repositories remain isolated; and active limits use the account plan tier.
 
-- [ ] **Step 2: Run the focused tests and confirm failure**
+- [x] **Step 2: Run the focused tests and confirm failure**
 
 Run the account route/repository/component suites and capture the failing ownership or persistence assertions.
 
-- [ ] **Step 3: Implement the narrow provider boundary**
+- [x] **Step 3: Implement the narrow provider boundary**
 
 Select the repository from authenticated server/session context, keep browser-only Dexie access behind a client boundary, and preserve explicit pending/error states.
 
-- [ ] **Step 4: Run focused accessibility and regression checks**
+- [x] **Step 4: Run focused accessibility and regression checks**
 
 Run Today/Habits/check-in/component/accessibility suites, typecheck, lint, and build.
 
-- [ ] **Step 5: Commit account-owned wiring**
+- [x] **Step 5: Commit account-owned wiring**
 
 Commit with `feat: wire authenticated plan 04 core loop`.
 
@@ -151,6 +151,8 @@ Commit with `feat: wire authenticated plan 04 core loop`.
 
 Cover Full, Minimum, Skipped friction, same-day edit, Automatic Skipped distinction, Free/Lite/Premium limit presentation, keyboard focus, mobile layout, and no color-only status.
 
+Current evidence covers the action/friction/accessibility semantics, account Today/Habits reads, Free-limit presentation, mobile navigation, and the same-day/Automatic Skipped database and adapter contracts. Browser-level edit/resolution flows and complete tier-presentation coverage remain open.
+
 - [ ] **Step 2: Run all Plan 04 verification commands**
 
 Run formatting, lint, typecheck, unit/domain, component, integration, accessibility, E2E, visual, database reset/tests/types/lint, repository policy checks, and production build.
@@ -162,6 +164,12 @@ Update Plan 04 status to authenticated-account verified only when every required
 - [ ] **Step 4: Commit the verified handoff**
 
 Commit with `docs: record authenticated plan 04 verification`.
+
+### Verification snapshot — 2026-08-07
+
+- Finished: Tasks 1–4 and Task 5 Step 1. Commits are `385d2e2`, `2de96df`, `82c0610`, `0a14c4b`, and `fb81373`.
+- Finished gates: local Supabase reset; pgTAP `98/98`; generated types; core-loop `59/59`; unit `128/128`; integration `7/7`; accessibility `9/9`; lint; strict typecheck; repository policy; environment-example check; env-configured production build; authenticated E2E `29 passed, 1 skipped`.
+- Not finished: Task 5 Steps 2–4. `pnpm format:check` reports 38 pre-existing unformatted files, and the default full `pnpm test` reports 254 passed / 2 dashboard-component timeouts (the focused rerun passes with a 20-second timeout). The worktree also retains six unrelated pre-existing dirty files, so clean-checkout/clean-tree acceptance is not claimed.
 
 ---
 
