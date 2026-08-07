@@ -5,6 +5,7 @@ import { isSlotConsumingHabitState } from '@/domain/habits/habit-lifecycle';
 import type { HabitLifecycleState } from '@/domain/habits/habit-lifecycle';
 import type { RecurrenceRule } from '@/domain/habits/recurrence';
 import { generateSessionsForCommand } from '@/features/sessions/application/ensure-session-horizon';
+import { stableUuidFromText } from '@/lib/identifiers/stable-uuid';
 import type { Database, Json } from '@/lib/supabase/database.types';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import type {
@@ -223,10 +224,11 @@ export class SupabaseProductRepository implements ProductRepository {
     timezoneSnapshot: string;
     eligibleAt: string;
     resolutionDueAt: string;
-    commandId: string;
   }): Promise<Json | null> {
+    const databaseSessionId = await stableUuidFromText(`session:${command.sessionId}`);
+    const commandId = await stableUuidFromText(`ensure-session:${command.sessionId}`);
     const params = {
-      p_session_id: command.sessionId,
+      p_session_id: databaseSessionId,
       p_habit_id: command.habitId,
       p_habit_version_id: command.habitVersionId,
       p_scheduled_local_date: command.scheduledLocalDate,
@@ -234,7 +236,7 @@ export class SupabaseProductRepository implements ProductRepository {
       p_timezone_snapshot: command.timezoneSnapshot,
       p_eligible_at: command.eligibleAt,
       p_resolution_due_at: command.resolutionDueAt,
-      p_command_id: command.commandId,
+      p_command_id: commandId,
     } as unknown as Database['public']['Functions']['ensure_session']['Args'];
     const { data, error } = await this.client.rpc('ensure_session', params);
     if (error) throw mapProviderError(error, 'session');
@@ -280,7 +282,7 @@ export class SupabaseProductRepository implements ProductRepository {
           {
             p_habit_id: command.habitId,
             p_expected_revision: 2,
-            p_command_id: `${command.commandId}-activate`,
+            p_command_id: await stableUuidFromText(`activate-habit:${command.commandId}`),
           },
         );
         if (activationError) throw activationError;
@@ -294,7 +296,6 @@ export class SupabaseProductRepository implements ProductRepository {
             timezoneSnapshot: session.timezoneSnapshot,
             eligibleAt: session.eligibleAt,
             resolutionDueAt: session.resolutionDueAt,
-            commandId: `${command.commandId}-session-${session.id}`,
           });
         }
         const activation = asRecordResult(activationData);
@@ -548,7 +549,6 @@ export class SupabaseProductRepository implements ProductRepository {
             timezoneSnapshot: session.timezoneSnapshot,
             eligibleAt: session.eligibleAt,
             resolutionDueAt: session.resolutionDueAt,
-            commandId: `${command.commandId}:${session.id}`,
           });
           ensured += 1;
         }
