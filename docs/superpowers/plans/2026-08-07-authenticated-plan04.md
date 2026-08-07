@@ -168,7 +168,7 @@ Commit with `docs: record authenticated plan 04 verification`.
 ### Verification snapshot — 2026-08-07
 
 - Finished: Tasks 1–4 and Task 5 Step 1. Commits are `385d2e2`, `2de96df`, `82c0610`, `0a14c4b`, and `fb81373`.
-- Finished gates: local Supabase reset; pgTAP `98/98`; generated types; core-loop `59/59`; unit `128/128`; integration `7/7`; accessibility `9/9`; lint; strict typecheck; repository policy; environment-example check; env-configured production build; authenticated E2E `29 passed, 1 skipped`.
+- Finished gates: local Supabase reset; pgTAP `98/98`; generated types; local database lint (`No schema errors found`); core-loop `59/59`; unit `128/128`; integration `7/7`; accessibility `9/9`; lint; strict typecheck; repository policy; environment-example check; env-configured production build; authenticated E2E `29 passed, 1 skipped`.
 - Not finished: Task 5 Steps 2–4. `pnpm format:check` reports 38 pre-existing unformatted files, and the default full `pnpm test` reports 254 passed / 2 dashboard-component timeouts (the focused rerun passes with a 20-second timeout). The worktree also retains six unrelated pre-existing dirty files, so clean-checkout/clean-tree acceptance is not claimed.
 
 ---
