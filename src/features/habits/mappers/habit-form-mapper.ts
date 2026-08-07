@@ -1,8 +1,5 @@
 import type { HabitFormValues } from '@/features/habits/forms/habit-form-types';
-import type {
-  CreateHabitCommand,
-  ProductOwner,
-} from '@/lib/repositories/product-repository';
+import type { CreateHabitCommand, ProductOwner } from '@/lib/repositories/product-repository';
 
 export function mapHabitFormToCreateCommand(
   values: HabitFormValues,

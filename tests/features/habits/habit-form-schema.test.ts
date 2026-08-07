@@ -31,8 +31,7 @@ describe('habitFormSchema', () => {
   it('requires distinct non-empty Normal and Minimum actions', () => {
     expect(habitFormSchema.safeParse(validForm).success).toBe(true);
     expect(
-      habitFormSchema.safeParse({ ...validForm, minimumAction: validForm.normalAction })
-        .success,
+      habitFormSchema.safeParse({ ...validForm, minimumAction: validForm.normalAction }).success,
     ).toBe(false);
   });
 

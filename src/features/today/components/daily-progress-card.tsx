@@ -24,7 +24,9 @@ export function DailyProgressCard({
         </div>
         <div className="grid gap-1">
           <h2 className="text-lg font-semibold">Today’s progress</h2>
-          <p className="text-sm text-[var(--color-text-secondary)]">{successfulCount} successful sessions · {minimumCount} Minimum</p>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            {successfulCount} successful sessions · {minimumCount} Minimum
+          </p>
           <p className="text-sm font-semibold">{remainingCount} remaining</p>
         </div>
       </CardContent>

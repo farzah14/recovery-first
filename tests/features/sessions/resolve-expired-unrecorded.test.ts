@@ -24,24 +24,64 @@ describe('resolveExpiredUnrecorded', () => {
     repository = new DexieProductRepository(database);
     await database.sessions.bulkAdd([
       {
-        id: 'session-open', ownerType: 'guest', ownerId: owner.ownerId, habitId: 'habit-1', habitVersionId: 'version-1',
-        scheduledLocalDate: '2026-08-03', scheduledLocalTime: null, timezoneSnapshot: owner.timezone,
-        eligibleAt: '2026-08-03T00:00:00.000Z', resolutionDueAt: '2026-08-04T00:00:00.000Z', status: 'unrecorded', revision: 1, synchronizationState: 'local_only',
+        id: 'session-open',
+        ownerType: 'guest',
+        ownerId: owner.ownerId,
+        habitId: 'habit-1',
+        habitVersionId: 'version-1',
+        scheduledLocalDate: '2026-08-03',
+        scheduledLocalTime: null,
+        timezoneSnapshot: owner.timezone,
+        eligibleAt: '2026-08-03T00:00:00.000Z',
+        resolutionDueAt: '2026-08-04T00:00:00.000Z',
+        status: 'unrecorded',
+        revision: 1,
+        synchronizationState: 'local_only',
       },
       {
-        id: 'session-expired', ownerType: 'guest', ownerId: owner.ownerId, habitId: 'habit-1', habitVersionId: 'version-1',
-        scheduledLocalDate: '2026-08-02', scheduledLocalTime: null, timezoneSnapshot: owner.timezone,
-        eligibleAt: '2026-08-02T00:00:00.000Z', resolutionDueAt: '2026-08-03T00:00:00.000Z', status: 'unrecorded', revision: 4, synchronizationState: 'pending',
+        id: 'session-expired',
+        ownerType: 'guest',
+        ownerId: owner.ownerId,
+        habitId: 'habit-1',
+        habitVersionId: 'version-1',
+        scheduledLocalDate: '2026-08-02',
+        scheduledLocalTime: null,
+        timezoneSnapshot: owner.timezone,
+        eligibleAt: '2026-08-02T00:00:00.000Z',
+        resolutionDueAt: '2026-08-03T00:00:00.000Z',
+        status: 'unrecorded',
+        revision: 4,
+        synchronizationState: 'pending',
       },
       {
-        id: 'session-full', ownerType: 'guest', ownerId: owner.ownerId, habitId: 'habit-1', habitVersionId: 'version-1',
-        scheduledLocalDate: '2026-08-01', scheduledLocalTime: null, timezoneSnapshot: owner.timezone,
-        eligibleAt: '2026-08-01T00:00:00.000Z', resolutionDueAt: '2026-08-02T00:00:00.000Z', status: 'full', revision: 2, synchronizationState: 'synchronized',
+        id: 'session-full',
+        ownerType: 'guest',
+        ownerId: owner.ownerId,
+        habitId: 'habit-1',
+        habitVersionId: 'version-1',
+        scheduledLocalDate: '2026-08-01',
+        scheduledLocalTime: null,
+        timezoneSnapshot: owner.timezone,
+        eligibleAt: '2026-08-01T00:00:00.000Z',
+        resolutionDueAt: '2026-08-02T00:00:00.000Z',
+        status: 'full',
+        revision: 2,
+        synchronizationState: 'synchronized',
       },
       {
-        id: 'session-manual', ownerType: 'guest', ownerId: owner.ownerId, habitId: 'habit-1', habitVersionId: 'version-1',
-        scheduledLocalDate: '2026-07-31', scheduledLocalTime: null, timezoneSnapshot: owner.timezone,
-        eligibleAt: '2026-07-31T00:00:00.000Z', resolutionDueAt: '2026-08-01T00:00:00.000Z', status: 'manual_skipped', revision: 3, synchronizationState: 'local_only',
+        id: 'session-manual',
+        ownerType: 'guest',
+        ownerId: owner.ownerId,
+        habitId: 'habit-1',
+        habitVersionId: 'version-1',
+        scheduledLocalDate: '2026-07-31',
+        scheduledLocalTime: null,
+        timezoneSnapshot: owner.timezone,
+        eligibleAt: '2026-07-31T00:00:00.000Z',
+        resolutionDueAt: '2026-08-01T00:00:00.000Z',
+        status: 'manual_skipped',
+        revision: 3,
+        synchronizationState: 'local_only',
       },
     ]);
   });
@@ -51,11 +91,21 @@ describe('resolveExpiredUnrecorded', () => {
   });
 
   it('keeps open sessions unrecorded and converts only expired sessions without a check-in row', async () => {
-    expect(await resolveExpiredUnrecorded({ repository, owner, now: '2026-08-02T23:59:59.000Z' })).toBe(0);
-    expect(await database.sessions.get('session-open')).toMatchObject({ status: 'unrecorded', revision: 1 });
+    expect(
+      await resolveExpiredUnrecorded({ repository, owner, now: '2026-08-02T23:59:59.000Z' }),
+    ).toBe(0);
+    expect(await database.sessions.get('session-open')).toMatchObject({
+      status: 'unrecorded',
+      revision: 1,
+    });
 
-    expect(await resolveExpiredUnrecorded({ repository, owner, now: '2026-08-04T00:00:00.000Z' })).toBe(1);
-    expect(await database.sessions.get('session-expired')).toMatchObject({ status: 'automatic_skipped', revision: 5 });
+    expect(
+      await resolveExpiredUnrecorded({ repository, owner, now: '2026-08-04T00:00:00.000Z' }),
+    ).toBe(1);
+    expect(await database.sessions.get('session-expired')).toMatchObject({
+      status: 'automatic_skipped',
+      revision: 5,
+    });
     expect(await database.checkIns.count()).toBe(0);
     expect(nextManualSkipCounter(2, 'automatic_skipped')).toBe(2);
   });
@@ -63,7 +113,13 @@ describe('resolveExpiredUnrecorded', () => {
   it('does not reclassify resolved sessions and is idempotent on rerun', async () => {
     expect(await repository.resolveExpiredUnrecorded(owner, '2026-08-04T00:00:00.000Z')).toBe(1);
     expect(await repository.resolveExpiredUnrecorded(owner, '2026-08-04T00:00:00.000Z')).toBe(0);
-    expect(await database.sessions.get('session-full')).toMatchObject({ status: 'full', revision: 2 });
-    expect(await database.sessions.get('session-manual')).toMatchObject({ status: 'manual_skipped', revision: 3 });
+    expect(await database.sessions.get('session-full')).toMatchObject({
+      status: 'full',
+      revision: 2,
+    });
+    expect(await database.sessions.get('session-manual')).toMatchObject({
+      status: 'manual_skipped',
+      revision: 3,
+    });
   });
 });

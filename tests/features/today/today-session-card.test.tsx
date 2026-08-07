@@ -31,7 +31,8 @@ describe('TodaySessionCard', () => {
     expect(screen.getByText('Read 20 minutes')).toBeInTheDocument();
     expect(screen.getByText('Read one page')).toBeInTheDocument();
     expect(screen.getByText('After dinner')).toBeInTheDocument();
-    for (const label of ['Full', 'Minimum', 'Skipped']) expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    for (const label of ['Full', 'Minimum', 'Skipped'])
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Minimum' }));
     expect(onAction).toHaveBeenCalledWith('minimum', baseSession);
   });
@@ -53,12 +54,7 @@ describe('TodaySessionCard', () => {
 
   it('shows paused and Recovery labels with text', () => {
     render(
-      <TodaySessionCard
-        session={baseSession}
-        onAction={vi.fn()}
-        habitState="paused"
-        isRecovery
-      />,
+      <TodaySessionCard session={baseSession} onAction={vi.fn()} habitState="paused" isRecovery />,
     );
 
     expect(screen.getByText('Paused')).toBeInTheDocument();

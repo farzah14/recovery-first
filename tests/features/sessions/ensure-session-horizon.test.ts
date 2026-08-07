@@ -48,9 +48,9 @@ describe('session horizon', () => {
   });
 
   it('converts local boundaries using the session timezone snapshot', () => {
-    expect(
-      zonedLocalDateTimeToUtc('2026-07-29', '00:00:00', 'Asia/Jakarta'),
-    ).toBe('2026-07-28T17:00:00.000Z');
+    expect(zonedLocalDateTimeToUtc('2026-07-29', '00:00:00', 'Asia/Jakarta')).toBe(
+      '2026-07-28T17:00:00.000Z',
+    );
   });
 
   it('generates deterministic unique sessions only for eligible weekdays', () => {
@@ -58,24 +58,22 @@ describe('session horizon', () => {
     const replay = generateSessionsForCommand(command);
     expect(replay).toEqual(first);
     expect(new Set(first.map((session) => session.id)).size).toBe(first.length);
-    expect(
-      first.every((session) => session.habitVersionId === command.habitVersionId),
-    ).toBe(true);
+    expect(first.every((session) => session.habitVersionId === command.habitVersionId)).toBe(true);
   });
 
   it('uses the earliest matching instant for an ambiguous daylight-saving time', () => {
-    expect(
-      zonedLocalDateTimeToUtc('2026-11-01', '01:30:00', 'America/New_York'),
-    ).toBe('2026-11-01T05:30:00.000Z');
+    expect(zonedLocalDateTimeToUtc('2026-11-01', '01:30:00', 'America/New_York')).toBe(
+      '2026-11-01T05:30:00.000Z',
+    );
   });
 
   it('rejects nonexistent daylight-saving times and invalid IANA timezones', () => {
-    expect(() =>
-      zonedLocalDateTimeToUtc('2026-03-08', '02:30:00', 'America/New_York'),
-    ).toThrow('local_datetime_cannot_be_resolved');
-    expect(() =>
-      zonedLocalDateTimeToUtc('2026-07-29', '00:00:00', 'Invalid/Timezone'),
-    ).toThrow(/Invalid time zone/);
+    expect(() => zonedLocalDateTimeToUtc('2026-03-08', '02:30:00', 'America/New_York')).toThrow(
+      'local_datetime_cannot_be_resolved',
+    );
+    expect(() => zonedLocalDateTimeToUtc('2026-07-29', '00:00:00', 'Invalid/Timezone')).toThrow(
+      /Invalid time zone/,
+    );
   });
 
   it('generates finite-date recurrence only for the declared dates', () => {

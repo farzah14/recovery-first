@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { recordCheckIn } from '@/features/check-ins/application/record-check-in';
 import { RecoveryFirstDatabase } from '@/lib/indexed-db/database';
 import { DexieProductRepository } from '@/lib/repositories/guest/dexie-product-repository';
-import type { ProductOwner, ProductRepository, RecordCheckInRepositoryCommand } from '@/lib/repositories/product-repository';
+import type {
+  ProductOwner,
+  ProductRepository,
+  RecordCheckInRepositoryCommand,
+} from '@/lib/repositories/product-repository';
 
 const owner: ProductOwner = {
   ownerId: 'guest-installation-1',
@@ -105,8 +109,19 @@ describe('DexieProductRepository.recordCheckIn', () => {
     const first = await repository.recordCheckIn(command);
     await expect(repository.recordCheckIn(command)).resolves.toEqual(first);
     expect(await database.checkIns.count()).toBe(1);
-    await expect(repository.recordCheckIn({ ...command, commandId: 'command-stale-1' })).rejects.toMatchObject({ code: 'stale_revision' });
-    await expect(repository.recordCheckIn({ ...command, commandId: 'command-second-1', expectedSessionRevision: 2 })).rejects.toMatchObject({ code: 'check_in_already_recorded' });
-    await expect(database.sessions.get('session-1')).resolves.toMatchObject({ status: 'full', revision: 2 });
+    await expect(
+      repository.recordCheckIn({ ...command, commandId: 'command-stale-1' }),
+    ).rejects.toMatchObject({ code: 'stale_revision' });
+    await expect(
+      repository.recordCheckIn({
+        ...command,
+        commandId: 'command-second-1',
+        expectedSessionRevision: 2,
+      }),
+    ).rejects.toMatchObject({ code: 'check_in_already_recorded' });
+    await expect(database.sessions.get('session-1')).resolves.toMatchObject({
+      status: 'full',
+      revision: 2,
+    });
   });
 });

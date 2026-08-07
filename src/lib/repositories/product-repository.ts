@@ -1,7 +1,4 @@
-import type {
-  FrictionReason,
-  UserRecordableCheckInOutcome,
-} from '@/domain/check-ins/check-in';
+import type { FrictionReason, UserRecordableCheckInOutcome } from '@/domain/check-ins/check-in';
 import type { HabitLifecycleState } from '@/domain/habits/habit-lifecycle';
 import type { RecurrenceRule } from '@/domain/habits/recurrence';
 import type { IdentityMode } from '@/domain/shared/identity-mode';
@@ -9,8 +6,14 @@ import type { PlanTier } from '@/domain/shared/plan-tier';
 
 export type ProductOwner = {
   ownerId: string;
-  identityMode: IdentityMode;
-  planTier: PlanTier;
+  /**
+   * Account ownership is the only supported cloud boundary. The legacy Guest
+   * values remain in this transport contract so the historical browser-local
+   * repository and its migration tests stay type-safe while account routes
+   * move to Supabase.
+   */
+  identityMode: IdentityMode | 'guest';
+  planTier: PlanTier | 'guest';
   timezone: string;
 };
 
@@ -65,15 +68,11 @@ export type SessionSummary = {
   scheduledLocalDate: string;
   scheduledLocalTime: string | null;
   timezoneSnapshot: string;
-  status:
-    | 'unrecorded'
-    | 'full'
-    | 'minimum'
-    | 'manual_skipped'
-    | 'automatic_skipped'
-    | 'excused';
+  status: 'unrecorded' | 'full' | 'minimum' | 'manual_skipped' | 'automatic_skipped' | 'excused';
   revision: number;
   synchronizationState: 'local_only' | 'pending' | 'synced' | 'failed' | 'conflict';
+  currentCheckInId?: string;
+  currentCheckInRevision?: number;
 };
 
 export type TodayRepositoryRead = {
@@ -133,6 +132,15 @@ export type HabitDetailRead = {
     source: 'creation' | 'redesign' | 'recommendation' | 'restore';
   }>;
   sessions: SessionSummary[];
+  checkInHistory?: Array<{
+    id: string;
+    sessionId: string;
+    outcome: Exclude<SessionSummary['status'], 'automatic_skipped' | 'unrecorded'>;
+    frictionCode: string | null;
+    frictionNote: string | null;
+    replacedAt: string;
+    previousRevision: number;
+  }>;
 };
 
 export interface ProductRepository {
@@ -150,8 +158,6 @@ export interface ProductRepository {
   ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number>;
   resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number>;
   getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead>;
-  recordCheckIn(
-    command: RecordCheckInRepositoryCommand,
-  ): Promise<RecordCheckInResult>;
+  recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult>;
   editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult>;
 }

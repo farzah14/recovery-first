@@ -26,6 +26,7 @@ export function activeHabitLimitFor(planTier: PlanTier): number;
  * ownership must use an authenticated Free, Lite, or Premium account.
  */
 export function activeHabitLimitFor(planTier: 'guest'): number;
+export function activeHabitLimitFor(planTier: PlanTier | 'guest'): number;
 export function activeHabitLimitFor(planTier: PlanTier | 'guest'): number {
   if (planTier === 'guest') {
     return legacyGuestActiveHabitLimit;

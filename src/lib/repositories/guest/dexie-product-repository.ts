@@ -29,8 +29,7 @@ function toHabitTarget(value: unknown): CreateHabitCommand['normalTarget'] {
     action: typeof record.action === 'string' ? record.action : '',
     quantity: typeof record.quantity === 'number' ? record.quantity : null,
     unit: typeof record.unit === 'string' ? record.unit : null,
-    estimatedMinutes:
-      typeof record.estimatedMinutes === 'number' ? record.estimatedMinutes : null,
+    estimatedMinutes: typeof record.estimatedMinutes === 'number' ? record.estimatedMinutes : null,
   };
 }
 
@@ -52,8 +51,9 @@ function toRecurrence(value: unknown): RecurrenceRule {
   if (
     value.kind === 'weekdays' &&
     Array.isArray(value.weekdays) &&
-    value.weekdays.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
-      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    value.weekdays.every(
+      (day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+        typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
     )
   ) {
     return { kind: 'weekdays', weekdays: value.weekdays };
@@ -65,8 +65,9 @@ function toRecurrence(value: unknown): RecurrenceRule {
     value.count >= 1 &&
     value.count <= 7 &&
     Array.isArray(value.placement) &&
-    value.placement.every((day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
-      typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
+    value.placement.every(
+      (day): day is 1 | 2 | 3 | 4 | 5 | 6 | 7 =>
+        typeof day === 'number' && Number.isInteger(day) && day >= 1 && day <= 7,
     )
   ) {
     return { kind: 'times_per_week', count: value.count, placement: value.placement };
@@ -80,7 +81,9 @@ function toVersionSource(value: unknown): HabitDetailRead['versions'][number]['s
     : 'creation';
 }
 
-function toSessionSyncState(value: LocalSessionRecord['synchronizationState']): SessionSummary['synchronizationState'] {
+function toSessionSyncState(
+  value: LocalSessionRecord['synchronizationState'],
+): SessionSummary['synchronizationState'] {
   if (value === 'synchronized') return 'synced';
   if (value === 'blocked') return 'conflict';
   return value;
@@ -120,18 +123,19 @@ export class DexieProductRepository implements ProductRepository {
         const activeHabits = await this.database.habits
           .where('[ownerType+ownerId]')
           .equals(['guest', command.owner.ownerId])
-          .filter((habit) =>
-            habit.deletedAt === null &&
-            [
-              'starting',
-              'building',
-              'active',
-              'stable',
-              'at_risk',
-              'recovery',
-              'rebuilding',
-              'needs_review',
-            ].includes(habit.lifecycleState),
+          .filter(
+            (habit) =>
+              habit.deletedAt === null &&
+              [
+                'starting',
+                'building',
+                'active',
+                'stable',
+                'at_risk',
+                'recovery',
+                'rebuilding',
+                'needs_review',
+              ].includes(habit.lifecycleState),
           )
           .count();
 
@@ -229,65 +233,70 @@ export class DexieProductRepository implements ProductRepository {
     if (draft?.ownerId === owner.ownerId) await this.database.drafts.delete(draftId);
   }
 
-  async ensureSessionHorizon(
-    owner: ProductOwner,
-    throughLocalDate: string,
-  ): Promise<number> {
-    return this.database.transaction('rw', this.database.habits, this.database.habitVersions, this.database.sessions, async () => {
-      const activeHabits = await this.database.habits
-        .where('[ownerType+ownerId]')
-        .equals([owner.identityMode, owner.ownerId])
-        .filter(
-          (habit) =>
-            habit.deletedAt === null &&
-            [
-              'starting',
-              'building',
-              'active',
-              'stable',
-              'at_risk',
-              'recovery',
-              'rebuilding',
-              'needs_review',
-            ].includes(habit.lifecycleState),
-        )
-        .toArray();
+  async ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number> {
+    return this.database.transaction(
+      'rw',
+      this.database.habits,
+      this.database.habitVersions,
+      this.database.sessions,
+      async () => {
+        const activeHabits = await this.database.habits
+          .where('[ownerType+ownerId]')
+          .equals([owner.identityMode, owner.ownerId])
+          .filter(
+            (habit) =>
+              habit.deletedAt === null &&
+              [
+                'starting',
+                'building',
+                'active',
+                'stable',
+                'at_risk',
+                'recovery',
+                'rebuilding',
+                'needs_review',
+              ].includes(habit.lifecycleState),
+          )
+          .toArray();
 
-      const generated = (
-        await Promise.all(
-          activeHabits.map(async (habit) => {
-            if (!habit.currentVersionId) return [];
-            const version = await this.database.habitVersions.get(habit.currentVersionId);
-            if (!version) return [];
+        const generated = (
+          await Promise.all(
+            activeHabits.map(async (habit) => {
+              if (!habit.currentVersionId) return [];
+              const version = await this.database.habitVersions.get(habit.currentVersionId);
+              if (!version) return [];
 
-            return generateSessionsForCommand(
-              {
-                commandId: `horizon:${habit.id}:${version.id}:${throughLocalDate}`,
-                habitId: habit.id,
-                habitVersionId: version.id,
-                owner,
-                title: habit.title,
-                category: 'other',
-                normalTarget: toHabitTarget(version.normalTarget),
-                minimumTarget: toHabitTarget(version.minimumTarget),
-                recurrence: version.scheduleRule,
-                cue: toHabitCue(version.cue),
-                reminderIntent: { enabled: false, localTime: null },
-                startLocalDate: habit.createdAt.slice(0, 10),
-                activate: true,
-                clientCreatedAt: habit.createdAt,
-              },
-              throughLocalDate,
-            );
-          }),
-        )
-      ).flat();
+              return generateSessionsForCommand(
+                {
+                  commandId: `horizon:${habit.id}:${version.id}:${throughLocalDate}`,
+                  habitId: habit.id,
+                  habitVersionId: version.id,
+                  owner,
+                  title: habit.title,
+                  category: 'other',
+                  normalTarget: toHabitTarget(version.normalTarget),
+                  minimumTarget: toHabitTarget(version.minimumTarget),
+                  recurrence: version.scheduleRule,
+                  cue: toHabitCue(version.cue),
+                  reminderIntent: { enabled: false, localTime: null },
+                  startLocalDate: habit.createdAt.slice(0, 10),
+                  activate: true,
+                  clientCreatedAt: habit.createdAt,
+                },
+                throughLocalDate,
+              );
+            }),
+          )
+        ).flat();
 
-      const existing = await this.database.sessions.bulkGet(generated.map((session) => session.id));
-      const missing = generated.filter((_, index) => !existing[index]);
-      if (missing.length > 0) await this.database.sessions.bulkAdd(missing);
-      return missing.length;
-    });
+        const existing = await this.database.sessions.bulkGet(
+          generated.map((session) => session.id),
+        );
+        const missing = generated.filter((_, index) => !existing[index]);
+        if (missing.length > 0) await this.database.sessions.bulkAdd(missing);
+        return missing.length;
+      },
+    );
   }
 
   async listHabits(owner: ProductOwner): Promise<HabitListItem[]> {
@@ -349,8 +358,8 @@ export class DexieProductRepository implements ProductRepository {
         const checkIns = await this.database.checkIns
           .where('[ownerType+ownerId]')
           .equals([owner.identityMode, owner.ownerId])
-          .filter((checkIn) => checkIn.replacedAt === null)
           .toArray();
+        const currentCheckIns = checkIns.filter((checkIn) => checkIn.replacedAt === null);
         const versionById = new Map(versions.map((version) => [version.id, version]));
 
         return {
@@ -386,7 +395,7 @@ export class DexieProductRepository implements ProductRepository {
             )
             .map((session) => {
               const version = versionById.get(session.habitVersionId) ?? currentVersion;
-              const checkIn = checkIns.find((item) => item.sessionId === session.id);
+              const checkIn = currentCheckIns.find((item) => item.sessionId === session.id);
               return {
                 id: session.id,
                 habitId: session.habitId,
@@ -401,8 +410,22 @@ export class DexieProductRepository implements ProductRepository {
                 status: checkIn?.outcome ?? session.status,
                 revision: session.revision,
                 synchronizationState: toSessionSyncState(session.synchronizationState),
+                ...(checkIn
+                  ? { currentCheckInId: checkIn.id, currentCheckInRevision: checkIn.revision }
+                  : {}),
               };
             }),
+          checkInHistory: checkIns
+            .filter((checkIn) => checkIn.replacedAt !== null)
+            .map((checkIn) => ({
+              id: checkIn.id,
+              sessionId: checkIn.sessionId,
+              outcome: checkIn.outcome,
+              frictionCode: checkIn.frictionCode,
+              frictionNote: checkIn.frictionNote,
+              replacedAt: checkIn.replacedAt as string,
+              previousRevision: checkIn.revision,
+            })),
         };
       },
     );
@@ -443,7 +466,9 @@ export class DexieProductRepository implements ProductRepository {
           .equals([owner.identityMode, owner.ownerId])
           .filter((habit) => habit.deletedAt === null)
           .toArray();
-        const activeHabits = habits.filter((habit) => isSlotConsumingHabitState(habit.lifecycleState));
+        const activeHabits = habits.filter((habit) =>
+          isSlotConsumingHabitState(habit.lifecycleState),
+        );
         const habitById = new Map(habits.map((habit) => [habit.id, habit]));
         const versions = await this.database.habitVersions
           .where('[ownerType+ownerId]')
@@ -468,21 +493,26 @@ export class DexieProductRepository implements ProductRepository {
             const version = versionById.get(session.habitVersionId);
             if (!habit || !version) return [];
             const checkIn = checkIns.find((item) => item.sessionId === session.id);
-            return [{
-              id: session.id,
-              habitId: session.habitId,
-              habitVersionId: session.habitVersionId,
-              title: habit.title,
-              normalTarget: toHabitTarget(version.normalTarget),
-              minimumTarget: toHabitTarget(version.minimumTarget),
-              cue: toHabitCue(version.cue),
-              scheduledLocalDate: session.scheduledLocalDate,
-              scheduledLocalTime: session.scheduledLocalTime,
-              timezoneSnapshot: session.timezoneSnapshot,
-              status: checkIn?.outcome ?? session.status,
-              revision: session.revision,
-              synchronizationState: toSessionSyncState(session.synchronizationState),
-            }];
+            return [
+              {
+                id: session.id,
+                habitId: session.habitId,
+                habitVersionId: session.habitVersionId,
+                title: habit.title,
+                normalTarget: toHabitTarget(version.normalTarget),
+                minimumTarget: toHabitTarget(version.minimumTarget),
+                cue: toHabitCue(version.cue),
+                scheduledLocalDate: session.scheduledLocalDate,
+                scheduledLocalTime: session.scheduledLocalTime,
+                timezoneSnapshot: session.timezoneSnapshot,
+                status: checkIn?.outcome ?? session.status,
+                revision: session.revision,
+                synchronizationState: toSessionSyncState(session.synchronizationState),
+                ...(checkIn
+                  ? { currentCheckInId: checkIn.id, currentCheckInRevision: checkIn.revision }
+                  : {}),
+              },
+            ];
           }),
           activeHabitCount: activeHabits.length,
           activeHabitLimit: activeHabitLimitFor(owner.planTier),
@@ -491,9 +521,7 @@ export class DexieProductRepository implements ProductRepository {
     );
   }
 
-  async recordCheckIn(
-    command: RecordCheckInRepositoryCommand,
-  ): Promise<RecordCheckInResult> {
+  async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {
     return this.database.transaction(
       'rw',
       this.database.sessions,
@@ -527,7 +555,9 @@ export class DexieProductRepository implements ProductRepository {
         const currentCheckIns = await this.database.checkIns
           .where('[ownerType+ownerId]')
           .equals([command.owner.identityMode, command.owner.ownerId])
-          .filter((checkIn) => checkIn.sessionId === command.sessionId && checkIn.replacedAt === null)
+          .filter(
+            (checkIn) => checkIn.sessionId === command.sessionId && checkIn.replacedAt === null,
+          )
           .toArray();
         if (currentCheckIns.length > 0) {
           throw new ProductRepositoryError('check_in_already_recorded');
@@ -572,7 +602,9 @@ export class DexieProductRepository implements ProductRepository {
           requestHash,
           result,
           createdAt: command.clientRecordedAt,
-          expiresAt: new Date(Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(
+            Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
         });
         return result;
       },
@@ -604,7 +636,10 @@ export class DexieProductRepository implements ProductRepository {
           throw new ProductRepositoryError('session_not_found');
         }
 
-        if (localDateForTime(command.clientRecordedAt, session.timezoneSnapshot) !== session.scheduledLocalDate) {
+        if (
+          localDateForTime(command.clientRecordedAt, session.timezoneSnapshot) !==
+          session.scheduledLocalDate
+        ) {
           throw new ProductRepositoryError('same_day_edit_closed');
         }
         if (session.revision !== command.expectedSessionRevision) {
@@ -671,7 +706,9 @@ export class DexieProductRepository implements ProductRepository {
           requestHash,
           result,
           createdAt: command.clientRecordedAt,
-          expiresAt: new Date(Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          expiresAt: new Date(
+            Date.parse(command.clientRecordedAt) + 90 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
         });
         return result;
       },

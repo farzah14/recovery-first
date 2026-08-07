@@ -8,7 +8,7 @@ export async function migrateVersionOneToTwo(transaction: Transaction): Promise<
     .toCollection()
     .modify((habit) => {
       habit.synchronizationState ??= 'local_only';
-  });
+    });
 }
 
 export async function migrateVersionTwoToThree(transaction: Transaction): Promise<void> {

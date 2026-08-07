@@ -14,9 +14,7 @@ describe('ProductRepository contract', () => {
   it('requires stable command identifiers for habit and check-in mutations', () => {
     expectTypeOf<CreateHabitCommand>().toHaveProperty('commandId');
     expectTypeOf<RecordCheckInRepositoryCommand>().toHaveProperty('commandId');
-    expectTypeOf<RecordCheckInRepositoryCommand>().toHaveProperty(
-      'expectedSessionRevision',
-    );
+    expectTypeOf<RecordCheckInRepositoryCommand>().toHaveProperty('expectedSessionRevision');
   });
 
   it('keeps read and write operations behind one account-neutral interface', () => {

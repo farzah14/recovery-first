@@ -32,10 +32,7 @@ export function createHabitFormDefaults(input: {
         : template?.recurrence.kind === 'times_per_week'
           ? [...template.recurrence.placement]
           : [],
-    timesPerWeek:
-      template?.recurrence.kind === 'times_per_week'
-        ? template.recurrence.count
-        : null,
+    timesPerWeek: template?.recurrence.kind === 'times_per_week' ? template.recurrence.count : null,
     cueType: template?.cue.type ?? 'none',
     cueValue: template?.cue.value ?? null,
     timezone: input.timezone,

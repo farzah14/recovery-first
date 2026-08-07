@@ -4,10 +4,7 @@ import Dexie from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { RecoveryFirstDatabase } from '@/lib/indexed-db/database';
-import {
-  currentIndexedDbVersion,
-  recoveryFirstStoresV2,
-} from '@/lib/indexed-db/schema';
+import { currentIndexedDbVersion, recoveryFirstStoresV2 } from '@/lib/indexed-db/schema';
 
 const databaseNames: string[] = [];
 

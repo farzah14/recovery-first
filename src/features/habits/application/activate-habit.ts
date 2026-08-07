@@ -4,7 +4,7 @@ export type ActiveLimitResolution =
   | { action: 'create_account' }
   | { action: 'cancel' };
 
-export function activeLimitOptions(planTier: 'guest' | 'free' | 'premium') {
+export function activeLimitOptions(planTier: 'guest' | 'free' | 'lite' | 'premium') {
   if (planTier === 'guest') {
     return ['pause_existing', 'create_account', 'keep_draft', 'cancel'] as const;
   }

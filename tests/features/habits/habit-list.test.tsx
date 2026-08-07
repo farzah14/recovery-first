@@ -183,6 +183,8 @@ describe('habit list', () => {
     expect(today.activeHabitCount).toBe(1);
     expect(today.activeHabitLimit).toBe(3);
     expect(today.sessions[0]?.status).toBe('minimum');
-    await expect(repository.getHabitDetail({ ...owner, ownerId: 'guest-other' }, 'habit-1')).resolves.toBeNull();
+    await expect(
+      repository.getHabitDetail({ ...owner, ownerId: 'guest-other' }, 'habit-1'),
+    ).resolves.toBeNull();
   });
 });

@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { getTodayReadModel } from '@/features/today/application/get-today-read-model';
 import { orderTodaySessions } from '@/features/today/today-ordering';
 import type { TodayRepositoryRead } from '@/lib/repositories/product-repository';
-import type { ProductOwner, ProductRepository, SessionSummary } from '@/lib/repositories/product-repository';
+import type {
+  ProductOwner,
+  ProductRepository,
+  SessionSummary,
+} from '@/lib/repositories/product-repository';
 
 const owner: ProductOwner = {
   ownerId: 'guest-installation-1',
@@ -48,7 +52,12 @@ describe('Today read model', () => {
       session('minimum', 'minimum', '07:00'),
     ]);
 
-    expect(ordered.map((item) => item.id)).toEqual(['timed-unrecorded', 'attention', 'minimum', 'full']);
+    expect(ordered.map((item) => item.id)).toEqual([
+      'timed-unrecorded',
+      'attention',
+      'minimum',
+      'full',
+    ]);
   });
 
   it('counts Full and Minimum as successful and identifies all-recorded', async () => {
@@ -75,7 +84,12 @@ describe('Today read model', () => {
     ['unrecorded sessions', 1, [session('unrecorded', 'unrecorded', '10:00')], 'none'],
   ] as const)('keeps %s distinct', async (_label, activeHabitCount, sessions, emptyState) => {
     const model = await getTodayReadModel({
-      repository: repository({ localDate: '2026-08-03', sessions: [...sessions], activeHabitCount, activeHabitLimit: 3 }),
+      repository: repository({
+        localDate: '2026-08-03',
+        sessions: [...sessions],
+        activeHabitCount,
+        activeHabitLimit: 3,
+      }),
       owner,
       localDate: '2026-08-03',
     });

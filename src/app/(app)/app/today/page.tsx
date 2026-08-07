@@ -7,5 +7,9 @@ export const metadata = {
 };
 
 export default function TodayDashboardPage(): React.JSX.Element {
-  return <AppShell><TodayPageClient /></AppShell>;
+  return (
+    <AppShell>
+      <TodayPageClient />
+    </AppShell>
+  );
 }

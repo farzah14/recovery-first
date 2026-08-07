@@ -1,5 +1,8 @@
 import type { FrictionReason, UserRecordableCheckInOutcome } from '@/domain/check-ins/check-in';
-import type { ProductOwner, RecordCheckInRepositoryCommand } from '@/lib/repositories/product-repository';
+import type {
+  ProductOwner,
+  RecordCheckInRepositoryCommand,
+} from '@/lib/repositories/product-repository';
 
 export function createRecordCheckInCommand(input: {
   commandId: string;

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  loadHabitDraft,
-  saveHabitDraft,
-} from '@/features/habits/application/save-habit-draft';
+import { loadHabitDraft, saveHabitDraft } from '@/features/habits/application/save-habit-draft';
 import type { ProductOwner, ProductRepository } from '@/lib/repositories/product-repository';
 
 const owner: ProductOwner = {
@@ -31,9 +28,7 @@ describe('habit draft application service', () => {
       now: '2026-07-29T13:00:00.000Z',
     });
 
-    await expect(
-      loadHabitDraft({ repository, owner, draftId: 'new-habit' }),
-    ).resolves.toEqual({
+    await expect(loadHabitDraft({ repository, owner, draftId: 'new-habit' })).resolves.toEqual({
       step: 2,
       values: { title: 'Read', normalAction: 'Read 20 minutes' },
     });

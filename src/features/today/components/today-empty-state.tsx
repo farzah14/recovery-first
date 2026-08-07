@@ -19,7 +19,9 @@ export function TodayEmptyState({
     },
     no_eligible_sessions: {
       title: 'No eligible sessions today',
-      description: nextSession ? `Next session: ${nextSession.title} on ${nextSession.localDate}.` : 'Your next eligible session will appear here.',
+      description: nextSession
+        ? `Next session: ${nextSession.title} on ${nextSession.localDate}.`
+        : 'Your next eligible session will appear here.',
     },
     all_recorded: {
       title: 'Today is recorded',
@@ -32,8 +34,14 @@ export function TodayEmptyState({
     <Card>
       <CardContent className="grid justify-items-start gap-3 p-6">
         <h2 className="text-xl font-semibold">{content.title}</h2>
-        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">{content.description}</p>
-        {state === 'no_habits' ? <Button asChild><Link href="/app/habits/new">Create your first habit</Link></Button> : null}
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+          {content.description}
+        </p>
+        {state === 'no_habits' ? (
+          <Button asChild>
+            <Link href="/app/habits/new">Create your first habit</Link>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

@@ -22,8 +22,13 @@ export function FirstCheckInGuide(): React.JSX.Element | null {
     <Alert tone="info" className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="font-semibold">Choose the outcome that fits today</p>
-        <p className="mt-1 text-sm leading-6">Full and Minimum both support continuity. Skipped is available when you need to record a deliberate pause.</p>
-        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">More help remains available from a session card’s help menu.</p>
+        <p className="mt-1 text-sm leading-6">
+          Full and Minimum both support continuity. Skipped is available when you need to record a
+          deliberate pause.
+        </p>
+        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+          More help remains available from a session card’s help menu.
+        </p>
       </div>
       <Button
         type="button"

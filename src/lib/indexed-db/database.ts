@@ -2,10 +2,7 @@ import Dexie, { type Table } from 'dexie';
 
 import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { isSlotConsumingHabitState } from '@/domain/habits/habit-lifecycle';
-import {
-  migrateVersionOneToTwo,
-  migrateVersionTwoToThree,
-} from '@/lib/indexed-db/migrations';
+import { migrateVersionOneToTwo, migrateVersionTwoToThree } from '@/lib/indexed-db/migrations';
 import {
   recoveryFirstStoresV1,
   recoveryFirstStoresV2,

@@ -21,7 +21,10 @@ function read(overrides: Partial<TodayReadModel> = {}): TodayReadModel {
 describe('TodayPageClient', () => {
   it('links the no-habits state to the creation wizard', () => {
     render(<TodayPageClient initialReadModel={read()} />);
-    expect(screen.getByRole('link', { name: 'Create your first habit' })).toHaveAttribute('href', '/app/habits/new');
+    expect(screen.getByRole('link', { name: 'Create your first habit' })).toHaveAttribute(
+      'href',
+      '/app/habits/new',
+    );
   });
 
   it('reports the next session when there are no eligible sessions today', () => {
@@ -40,7 +43,11 @@ describe('TodayPageClient', () => {
   it('explains that Full and Minimum both support continuity when all are recorded', () => {
     render(
       <TodayPageClient
-        initialReadModel={read({ emptyState: 'all_recorded', activeHabitCount: 1, successfulCount: 2 })}
+        initialReadModel={read({
+          emptyState: 'all_recorded',
+          activeHabitCount: 1,
+          successfulCount: 2,
+        })}
       />,
     );
     expect(screen.getByText('Full and Minimum both support continuity.')).toBeInTheDocument();
