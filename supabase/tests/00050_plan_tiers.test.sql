@@ -129,6 +129,5 @@ select is(
   'lite'::public.plan_tier,
   'a past-due Premium entitlement falls back after its window expires'
 );
-
 select * from finish();
 rollback;

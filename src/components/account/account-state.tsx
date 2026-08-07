@@ -5,6 +5,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { PlanTier } from '@/domain/shared/plan-tier';
 
 export type AccountState = {
+  id?: string;
   accountId?: string;
   displayName: string;
   planTier: PlanTier;
@@ -14,6 +15,8 @@ export type AccountState = {
 };
 
 const defaultAccountState: AccountState = {
+  id: '',
+  accountId: '',
   displayName: 'Account',
   planTier: 'free',
   timezone: 'UTC',

@@ -7,8 +7,8 @@ import type { IdentityMode } from '@/domain/shared/identity-mode';
 import type { PlanTier } from '@/domain/shared/plan-tier';
 import type { SynchronizationState } from '@/domain/shared/sync-state';
 
-/** Normal records are account-owned; legacy is reserved for pre-account data awaiting recovery. */
-export type LocalOwnerType = 'account' | 'legacy';
+/** Guest is retained only for historical browser-local records during migration. */
+export type LocalOwnerType = 'account' | 'legacy' | 'guest';
 
 export type LegacyLocalDataStatus = 'pending_recovery' | 'exported' | 'transferred' | 'cleared';
 
@@ -102,6 +102,19 @@ export type LocalCheckInRecord = {
   timezoneSnapshot: string;
   revision: number;
   synchronizationState: SynchronizationState;
+  replacedAt: string | null;
+  replacedById: string | null;
+};
+
+export type LocalCommandResultRecord = {
+  id: string;
+  ownerType: LocalOwnerType;
+  ownerId: string;
+  operationType: 'create_habit' | 'record_check_in' | 'edit_check_in';
+  requestHash: string;
+  result: unknown;
+  createdAt: string;
+  expiresAt: string;
 };
 
 export type LocalRecommendationRecord = {

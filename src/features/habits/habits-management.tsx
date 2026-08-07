@@ -280,6 +280,7 @@ function getIconEmojiFromId(iconId: string): string {
 }
 
 function formatHabitTarget(target: HabitListItem['normalTarget']): string {
+  if (!target) return '';
   return (
     target.label ||
     (target.quantity !== null && target.unit ? `${target.quantity} ${target.unit}` : target.action)
@@ -291,21 +292,21 @@ function mapRepositoryHabit(habit: HabitListItem): HabitItem {
     id: habit.id,
     name: habit.title,
     category: habit.category || 'Other',
-    description: habit.description,
+    description: habit.description ?? '',
     normalTarget: formatHabitTarget(habit.normalTarget),
     minimumTarget: formatHabitTarget(habit.minimumTarget),
-    schedule: habit.schedule,
-    cue: habit.cue,
-    status: habit.status,
-    streak: habit.streak,
-    consistency: habit.consistency,
-    createdDate: habit.createdDate,
-    version: habit.version,
-    iconName: habit.iconName,
+    schedule: habit.schedule ?? '',
+    cue: habit.cue ?? habit.schedule ?? '',
+    status: habit.status ?? 'Paused',
+    streak: habit.streak ?? 0,
+    consistency: habit.consistency ?? 0,
+    createdDate: habit.createdDate ?? '',
+    version: habit.version ?? 'v0',
+    iconName: habit.iconName ?? 'ðŸŽ¯',
     lifecycleState: habit.lifecycleState,
     currentVersionId: habit.currentVersionId,
-    revision: habit.revision,
-    startLocalDate: habit.startLocalDate,
+    revision: habit.revision ?? 1,
+    startLocalDate: habit.startLocalDate ?? '',
     ...(habit.fromTime ? { fromTime: habit.fromTime } : {}),
     ...(habit.untilTime ? { untilTime: habit.untilTime } : {}),
   };

@@ -2,9 +2,9 @@
 
 > **Execution mode:** Single-agent sequential execution. Use the `executing-plans` workflow. Do not create, delegate to, or dispatch subagents. Complete one task, run its fresh verification commands, commit it, and only then continue. Steps use checkbox (`- [ ]`) syntax for progress tracking.
 
-**Goal:** Deliver the complete authenticated account core loop for Free, Lite, and Premium users: creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, and preserving immutable history.
+**Goal:** Deliver the authenticated account core loop for Free, Lite, and Premium users: creating habits, generating sessions, viewing Today, recording Full/Minimum/Skipped outcomes, capturing optional friction, editing same-day check-ins, resolving expired sessions, and preserving immutable history.
 
-**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03A. Supabase is canonical for authenticated account data; Dexie provides account cache, drafts, and pending operations. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
+**Architecture:** Framework-independent application services orchestrate the deterministic domain rules and persistence contracts established in Plan 03A. Supabase PostgreSQL is canonical for authenticated account data; Dexie is limited to account cache, drafts, and pending operations. React routes consume feature-level query and command services rather than reading IndexedDB or PostgreSQL directly.
 
 **Tech Stack:** Next.js App Router, React, strict TypeScript, React Hook Form, Zod, `@hookform/resolvers`, Dexie, Supabase PostgreSQL functions and views, TanStack Query contracts, Tailwind CSS, shadcn/ui primitives, Lucide, Vitest, React Testing Library, `fake-indexeddb`, Playwright, pnpm.
 
@@ -33,7 +33,61 @@
 - The repository is on a dedicated implementation branch or worktree.
 - `pnpm verify`, `pnpm db:reset`, `pnpm db:test`, `pnpm db:types:check`, and `pnpm build` pass before Task 1.
 
-**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, legacy-local recovery UI, Premium analytics, payment-provider integration, production monitoring, and release operations.
+**Explicitly excluded:** Cross-device synchronization processing, service-worker write replay, Web Push delivery, email reminder delivery, automated Recovery Plan creation, Weekly Review recommendations, Guest-to-account transfer, Premium analytics, payment-provider integration, production monitoring, and release operations.
+
+---
+
+## Approved authenticated-account amendment — 2026-08-07
+
+The user selected the authenticated-account revision of Plan 04. This amendment supersedes conflicting Guest-only execution steps in Tasks 1–17 and the final acceptance checklist.
+
+- `ProductOwner.identityMode` is `account`; `ProductOwner.planTier` is `free | lite | premium`.
+- Supabase PostgreSQL is the canonical source for signed-in habits, versions, sessions, check-ins, history, and plan limits.
+- Dexie may provide signed-in cache, drafts, and pending-operation durability, but it is not the canonical account source.
+- Active limits are server-authoritative: Free `5`, Lite `10`, Premium `30`.
+- The signed-in repository must call transactional Supabase functions and owner-scoped views; it must never accept a Guest owner or service-role client.
+- Tasks 13–15 must complete authenticated same-day editing, immutable check-in history, and Automatic Skipped resolution through Supabase functions.
+- Task 16 replaces the Guest-only browser scenario with authenticated account coverage against local Supabase. Guest behavior remains covered only by its own browser-local tests and is not counted as account completion.
+- Task 17 may mark Plan 04 complete only after the authenticated acceptance suite, migrations, RLS tests, browser checks, and clean-checkout verification pass.
+
+The historical Guest implementation commits in this worktree remain preserved for domain and component reuse. They do not authorize new Guest-owned account behavior or change the approved account limits.
+
+## Authenticated Plan 04 status — 2026-08-07
+
+This status applies to the approved authenticated-account amendment above. The historical Guest task checkboxes below are retained as history and are not evidence of account completion.
+
+| Amendment task | Status | Evidence | Persistence classification |
+|---|---|---|---|
+| Task 1 — amendment and checkpoint | Finished | Amendment committed as `385d2e2`; worktree and plan checkpoint recorded. | Documentation only |
+| Task 2 — same-day edit and immutable history | Finished | Migration `20260807010000_authenticated_same_day_check_in_edit.sql`; pgTAP edit/history/cutoff/RLS tests; signed-in RPC adapter; commit `2de96df`. | Supabase PostgreSQL canonical |
+| Task 3 — Automatic Skipped resolution | Finished | Migration `20260807020000_authenticated_automatic_skipped.sql`; owner-scoped/idempotent resolver and pgTAP tests; commit `82c0610`. | Supabase PostgreSQL canonical |
+| Task 4 — account repository/UI wiring | Finished for core loop; draft gap open | Account context derives verified entitlement tier; Today/Habits select the signed-in Supabase repository; Free/Lite/Premium limits use the shared policy; commit `0a14c4b`. Signed-in draft save/delete still require an approved server draft boundary. | Supabase PostgreSQL canonical; Dexie only Guest fallback/cache boundary |
+| Task 5 — authenticated acceptance coverage | Partially finished | Authenticated accessibility/E2E/visual coverage and local seed fixture committed as `fb81373`; database, focused suites, build, and authenticated E2E pass. | Supabase-backed browser coverage |
+| Task 5 quality handoff | Not finished | Global format gate fails on 38 pre-existing files; default full Vitest is `254 passed / 2 dashboard-component timeouts`; unrelated dirty files remain. | No completion claim |
+
+### Original Plan 04 task-by-task reconciliation
+
+| Original task | Authenticated revision status | Result |
+|---|---|---|
+| 1 — dependencies and focused commands | Finished supporting work | Tooling and scripts are present and the historical baseline is retained; no product data is stored here. |
+| 2 — account-neutral repository contracts | Finished supporting work | Shared repository contracts are used by both Guest and account providers. |
+| 3 — basic template catalog | Finished, static by design | Templates are deterministic product content, not user-owned Supabase records. |
+| 4 — wizard schema/defaults/mapping | Finished supporting work | Validation and mapping are reusable; account persistence is handled by the signed-in adapter. |
+| 5 — Guest Dexie repository | Finished for Guest only | Browser-local Guest data remains isolated; it is not the account canonical source. |
+| 6 — deterministic bounded sessions | Finished supporting work | The same deterministic horizon generator feeds the Supabase `ensure_session` boundary. |
+| 7 — draft and creation services | Partially finished for account | Habit creation is wired to Supabase; signed-in draft save/delete still require an approved server draft boundary. |
+| 8 — route-backed creation wizard | Partially finished for account | The wizard is routed and account-owned, but signed-in draft durability is still open. |
+| 9 — habit list/detail/history reads | Finished for account core reads | Account list/detail/history reads use owner-scoped Supabase tables/views; legacy static design components remain outside the route. |
+| 10 — Today read models/ordering | Finished for account core reads | Account Today reads use `today_session_view` and Supabase-owned versions/check-ins. |
+| 11 — Today dashboard/session states | Finished for account core surface | Account Today selects the Supabase repository; Guest remains a separate Dexie fallback. |
+| 12 — Full/Minimum/Skipped check-ins | Finished for account boundary | Account mutations call authoritative Supabase functions; accessibility semantics are covered. |
+| 13 — same-day edit/history | Finished via amendment Task 2 | Authenticated migration/RPC, adapter, and pgTAP history/cutoff/RLS checks pass. |
+| 14 — Automatic Skipped resolution | Finished via amendment Task 3 | Authenticated owner-scoped/idempotent migration/RPC and pgTAP checks pass. |
+| 15 — signed-in Supabase adapter | Finished via amendment Task 4 | Account provider wiring and repository reads/writes are committed and locally verified. |
+| 16 — Guest accessibility/E2E | Superseded; partially replaced | Authenticated accessibility/E2E/visual coverage exists; complete browser edit/resolution/tier coverage remains open. |
+| 17 — Plan 04 quality gate/handoff | Not finished | Format and default full-test gates are not green, and the worktree is not clean. |
+
+The account path is not considered fully verified until Task 5 quality-gate failures and the clean-tree/clean-checkout requirement are resolved. No hosted Supabase, production credentials, payment provider, or external authenticated E2E integration was verified in this worktree.
 
 ---
 
@@ -219,7 +273,7 @@ tests/e2e/
 - Modify: `package.json`
 - Modify: `pnpm-lock.yaml`
 
-- [ ] **Step 1: Verify the Plan 03 baseline**
+- [x] **Step 1: Verify the Plan 03 baseline**
 
 Run:
 
@@ -238,7 +292,7 @@ git status --short
 
 Expected: every command exits with status `0` and the working tree is clean.
 
-- [ ] **Step 2: Install the form and query dependencies required by this plan**
+- [x] **Step 2: Install the form and query dependencies required by this plan**
 
 Run:
 
@@ -248,7 +302,7 @@ pnpm add react-hook-form zod @hookform/resolvers @tanstack/react-query
 
 Expected: `package.json` and `pnpm-lock.yaml` contain the four dependencies and no unrelated package changes.
 
-- [ ] **Step 3: Add focused scripts without replacing existing scripts**
+- [x] **Step 3: Add focused scripts without replacing existing scripts**
 
 Run:
 
@@ -272,7 +326,7 @@ pnpm install --lockfile-only
 
 Expected: all six scripts exist and `pnpm-lock.yaml` remains synchronized.
 
-- [ ] **Step 4: Run package and repository checks**
+- [x] **Step 4: Run package and repository checks**
 
 Run:
 
@@ -286,7 +340,7 @@ pnpm check:repository
 
 Expected: every command exits with status `0`.
 
-- [ ] **Step 5: Commit dependency and script changes**
+- [x] **Step 5: Commit dependency and script changes**
 
 Run:
 
@@ -306,7 +360,7 @@ git commit -m "chore: add core loop form and query tooling"
 - Create: `src/lib/repositories/repository-provider.tsx`
 - Create: `tests/features/habits/product-repository-contract.test.ts`
 
-- [ ] **Step 1: Write a failing repository contract test**
+- [x] **Step 1: Write a failing repository contract test**
 
 Create `tests/features/habits/product-repository-contract.test.ts`:
 
@@ -338,7 +392,7 @@ describe('ProductRepository contract', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the expected failure**
+- [x] **Step 2: Run the focused test and confirm the expected failure**
 
 Run:
 
@@ -348,7 +402,7 @@ pnpm vitest run tests/features/habits/product-repository-contract.test.ts
 
 Expected: FAIL because `product-repository.ts` does not exist.
 
-- [ ] **Step 3: Define repository commands, results, and reads**
+- [x] **Step 3: Define repository commands, results, and reads**
 
 Create `src/lib/repositories/product-repository.ts`:
 
@@ -509,7 +563,7 @@ export interface ProductRepository {
 }
 ```
 
-- [ ] **Step 4: Define repository error codes**
+- [x] **Step 4: Define repository error codes**
 
 Create `src/lib/repositories/repository-errors.ts`:
 
@@ -540,7 +594,7 @@ export class ProductRepositoryError extends Error {
 }
 ```
 
-- [ ] **Step 5: Add the client repository provider**
+- [x] **Step 5: Add the client repository provider**
 
 Create `src/lib/repositories/repository-provider.tsx`:
 
@@ -576,7 +630,7 @@ export function useProductRepository(): ProductRepository {
 }
 ```
 
-- [ ] **Step 6: Run focused and static checks**
+- [x] **Step 6: Run focused and static checks**
 
 Run:
 
@@ -588,7 +642,7 @@ pnpm lint
 
 Expected: the focused test passes and static checks exit with status `0`.
 
-- [ ] **Step 7: Commit repository contracts**
+- [x] **Step 7: Commit repository contracts**
 
 Run:
 
@@ -608,7 +662,7 @@ git commit -m "feat: define account neutral product repository"
 - Create: `src/features/templates/template-picker.tsx`
 - Create: `tests/features/templates/catalog.test.ts`
 
-- [ ] **Step 1: Write failing catalog tests**
+- [x] **Step 1: Write failing catalog tests**
 
 Create `tests/features/templates/catalog.test.ts`:
 
@@ -639,7 +693,7 @@ describe('basicHabitTemplates', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and confirm the expected failure**
+- [x] **Step 2: Run the test and confirm the expected failure**
 
 Run:
 
@@ -649,7 +703,7 @@ pnpm test:templates
 
 Expected: FAIL because the catalog module does not exist.
 
-- [ ] **Step 3: Implement deterministic, local template data**
+- [x] **Step 3: Implement deterministic, local template data**
 
 Create `src/features/templates/catalog.ts`:
 
@@ -746,7 +800,7 @@ export function findHabitTemplates(query: string): readonly BasicHabitTemplate[]
 }
 ```
 
-- [ ] **Step 4: Implement reusable template presentation components**
+- [x] **Step 4: Implement reusable template presentation components**
 
 Create `src/features/templates/template-card.tsx`:
 
@@ -819,7 +873,7 @@ export function TemplatePicker({ onSelect }: { onSelect: (templateId: string) =>
 }
 ```
 
-- [ ] **Step 5: Run focused and component checks**
+- [x] **Step 5: Run focused and component checks**
 
 Run:
 
@@ -832,7 +886,7 @@ pnpm lint
 
 Expected: all tests and static checks pass.
 
-- [ ] **Step 6: Commit the template catalog**
+- [x] **Step 6: Commit the template catalog**
 
 Run:
 
@@ -853,7 +907,7 @@ git commit -m "feat: add editable basic habit templates"
 - Create: `src/features/habits/mappers/habit-form-mapper.ts`
 - Create: `tests/features/habits/habit-form-schema.test.ts`
 
-- [ ] **Step 1: Write failing schema and mapping tests**
+- [x] **Step 1: Write failing schema and mapping tests**
 
 Create `tests/features/habits/habit-form-schema.test.ts`:
 
@@ -919,7 +973,7 @@ describe('habitFormSchema', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+- [x] **Step 2: Run the focused test and confirm failure**
 
 Run:
 
@@ -929,7 +983,7 @@ pnpm vitest run tests/features/habits/habit-form-schema.test.ts
 
 Expected: FAIL because the form modules do not exist.
 
-- [ ] **Step 3: Implement the form schema**
+- [x] **Step 3: Implement the form schema**
 
 Create `src/features/habits/forms/habit-form-schema.ts`:
 
@@ -1004,7 +1058,7 @@ export const habitFormSchema = z
   });
 ```
 
-- [ ] **Step 4: Export inferred form types and deterministic defaults**
+- [x] **Step 4: Export inferred form types and deterministic defaults**
 
 Create `src/features/habits/forms/habit-form-types.ts`:
 
@@ -1068,7 +1122,7 @@ export function createHabitFormDefaults(input: {
 }
 ```
 
-- [ ] **Step 5: Map validated values to the repository command**
+- [x] **Step 5: Map validated values to the repository command**
 
 Create `src/features/habits/mappers/habit-form-mapper.ts`:
 
@@ -1130,7 +1184,7 @@ export function mapHabitFormToCreateCommand(
 }
 ```
 
-- [ ] **Step 6: Run focused, domain, and static checks**
+- [x] **Step 6: Run focused, domain, and static checks**
 
 Run:
 
@@ -1143,7 +1197,7 @@ pnpm lint
 
 Expected: all commands pass.
 
-- [ ] **Step 7: Commit form contracts**
+- [x] **Step 7: Commit form contracts**
 
 Run:
 
@@ -1166,7 +1220,7 @@ git commit -m "feat: define validated habit creation form"
 - Create: `src/lib/repositories/guest/dexie-product-repository.ts`
 - Create: `tests/integration/guest-habit-core-loop.test.ts`
 
-- [ ] **Step 1: Write a failing Dexie version 3 migration test**
+- [x] **Step 1: Write a failing Dexie version 3 migration test**
 
 Create `tests/unit/indexed-db/command-results-migration.test.ts` and prove that upgrading a populated version 2 database:
 
@@ -1175,7 +1229,7 @@ Create `tests/unit/indexed-db/command-results-migration.test.ts` and prove that 
 - adds nullable `replacedAt` and `replacedById` metadata to existing check-in records without changing their outcome;
 - reports `currentIndexedDbVersion === 3`.
 
-- [ ] **Step 2: Run the migration test and confirm failure**
+- [x] **Step 2: Run the migration test and confirm failure**
 
 Run:
 
@@ -1185,7 +1239,7 @@ pnpm vitest run tests/unit/indexed-db/command-results-migration.test.ts
 
 Expected: FAIL because Dexie version 3 and `commandResults` do not exist.
 
-- [ ] **Step 3: Add append-only Dexie version 3 contracts**
+- [x] **Step 3: Add append-only Dexie version 3 contracts**
 
 Extend `src/lib/indexed-db/types.ts`:
 
@@ -1224,7 +1278,7 @@ Add `migrateVersionTwoToThree` in `src/lib/indexed-db/migrations.ts` to set miss
 
 Register version 3 and `commandResults!: Table<LocalCommandResultRecord, string>` in `RecoveryFirstDatabase`.
 
-- [ ] **Step 4: Run migration and IndexedDB regression tests**
+- [x] **Step 4: Run migration and IndexedDB regression tests**
 
 Run:
 
@@ -1236,7 +1290,7 @@ pnpm typecheck
 
 Expected: version 1 to 2 to 3 upgrades preserve all existing records and pass.
 
-- [ ] **Step 5: Write the first failing Guest repository integration test**
+- [x] **Step 5: Write the first failing Guest repository integration test**
 
 Create `tests/integration/guest-habit-core-loop.test.ts`:
 
@@ -1317,7 +1371,7 @@ describe('DexieProductRepository', () => {
 });
 ```
 
-- [ ] **Step 6: Run the integration test and confirm the expected failure**
+- [x] **Step 6: Run the integration test and confirm the expected failure**
 
 Run:
 
@@ -1327,7 +1381,7 @@ pnpm vitest run tests/integration/guest-habit-core-loop.test.ts
 
 Expected: FAIL because `DexieProductRepository` does not exist.
 
-- [ ] **Step 7: Implement atomic Guest habit creation and idempotent replay**
+- [x] **Step 7: Implement atomic Guest habit creation and idempotent replay**
 
 Create `src/lib/repositories/guest/dexie-product-repository.ts` with this class skeleton and complete every interface method in later tasks:
 
@@ -1495,7 +1549,7 @@ export class DexieProductRepository implements ProductRepository {
 }
 ```
 
-- [ ] **Step 8: Run the focused test to expose the missing session generator**
+- [x] **Step 8: Run the focused test to expose the missing session generator**
 
 Run:
 
@@ -1505,7 +1559,7 @@ pnpm vitest run tests/integration/guest-habit-core-loop.test.ts
 
 Expected: FAIL because `generateSessionsForCommand` is not implemented.
 
-- [ ] **Step 9: Commit the repository boundary before session implementation**
+- [x] **Step 9: Commit the repository boundary before session implementation**
 
 Run:
 
@@ -1526,7 +1580,7 @@ git commit -m "feat: add atomic guest habit repository"
 - Create: `tests/features/sessions/ensure-session-horizon.test.ts`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing session horizon tests**
+- [x] **Step 1: Write failing session horizon tests**
 
 Create `tests/features/sessions/ensure-session-horizon.test.ts`:
 
@@ -1580,7 +1634,7 @@ describe('session horizon', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and confirm failure**
+- [x] **Step 2: Run the focused test and confirm failure**
 
 Run:
 
@@ -1590,7 +1644,7 @@ pnpm test:sessions
 
 Expected: FAIL because the session modules do not exist.
 
-- [ ] **Step 3: Define horizon constants and date helpers**
+- [x] **Step 3: Define horizon constants and date helpers**
 
 Create `src/features/sessions/session-horizon.ts`:
 
@@ -1670,7 +1724,7 @@ export function zonedLocalDateTimeToUtc(
 }
 ```
 
-- [ ] **Step 4: Implement deterministic session generation**
+- [x] **Step 4: Implement deterministic session generation**
 
 Create `src/features/sessions/application/ensure-session-horizon.ts`:
 
@@ -1754,7 +1808,7 @@ export function generateSessionsForCommand(
 }
 ```
 
-- [ ] **Step 5: Implement repository horizon extension with duplicate-safe bulk insert**
+- [x] **Step 5: Implement repository horizon extension with duplicate-safe bulk insert**
 
 Extend `DexieProductRepository.ensureSessionHorizon` to:
 
@@ -1767,11 +1821,11 @@ Extend `DexieProductRepository.ensureSessionHorizon` to:
 
 The method must use `bulkGet` by deterministic IDs and must never delete or move existing sessions.
 
-- [ ] **Step 6: Add timezone regression cases**
+- [x] **Step 6: Add timezone regression cases**
 
 Add tests for `Asia/Jakarta`, a daylight-saving transition in `America/New_York`, an invalid IANA timezone, and a finite-date recurrence. Document the deterministic policy for ambiguous local times as the earliest matching instant and reject nonexistent local times with `local_datetime_cannot_be_resolved`.
 
-- [ ] **Step 7: Run session and Guest integration tests**
+- [x] **Step 7: Run session and Guest integration tests**
 
 Run:
 
@@ -1785,7 +1839,7 @@ pnpm lint
 
 Expected: all commands pass and rerunning the generator inserts zero duplicates.
 
-- [ ] **Step 8: Commit deterministic generation**
+- [x] **Step 8: Commit deterministic generation**
 
 Run:
 
@@ -1807,7 +1861,7 @@ git commit -m "feat: generate deterministic bounded habit sessions"
 - Create: `tests/features/habits/create-habit.test.ts`
 - Create: `tests/features/habits/save-habit-draft.test.ts`
 
-- [ ] **Step 1: Write failing application-service tests**
+- [x] **Step 1: Write failing application-service tests**
 
 Create `tests/features/habits/create-habit.test.ts`:
 
@@ -1965,7 +2019,7 @@ describe('habit draft application service', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm failure**
+- [x] **Step 2: Run the tests and confirm failure**
 
 Run:
 
@@ -1975,7 +2029,7 @@ pnpm vitest run tests/features/habits/create-habit.test.ts tests/features/habits
 
 Expected: FAIL because the application services do not exist.
 
-- [ ] **Step 3: Implement create-habit orchestration**
+- [x] **Step 3: Implement create-habit orchestration**
 
 Create `src/features/habits/application/create-habit.ts`:
 
@@ -2014,7 +2068,7 @@ export async function createHabit(input: {
 }
 ```
 
-- [ ] **Step 4: Implement validated draft persistence**
+- [x] **Step 4: Implement validated draft persistence**
 
 Create `src/features/habits/application/save-habit-draft.ts`:
 
@@ -2055,7 +2109,7 @@ export async function loadHabitDraft(input: {
 }
 ```
 
-- [ ] **Step 5: Implement activation result mapping**
+- [x] **Step 5: Implement activation result mapping**
 
 Create `src/features/habits/application/activate-habit.ts`:
 
@@ -2077,7 +2131,7 @@ export function activeLimitOptions(planTier: 'guest' | 'free' | 'premium') {
 }
 ```
 
-- [ ] **Step 6: Run focused checks**
+- [x] **Step 6: Run focused checks**
 
 Run:
 
@@ -2089,7 +2143,7 @@ pnpm lint
 
 Expected: all habit application tests pass.
 
-- [ ] **Step 7: Commit application services**
+- [x] **Step 7: Commit application services**
 
 Run:
 
@@ -2112,7 +2166,7 @@ git commit -m "feat: orchestrate habit creation and drafts"
 - Create: `tests/features/habits/active-limit-dialog.test.tsx`
 - Modify: `src/app/(application)/habits/new/page.tsx`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Create `tests/features/habits/habit-wizard.test.tsx` and verify:
 
@@ -2125,7 +2179,7 @@ Create `tests/features/habits/habit-wizard.test.tsx` and verify:
 
 Create `tests/features/habits/active-limit-dialog.test.tsx` and verify Guest options are `Pause an Active Habit`, `Create Account`, `Keep as Draft`, and `Cancel`.
 
-- [ ] **Step 2: Run tests and confirm failure**
+- [x] **Step 2: Run tests and confirm failure**
 
 Run:
 
@@ -2135,7 +2189,7 @@ pnpm vitest run tests/features/habits/habit-wizard.test.tsx tests/features/habit
 
 Expected: FAIL because the components do not exist.
 
-- [ ] **Step 3: Implement the wizard with React Hook Form and Zod**
+- [x] **Step 3: Implement the wizard with React Hook Form and Zod**
 
 The root component must use:
 
@@ -2158,7 +2212,7 @@ Implement these steps in order:
 
 Each step must use semantic fieldsets, visible labels, inline errors linked with `aria-describedby`, and a stable progress indicator. The Review step must display the exact values held by React Hook Form, not duplicated component state.
 
-- [ ] **Step 4: Implement save/discard/continue behavior**
+- [x] **Step 4: Implement save/discard/continue behavior**
 
 `LeaveDraftDialog` must:
 
@@ -2168,7 +2222,7 @@ Each step must use semantic fieldsets, visible labels, inline errors linked with
 - close without navigation on `Continue editing`;
 - keep focus trapped while open and return focus to the triggering control.
 
-- [ ] **Step 5: Implement active-limit resolution without destructive defaults**
+- [x] **Step 5: Implement active-limit resolution without destructive defaults**
 
 `ActiveLimitDialog` must:
 
@@ -2178,11 +2232,11 @@ Each step must use semantic fieldsets, visible labels, inline errors linked with
 - never delete or archive a habit automatically;
 - keep `Cancel` visually available and initially focused for destructive choices.
 
-- [ ] **Step 6: Wire `/app/habits/new`**
+- [x] **Step 6: Wire `/app/habits/new`**
 
 Create `src/app/(application)/habits/new/page.tsx` as a Server Component that renders page metadata and a narrow Client Component boundary for `HabitWizard`. It must not import Dexie from the Server Component.
 
-- [ ] **Step 7: Run component, accessibility, and static checks**
+- [x] **Step 7: Run component, accessibility, and static checks**
 
 Run:
 
@@ -2196,7 +2250,7 @@ pnpm build
 
 Expected: all commands pass; the route builds as a responsive web page.
 
-- [ ] **Step 8: Commit the habit wizard**
+- [x] **Step 8: Commit the habit wizard**
 
 Run:
 
@@ -2225,7 +2279,7 @@ git commit -m "feat: build accessible habit creation wizard"
 - Modify: `src/app/(application)/habits/[habitId]/page.tsx`
 - Create: `src/app/(application)/habits/[habitId]/history/page.tsx`
 
-- [ ] **Step 1: Write failing repository and component tests**
+- [x] **Step 1: Write failing repository and component tests**
 
 Add tests that prove:
 
@@ -2235,7 +2289,7 @@ Add tests that prove:
 - Versions list is ordered descending and cannot edit historical rows;
 - History labels Full, Minimum, Manual Skipped, Automatic Skipped, and Unrecorded with text and icon, not color alone.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2245,17 +2299,17 @@ pnpm vitest run tests/features/habits/habit-list.test.tsx tests/features/habits/
 
 Expected: FAIL because list/detail reads and components are not implemented.
 
-- [ ] **Step 3: Complete Guest repository list and detail methods**
+- [x] **Step 3: Complete Guest repository list and detail methods**
 
 Implement `listHabits` with the compound owner index and filter `deletedAt === null`.
 
 Implement `getHabitDetail` in a single Dexie read transaction over `habits`, `habitVersions`, `sessions`, and `checkIns`. Map JSON targets and cues through narrow runtime validators. Return `null` when the habit does not belong to the owner.
 
-- [ ] **Step 4: Implement application read services**
+- [x] **Step 4: Implement application read services**
 
 `listHabits.ts` and `get-habit-detail.ts` must accept a `ProductRepository` and `ProductOwner`, then return repository reads without React dependencies. They may add display-safe derived labels but may not recalculate domain metrics differently from shared domain functions.
 
-- [ ] **Step 5: Implement responsive list and detail components**
+- [x] **Step 5: Implement responsive list and detail components**
 
 Follow `UI-SPEC.md`:
 
@@ -2266,11 +2320,11 @@ Follow `UI-SPEC.md`:
 - status always includes a visible text label;
 - no history row is deleted or mutated from the list UI.
 
-- [ ] **Step 6: Wire routes and not-found behavior**
+- [x] **Step 6: Wire routes and not-found behavior**
 
 `/app/habits/[habitId]` must render `notFound()` only after the client repository reports a missing owner-scoped habit. While Guest IndexedDB initializes, show the approved loading structure rather than a false not-found state.
 
-- [ ] **Step 7: Run feature and route checks**
+- [x] **Step 7: Run feature and route checks**
 
 Run:
 
@@ -2285,7 +2339,7 @@ pnpm build
 
 Expected: all commands pass.
 
-- [ ] **Step 8: Commit habit read surfaces**
+- [x] **Step 8: Commit habit read surfaces**
 
 Run:
 
@@ -2307,7 +2361,7 @@ git commit -m "feat: add habit list detail versions and history"
 - Create: `tests/features/today/get-today-read-model.test.ts`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing Today read-model tests**
+- [x] **Step 1: Write failing Today read-model tests**
 
 Create `tests/features/today/get-today-read-model.test.ts` and prove:
 
@@ -2318,7 +2372,7 @@ Create `tests/features/today/get-today-read-model.test.ts` and prove:
 - no-habits, no-eligible-sessions, and all-recorded are distinct states;
 - an Automatic Skipped historical row never appears as a user action.
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 Run:
 
@@ -2328,7 +2382,7 @@ pnpm test:today
 
 Expected: FAIL because Today modules do not exist.
 
-- [ ] **Step 3: Define Today view types**
+- [x] **Step 3: Define Today view types**
 
 Create `src/features/today/today-types.ts`:
 
@@ -2349,7 +2403,7 @@ export type TodayReadModel = {
 };
 ```
 
-- [ ] **Step 4: Implement deterministic ordering**
+- [x] **Step 4: Implement deterministic ordering**
 
 Create `src/features/today/today-ordering.ts`:
 
@@ -2376,7 +2430,7 @@ export function orderTodaySessions(sessions: SessionSummary[]): SessionSummary[]
 }
 ```
 
-- [ ] **Step 5: Implement the Today application read model**
+- [x] **Step 5: Implement the Today application read model**
 
 Create `src/features/today/application/get-today-read-model.ts`:
 
@@ -2418,11 +2472,11 @@ export async function getTodayReadModel(input: {
 }
 ```
 
-- [ ] **Step 6: Complete Guest repository `getToday`**
+- [x] **Step 6: Complete Guest repository `getToday`**
 
 Read owner-scoped sessions for `localDate`, join current habit and Habit Version values in one Dexie transaction, map targets and cues, count slot-consuming habits, and return the Guest limit from `activeHabitLimitFor('guest')`.
 
-- [ ] **Step 7: Run Today, domain, and IndexedDB tests**
+- [x] **Step 7: Run Today, domain, and IndexedDB tests**
 
 Run:
 
@@ -2436,7 +2490,7 @@ pnpm lint
 
 Expected: all commands pass.
 
-- [ ] **Step 8: Commit Today read models**
+- [x] **Step 8: Commit Today read models**
 
 Run:
 
@@ -2462,7 +2516,7 @@ git commit -m "feat: build deterministic today read model"
 - Create: `src/app/(application)/today/loading.tsx`
 - Create: `src/app/(application)/today/error.tsx`
 
-- [ ] **Step 1: Write failing Today component tests**
+- [x] **Step 1: Write failing Today component tests**
 
 Prove:
 
@@ -2475,7 +2529,7 @@ Prove:
 - no-eligible state reports the next session when available;
 - all-recorded state says `Full and Minimum both support continuity.`
 
-- [ ] **Step 2: Run component tests and confirm failure**
+- [x] **Step 2: Run component tests and confirm failure**
 
 Run:
 
@@ -2485,11 +2539,11 @@ pnpm vitest run tests/features/today/today-page.test.tsx tests/features/today/to
 
 Expected: FAIL because Today components do not exist.
 
-- [ ] **Step 3: Implement the daily progress card**
+- [x] **Step 3: Implement the daily progress card**
 
 Display completed count, Minimum count, remaining count, and a text summary. The circular progress must expose an accessible name and cannot use a punitive missed count as the dominant metric.
 
-- [ ] **Step 4: Implement stable session-card anatomy**
+- [x] **Step 4: Implement stable session-card anatomy**
 
 `TodaySessionCard` must preserve the same layout across states:
 
@@ -2504,19 +2558,19 @@ Action group or Edit action
 
 Use the shared UI tokens from Plan 02. State changes may replace the action row but must not move the title, targets, or schedule.
 
-- [ ] **Step 5: Implement first check-in guidance**
+- [x] **Step 5: Implement first check-in guidance**
 
 The guide must be non-blocking, dismissible, and stored as a browser-local setting. It explains Full, Minimum, and Skipped without covering the action buttons. Help remains available from the session-card overflow menu.
 
-- [ ] **Step 6: Implement route loading and error surfaces**
+- [x] **Step 6: Implement route loading and error surfaces**
 
 `loading.tsx` must use skeletons matching the final card dimensions. `error.tsx` must preserve the application shell, display an icon, heading, explanation, and Retry action, and must not rely on red alone.
 
-- [ ] **Step 7: Wire the Today route with a narrow Client Component boundary**
+- [x] **Step 7: Wire the Today route with a narrow Client Component boundary**
 
 The Server Component renders page metadata and shell framing. `TodayPageClient` initializes the Guest repository, ensures the horizon, resolves eligible expired local records, reads Today, and subscribes to Dexie live changes. It must not claim cloud synchronization in Guest mode.
 
-- [ ] **Step 8: Run component, accessibility, visual, and build checks**
+- [x] **Step 8: Run component, accessibility, visual, and build checks**
 
 Run:
 
@@ -2532,7 +2586,7 @@ pnpm build
 
 Expected: all commands pass and card layout remains stable in tested states.
 
-- [ ] **Step 9: Commit Today UI**
+- [x] **Step 9: Commit Today UI**
 
 Run:
 
@@ -2559,7 +2613,7 @@ git commit -m "feat: build responsive today dashboard"
 - Create: `tests/features/check-ins/check-in-components.test.tsx`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing check-in tests**
+- [x] **Step 1: Write failing check-in tests**
 
 Prove:
 
@@ -2571,7 +2625,7 @@ Prove:
 - stale session revision is rejected;
 - friction notes are absent from analytics-facing event data.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2581,7 +2635,7 @@ pnpm test:check-ins
 
 Expected: FAIL because check-in modules do not exist.
 
-- [ ] **Step 3: Define the friction form schema**
+- [x] **Step 3: Define the friction form schema**
 
 Create `src/features/check-ins/forms/friction-form-schema.ts`:
 
@@ -2596,7 +2650,7 @@ export const frictionFormSchema = z.object({
 });
 ```
 
-- [ ] **Step 4: Define check-in command creation**
+- [x] **Step 4: Define check-in command creation**
 
 Create `src/features/check-ins/check-in-command.ts`:
 
@@ -2627,7 +2681,7 @@ export function createRecordCheckInCommand(input: {
 }
 ```
 
-- [ ] **Step 5: Implement record-check-in application orchestration**
+- [x] **Step 5: Implement record-check-in application orchestration**
 
 Create `src/features/check-ins/application/record-check-in.ts`:
 
@@ -2663,7 +2717,7 @@ export async function recordCheckIn(input: {
 }
 ```
 
-- [ ] **Step 6: Complete Guest repository `recordCheckIn` atomically**
+- [x] **Step 6: Complete Guest repository `recordCheckIn` atomically**
 
 Inside one Dexie transaction over `sessions`, `checkIns`, and `commandResults`:
 
@@ -2680,7 +2734,7 @@ Inside one Dexie transaction over `sessions`, `checkIns`, and `commandResults`:
 
 For Guest mode, set synchronization state to `local_only`, not `pending`.
 
-- [ ] **Step 7: Implement action group, friction surface, and confirmation**
+- [x] **Step 7: Implement action group, friction surface, and confirmation**
 
 - `Full` and `Minimum` save directly.
 - `Skipped` opens the responsive friction dialog.
@@ -2689,7 +2743,7 @@ For Guest mode, set synchronization state to `local_only`, not `pending`.
 - Restore controls and announce an error when the transaction fails.
 - Use `aria-live="polite"` for normal confirmations.
 
-- [ ] **Step 8: Run focused and integration checks**
+- [x] **Step 8: Run focused and integration checks**
 
 Run:
 
@@ -2704,7 +2758,7 @@ pnpm lint
 
 Expected: all commands pass; Full, Minimum, and Manual Skipped remain distinct.
 
-- [ ] **Step 9: Commit check-in creation**
+- [x] **Step 9: Commit check-in creation**
 
 Run:
 
@@ -2726,7 +2780,7 @@ git commit -m "feat: record full minimum and skipped check-ins"
 - Modify: `src/features/today/components/today-session-card.tsx`
 - Modify: `src/lib/repositories/guest/dexie-product-repository.ts`
 
-- [ ] **Step 1: Write failing edit and history tests**
+- [x] **Step 1: Write failing edit and history tests**
 
 Prove:
 
@@ -2737,7 +2791,7 @@ Prove:
 - edits after the owner-local same-day cutoff return `same_day_edit_closed`;
 - the UI explains that today’s record changes while prior history remains preserved.
 
-- [ ] **Step 2: Run focused tests and confirm failure**
+- [x] **Step 2: Run focused tests and confirm failure**
 
 Run:
 
@@ -2747,7 +2801,7 @@ pnpm vitest run tests/features/check-ins/edit-check-in.test.ts
 
 Expected: FAIL because edit orchestration is not implemented.
 
-- [ ] **Step 3: Implement edit orchestration**
+- [x] **Step 3: Implement edit orchestration**
 
 Create `src/features/check-ins/application/edit-check-in.ts`:
 
@@ -2784,11 +2838,11 @@ export async function editCheckIn(input: {
 }
 ```
 
-- [ ] **Step 4: Complete Guest repository `editCheckIn`**
+- [x] **Step 4: Complete Guest repository `editCheckIn`**
 
 Use one Dexie transaction. Never update the prior check-in row in place. Add a new check-in record, update the session projection, preserve both records for history, and store the idempotent replay result. Verify the local date using the session’s timezone snapshot and a deterministic clock helper.
 
-- [ ] **Step 5: Implement the edit dialog and entry points**
+- [x] **Step 5: Implement the edit dialog and entry points**
 
 Entry points:
 
@@ -2798,7 +2852,7 @@ Entry points:
 
 The dialog must show the current outcome, all alternatives, optional friction when Skipped, metric-impact text, Cancel, and explicit Save Changes.
 
-- [ ] **Step 6: Run edit, history, and regression checks**
+- [x] **Step 6: Run edit, history, and regression checks**
 
 Run:
 
@@ -2834,7 +2888,7 @@ git commit -m "feat: preserve history during same day check-in edits"
 - Modify: `src/features/today/components/today-page-client.tsx`
 - Modify: `src/features/habits/components/habit-history.tsx`
 
-- [ ] **Step 1: Write failing resolution tests**
+- [x] **Step 1: Write failing resolution tests**
 
 Prove:
 
@@ -2845,7 +2899,7 @@ Prove:
 - a resolved Full, Minimum, or Manual Skipped session is never reclassified;
 - rerunning resolution is idempotent.
 
-- [ ] **Step 2: Run the test and confirm failure**
+- [x] **Step 2: Run the test and confirm failure**
 
 Run:
 
@@ -2855,7 +2909,7 @@ pnpm vitest run tests/features/sessions/resolve-expired-unrecorded.test.ts
 
 Expected: FAIL because resolution application logic is not implemented.
 
-- [ ] **Step 3: Implement the resolution application service**
+- [x] **Step 3: Implement the resolution application service**
 
 Create `src/features/sessions/application/resolve-expired-unrecorded.ts`:
 
@@ -2871,19 +2925,19 @@ export async function resolveExpiredUnrecorded(input: {
 }
 ```
 
-- [ ] **Step 4: Complete the Guest repository resolution transaction**
+- [x] **Step 4: Complete the Guest repository resolution transaction**
 
 Query owner-scoped sessions with `status === 'unrecorded'` and `resolutionDueAt < now`. Update only those sessions to `automatic_skipped`, increment revision, and preserve synchronization state. Do not create a check-in row and do not call Manual Skipped counter logic.
 
-- [ ] **Step 5: Invoke safe catch-up before Today reads**
+- [x] **Step 5: Invoke safe catch-up before Today reads**
 
 `TodayPageClient` calls resolution once after local repository initialization and before its first Today read. The operation must be safe to rerun on reload.
 
-- [ ] **Step 6: Display Automatic Skipped distinctly in history**
+- [x] **Step 6: Display Automatic Skipped distinctly in history**
 
 Use text `Automatically marked skipped after the check-in window closed` with a clock-related icon. Do not offer friction editing for an Automatic Skipped record.
 
-- [ ] **Step 7: Run session, domain, and full core-loop tests**
+- [x] **Step 7: Run session, domain, and full core-loop tests**
 
 Run:
 
@@ -2916,7 +2970,7 @@ git commit -m "feat: resolve expired unrecorded sessions"
 - Create: `src/lib/repositories/signed-in/supabase-product-repository.test.ts`
 - Create: `tests/integration/signed-in-product-repository.test.ts`
 
-- [ ] **Step 1: Write failing adapter tests with a typed Supabase mock**
+- [x] **Step 1: Write failing adapter tests with a typed Supabase mock**
 
 Prove:
 
@@ -2927,7 +2981,7 @@ Prove:
 - database error codes map to `ProductRepositoryError` codes;
 - no browser service-role client is accepted.
 
-- [ ] **Step 2: Run adapter tests and confirm failure**
+- [x] **Step 2: Run adapter tests and confirm failure**
 
 Run:
 
@@ -2937,11 +2991,11 @@ pnpm vitest run src/lib/repositories/signed-in/supabase-product-repository.test.
 
 Expected: FAIL because the adapter does not exist.
 
-- [ ] **Step 3: Implement a dependency-injected adapter**
+- [x] **Step 3: Implement a dependency-injected adapter**
 
 The constructor accepts only an authenticated, typed Supabase client and an explicit user ID. It must implement the same `ProductRepository` interface. Mutations call Plan 03 RPCs; reads call security-invoker views or owner-scoped tables. The adapter must never infer Premium entitlement from browser storage.
 
-- [ ] **Step 4: Map database errors centrally**
+- [x] **Step 4: Map database errors centrally**
 
 Map:
 
@@ -2955,7 +3009,7 @@ row_not_found or RLS denial -> habit_not_found/session_not_found as operation ap
 
 Unknown errors map to `repository_unavailable` while retaining a privacy-safe internal cause for monitoring adapters introduced later.
 
-- [ ] **Step 5: Verify RLS and typed database contracts**
+- [x] **Step 5: Verify RLS and typed database contracts**
 
 Run:
 

@@ -20,6 +20,9 @@ export default defineConfig({
       'tests/contract/**/*.test.ts',
       'tests/accessibility/**/*.test.ts',
       'tests/accessibility/**/*.test.tsx',
+      'tests/features/**/*.test.ts',
+      'tests/features/**/*.test.tsx',
+      'src/lib/repositories/**/*.test.ts',
     ],
     coverage: {
       provider: 'v8',

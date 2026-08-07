@@ -1,4 +1,5 @@
-import { TodayDashboard } from '@/features/today/today-dashboard';
+import { AppShell } from '@/components/layout/app-shell';
+import { TodayPageClient } from '@/features/today/components/today-page-client';
 
 export const metadata = {
   title: 'Today Dashboard | RecoveryFirst',
@@ -6,5 +7,9 @@ export const metadata = {
 };
 
 export default function TodayDashboardPage(): React.JSX.Element {
-  return <TodayDashboard />;
+  return (
+    <AppShell>
+      <TodayPageClient />
+    </AppShell>
+  );
 }
