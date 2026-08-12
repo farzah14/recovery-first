@@ -1,12 +1,16 @@
 import { StrictMode } from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
 import { HabitsManagement } from '@/features/habits/habits-management';
 
 describe('HabitsManagement', () => {
   beforeEach(() => {
     window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('renders Habits Library header, search bar, status and date and time dropdowns, active habits cards, and paused habits section', () => {
@@ -106,6 +110,8 @@ describe('HabitsManagement', () => {
   }, 30000);
 
   it('uses the Habits Library count for the matching Weekly Overview date', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-05T10:00:00.000Z'));
     window.localStorage.setItem(
       'recovery-first.habits-list',
       JSON.stringify([
