@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { handlePortalRequest } from '@/app/api/billing/portal/route';
+import { handlePortalRequest } from '@/app/api/billing/portal/handler';
 
 describe('portal route', () => {
   it('requires authentication and prevents response caching', async () => {
