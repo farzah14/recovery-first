@@ -13,7 +13,6 @@ import {
   Trash2,
   Sparkles,
   TrendingUp,
-  Info,
   Calendar,
   Wrench,
   RotateCcw,

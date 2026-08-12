@@ -13,7 +13,6 @@ import {
   Trash2,
   Sparkles,
   TrendingUp,
-  Info,
   Calendar,
   Wrench,
   AlertTriangle,
@@ -223,27 +222,6 @@ function StatusFilterIcon({
 
 function mergeLibraryHabits(records: ReadonlyArray<HabitRecord>): HabitItem[] {
   return records.map(toHabitItem);
-}
-
-function getIconIdFromEmoji(emojiOrName: string): string {
-  const normalized = emojiOrName.toLowerCase();
-  if (normalized === 'water' || normalized.includes('💧')) return 'water';
-  if (normalized === 'reading' || normalized.includes('📚') || normalized.includes('📖'))
-    return 'reading';
-  if (normalized === 'exercise' || normalized.includes('🏋️') || normalized.includes('🏃'))
-    return 'exercise';
-  if (normalized === 'running' || normalized.includes('🏃')) return 'running';
-  if (normalized === 'sleep' || normalized.includes('🌙') || normalized.includes('😴'))
-    return 'sleep';
-  if (normalized === 'coding' || normalized.includes('💻')) return 'coding';
-  if (normalized === 'writing' || normalized.includes('✏️')) return 'writing';
-  if (normalized === 'nutrition' || normalized.includes('🍎')) return 'nutrition';
-  if (normalized === 'flame' || normalized.includes('🔥')) return 'flame';
-  if (normalized === 'coffee' || normalized.includes('☕')) return 'coffee';
-  if (normalized === 'music' || normalized.includes('🎵')) return 'music';
-  if (normalized === 'zap' || normalized.includes('⚡')) return 'zap';
-  if (normalized === 'target' || normalized.includes('🎯')) return 'target';
-  return 'meditation';
 }
 
 function getIconEmojiFromId(iconId: string): string {
@@ -505,21 +483,6 @@ export function HabitsManagement(): React.JSX.Element {
       setToastMessage(null);
       setToastExiting(false);
     }, 3000);
-  };
-
-  const openEditHabitModal = (habit: HabitItem) => {
-    setSelectedHabitId(habit.id);
-    setEditName(habit.name);
-    setEditDesc(habit.description);
-    setEditCategory((habit.category || 'mindfulness').toLowerCase());
-    setEditNormal(habit.normalTarget);
-    setEditMinimum(habit.minimumTarget);
-    setEditIcon(getIconIdFromEmoji(habit.iconName));
-    setEditFromTime(habit.fromTime || '08:00');
-    setEditUntilTime(habit.untilTime || '09:00');
-    setEditTiming(habit.timingContext || habit.schedule || '08:00 AM - 09:00 AM');
-    setEditDate(habit.createdDate || getTodayDateStr());
-    setEditDialogOpen(true);
   };
 
   const handleOpenDetail = (habitId: string) => {
