@@ -124,6 +124,14 @@ export default function SignInPage(): React.JSX.Element {
           <Button disabled={pending} fullWidth size="touch" type="submit" variant="primary">
             Continue with Email
           </Button>
+          <div className="text-center">
+            <Link
+              className="text-xs font-semibold text-[var(--color-text-secondary)] underline-offset-4 hover:text-[var(--color-primary)] hover:underline"
+              href={routes.forgotPassword}
+            >
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         {message ? (
