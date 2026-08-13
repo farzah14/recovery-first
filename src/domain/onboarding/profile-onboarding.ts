@@ -45,7 +45,7 @@ export const TIMEZONE_OPTIONS = [
 ] as const;
 
 export const WEEK_START_OPTIONS = [
-  { value: 0, label: 'Sunday' },
+  { value: 7, label: 'Sunday' },
   { value: 1, label: 'Monday' },
   { value: 6, label: 'Saturday' },
 ] as const;

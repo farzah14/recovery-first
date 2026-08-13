@@ -6,6 +6,7 @@ import {
   normalizeHabitInput,
   normalizeProfileInput,
   ONBOARDING_STEPS,
+  WEEK_START_OPTIONS,
 } from '@/domain/onboarding/profile-onboarding';
 
 describe('onboarding domain rules', () => {
@@ -37,6 +38,25 @@ describe('onboarding domain rules', () => {
     expect(result.quiet_hours_start).toBe('21:00');
     expect(result.quiet_hours_end).toBe('07:00');
     expect(result.terms_accepted_at).toBe('2026-08-13T12:00:00.000Z');
+  });
+
+  it('keeps every week start option within the database 1–7 contract', () => {
+    for (const option of WEEK_START_OPTIONS) {
+      expect(option.value).toBeGreaterThanOrEqual(1);
+      expect(option.value).toBeLessThanOrEqual(7);
+    }
+  });
+
+  it('maps Sunday to 7 so the profiles week_start check accepts it', () => {
+    const result = normalizeProfileInput({
+      displayName: 'Ada',
+      timezone: 'UTC',
+      weekStart: 7,
+      quietHoursStart: null,
+      quietHoursEnd: null,
+    });
+
+    expect(result.week_start).toBe(7);
   });
 
   it('preserves a valid week start day', () => {
