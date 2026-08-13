@@ -586,10 +586,15 @@ Use Supabase Edge Functions for privileged or externally triggered workflows:
 /legal/terms
 /legal/cookies
 /auth/sign-in
+/auth/forgot-password
+/auth/update-password
 /auth/callback
+/onboarding
 ```
 
 Public content uses static generation or cached server rendering where practical. Private data is never embedded in public-page output.
+
+The `/onboarding` route group is authenticated but sits outside the private application group so it can render while `onboarding_completed_at` is unset. The private application layout redirects to `/onboarding` until onboarding completes.
 
 ## 7.2 Application routes
 
@@ -662,8 +667,11 @@ All normal product identities are authenticated Supabase accounts. Legacy browse
 
 - Google OAuth through Supabase Auth.
 - Email OTP or magic link through Supabase Auth.
+- Password recovery through Supabase Auth recovery links.
 - Authentication uses PKCE-compatible browser flows and secure cookie-based SSR sessions.
 - The callback validates the intended destination before redirecting.
+- A `type=recovery` callback query parameter routes to the password-update page instead of the standard sign-in bootstrap.
+- The password-update page requires a valid Supabase session before `updateUser` is called.
 
 ## 8.3 Supabase client separation
 
@@ -689,6 +697,7 @@ src/lib/supabase/admin.ts    → privileged server-only client
 5. The server loads plan and entitlement state.
 6. The browser initializes the signed-in local cache.
 7. If legacy local data exists, the recovery or export flow is offered contextually.
+8. While `onboarding_completed_at` is unset, private application routes redirect to `/onboarding`; completing the wizard sets the completion timestamp and lands the user on Today.
 
 ## 8.5 Authorization layers
 
@@ -799,6 +808,8 @@ Core local tables:
 | `week_start` | smallint | Validated 1–7 |
 | `quiet_hours_start` | time | Optional |
 | `quiet_hours_end` | time | Optional |
+| `terms_accepted_at` | timestamptz | One-time consent record, written by onboarding, never cleared |
+| `onboarding_completed_at` | timestamptz | One-time onboarding gate, written by onboarding, never cleared |
 | `plan_code` | text | Cached display value, not sole entitlement authority |
 | `created_at` | timestamptz | Server-generated |
 | `updated_at` | timestamptz | Server-generated |

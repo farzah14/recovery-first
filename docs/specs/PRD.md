@@ -429,6 +429,40 @@ When an authenticated session expires, the application shall preserve unsynchron
 
 **Acceptance:** Successful re-authentication resumes the prior safe context and retries eligible pending operations.
 
+### FR-ONB-08 — Password reset
+
+The product shall support password reset through a Supabase Auth recovery link for email/password accounts.
+
+**Acceptance:**
+
+- The sign-in surface exposes a `Forgot password?` entry that never reveals whether an email address has an account.
+- The recovery link returns the user to a password-update page that requires a valid recovery session.
+- The new password requires at least 8 characters and a matching confirmation, with inline validation.
+- Expired, reused, or malformed recovery links fail safely back to a stable auth surface without changing the password.
+
+### FR-ONB-09 — Terms and Privacy Policy consent
+
+Account creation for both Google and email authentication shall require explicit consent to the Terms of Service and Privacy Policy before private application access.
+
+**Acceptance:**
+
+- Consent is a required step for every new account regardless of authentication method.
+- The consent step links to the current Terms of Service and Privacy Policy documents.
+- The application records the consent timestamp in the account profile and never clears it.
+- Consent is not implicitly granted by sign-up alone.
+
+### FR-ONB-10 — Required one-time onboarding
+
+New accounts shall complete a required one-time onboarding wizard — consent, profile, and first habit — before private application routes open.
+
+**Acceptance:**
+
+- Every private application route redirects to onboarding until `onboarding_completed_at` is set.
+- The wizard consists of consent, profile (display name, timezone, week start, quiet hours), and first-habit steps, each with one primary action.
+- The profile step persists timezone, week-start, and quiet-hours preferences.
+- The first-habit step reuses the standard habit-creation rules and Free active-habit limits.
+- Completing the wizard lands the user on Today.
+
 ## 6.2 Habit creation and structure
 
 ### FR-HAB-01 — Creation routes
