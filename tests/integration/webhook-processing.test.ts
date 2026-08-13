@@ -6,7 +6,7 @@ import type { NormalizedBillingEvent } from '@/domain/billing/normalized-event';
 import { BillingNormalizationError } from '@/lib/payments/paddle-normalizer';
 import { readRawWebhook } from '@/lib/payments/webhook-envelope';
 import { createWebhookProcessor } from '@/server/billing/process-webhook';
-import { handleWebhookRequest } from '@/app/api/billing/webhook/route';
+import { handleWebhookRequest } from '@/app/api/billing/webhook/handler';
 
 const normalizedEvent: NormalizedBillingEvent = {
   provider: 'paddle',

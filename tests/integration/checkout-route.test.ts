@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleCheckoutRequest } from '@/app/api/billing/checkout/route';
+import { handleCheckoutRequest } from '@/app/api/billing/checkout/handler';
 
 describe('checkout route', () => {
   it('rejects malformed requests without invoking checkout creation', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleBillingStatusRequest } from '@/app/api/billing/status/route';
+import { handleBillingStatusRequest } from '@/app/api/billing/status/handler';
 
 describe('billing status route', () => {
   it('rejects a missing or malformed attempt identifier', async () => {

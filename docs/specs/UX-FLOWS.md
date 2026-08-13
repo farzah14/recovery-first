@@ -563,6 +563,7 @@ flowchart TD
 3. Successful authentication creates or restores a Free account.
 4. If legacy local data exists, the website offers transfer or export before opening the account workspace.
 5. The first-habit onboarding begins after account resolution.
+6. New accounts complete the required one-time onboarding wizard before private application routes open (see UX-APP-03).
 
 **Primary path: returning account user**
 
@@ -623,6 +624,48 @@ After first account sign-in with no habits:
 5. No account, notification, or Premium prompt interrupts this state.
 
 **Requirement references:** FR-ONB-01, FR-ONB-02, FR-ONB-04.
+
+## 6.4 UX-APP-04 — Required one-time onboarding wizard
+
+**Trigger**
+
+- A new account completes authentication for the first time, or any signed-in user with `onboarding_completed_at` unset attempts a private application route.
+
+**Gate behavior**
+
+- Every private application route redirects to `/onboarding` while `onboarding_completed_at` is unset.
+- `/onboarding` itself, the auth routes, and public content are never redirected.
+- The account profile remains readable at all times; the wizard writes only the caller's own profile row.
+
+**Wizard steps**
+
+1. **Consent** — the user selects a checkbox confirming acceptance of the Terms of Service and Privacy Policy (both linked). Without consent, the primary action shows an inline error and does not advance.
+2. **Profile** — display name (optional), timezone (supported IANA options), week start day, and quiet hours (optional start/end pair). Saving persists the profile and records the consent timestamp.
+3. **First habit** — name, category, Normal version, Minimum version, icon, and schedule range. The step reuses the standard habit-creation rules and Free active-habit limits.
+
+**Primary path**
+
+1. The wizard opens at step 1.
+2. The user accepts the terms and selects Continue.
+3. The user reviews or adjusts the profile and selects Continue.
+4. The user names the first habit and selects Finish.
+5. The account lands on Today.
+
+**Failure states**
+
+- Consent not checked: inline error, step does not advance.
+- Profile save fails: inline error, retry keeps entered values.
+- First-habit creation fails: inline error, retry; no completion timestamp is written.
+- Completion timestamp write fails: inline error, retry; the habit already created is not duplicated (standard idempotency rules apply).
+- Mid-wizard refresh: the wizard restarts at step 1; nothing is lost because nothing was persisted until a step saved.
+
+**UX rules**
+
+- Each step has one primary action and visible progress.
+- Back navigation returns to the previous step with entered values preserved.
+- The wizard is keyboard-operable and never uses color alone to communicate state.
+
+**Requirement references:** FR-ONB-01, FR-ONB-02, FR-ONB-09, FR-ONB-10.
 
 # 7. Habit Creation
 
@@ -1616,6 +1659,44 @@ flowchart TD
 
 ## 15.5 UX-AUTH-04 — Merge legacy local data with an existing account
 
+```mermaid
+flowchart TD
+    Forgot[Forgot password? on sign-in] --> Email[Enter email address]
+    Email --> Sent[Confirmation: reset link sent if address has an account]
+    Sent --> Link[User opens recovery link]
+    Link --> Callback[Auth callback type=recovery]
+    Callback --> Update[Choose a new password page]
+    Update --> Validate{Password valid?}
+    Validate -- No --> Inline[Inline validation error]
+    Validate -- Yes --> Done[Password updated, redirected to Today]
+```
+
+**Primary path**
+
+1. The user selects `Forgot password?` on the sign-in page.
+2. The user enters an email address.
+3. The website shows a neutral confirmation that a reset link was sent; it never reveals whether the address has an account.
+4. The user opens the recovery link.
+5. The auth callback detects a `recovery` link and sends the user to the password-update page.
+6. The user enters a new password (at least 8 characters) and a matching confirmation.
+7. The password is updated and the user lands in the application.
+
+**Failure states**
+
+- Expired, reused, or malformed recovery link: the callback fails safely back to a stable auth surface without changing the password.
+- No active session at the update page: the user is asked to start a fresh reset flow.
+- New password too short or mismatched confirmation: inline errors, no update is attempted.
+
+**UX rules**
+
+- Never confirm or deny the existence of an account for a given address.
+- After a successful reset, do not silently drop the user; land them in a signed-in state on Today.
+- Do not present reset as punitive; recovery language is neutral.
+
+**Requirement references:** FR-ONB-08.
+
+## 15.6 UX-AUTH-04 — Merge legacy local data with an existing account
+
 1. The website detects both legacy local data and existing cloud data.
 2. A merge summary lists counts and potential conflicts.
 3. Duplicate detection uses stable identifiers and supported matching rules.
@@ -1630,7 +1711,45 @@ flowchart TD
 - Never discard a check-in silently.
 - Do not require the user to manually inspect every non-conflicting item.
 
-## 15.6 Legacy local data recovery failure
+## 15.6 UX-AUTH-05 — Reset a forgotten password
+
+```mermaid
+flowchart TD
+    Forgot[Forgot password? on sign-in] --> Email[Enter email address]
+    Email --> Sent[Confirmation: reset link sent if address has an account]
+    Sent --> Link[User opens recovery link]
+    Link --> Callback[Auth callback type=recovery]
+    Callback --> Update[Choose a new password page]
+    Update --> Validate{Password valid?}
+    Validate -- No --> Inline[Inline validation error]
+    Validate -- Yes --> Done[Password updated, redirected to Today]
+```
+
+**Primary path**
+
+1. The user selects `Forgot password?` on the sign-in page.
+2. The user enters an email address.
+3. The website shows a neutral confirmation that a reset link was sent; it never reveals whether the address has an account.
+4. The user opens the recovery link.
+5. The auth callback detects a `recovery` link and sends the user to the password-update page.
+6. The user enters a new password (at least 8 characters) and a matching confirmation.
+7. The password is updated and the user lands in the application.
+
+**Failure states**
+
+- Expired, reused, or malformed recovery link: the callback fails safely back to a stable auth surface without changing the password.
+- No active session at the update page: the user is asked to start a fresh reset flow.
+- New password too short or mismatched confirmation: inline errors, no update is attempted.
+
+**UX rules**
+
+- Never confirm or deny the existence of an account for a given address.
+- After a successful reset, do not silently drop the user; land them in a signed-in state on Today.
+- Do not present reset as punitive; recovery language is neutral.
+
+**Requirement references:** FR-ONB-08.
+
+## 15.7 Legacy local data recovery failure
 
 - Show which stage failed.
 - Preserve browser-local legacy data.

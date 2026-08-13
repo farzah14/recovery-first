@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { NormalizedBillingEvent } from '@/domain/billing/normalized-event';
 import { createEntitlementRefreshService } from '@/features/subscriptions/entitlement-refresh-service';
-import { handleRefreshRequest } from '@/app/api/billing/refresh/route';
+import { handleRefreshRequest } from '@/app/api/billing/refresh/handler';
 import { runScheduledSubscriptionReconciliation } from '@/server/billing/scheduled-reconciliation';
 
 const userId = '12000000-0000-4000-8000-000000000001';
