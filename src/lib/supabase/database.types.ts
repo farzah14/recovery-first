@@ -373,9 +373,11 @@ export type Database = {
           display_name: string | null
           id: string
           locale: string
+          onboarding_completed_at: string | null
           plan_code: Database["public"]["Enums"]["plan_tier"]
           quiet_hours_end: string | null
           quiet_hours_start: string | null
+          terms_accepted_at: string | null
           timezone: string
           updated_at: string
           week_start: number
@@ -386,9 +388,11 @@ export type Database = {
           display_name?: string | null
           id: string
           locale?: string
+          onboarding_completed_at?: string | null
           plan_code?: Database["public"]["Enums"]["plan_tier"]
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          terms_accepted_at?: string | null
           timezone?: string
           updated_at?: string
           week_start?: number
@@ -399,9 +403,11 @@ export type Database = {
           display_name?: string | null
           id?: string
           locale?: string
+          onboarding_completed_at?: string | null
           plan_code?: Database["public"]["Enums"]["plan_tier"]
           quiet_hours_end?: string | null
           quiet_hours_start?: string | null
+          terms_accepted_at?: string | null
           timezone?: string
           updated_at?: string
           week_start?: number
