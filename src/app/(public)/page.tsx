@@ -8,7 +8,6 @@ import {
   ArrowRight,
   CheckCircle2,
   Check,
-  Database,
   Download,
   EyeOff,
   FileJson,
@@ -164,32 +163,21 @@ export default function HomePage(): React.JSX.Element {
                 principles—your habit history is stored securely on your device, not on ad networks.
               </p>
 
-              {/* Feature Highlights Grid */}
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {/* Feature 1: IndexedDB */}
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)]/60 p-5 transition-all duration-200 hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-surface-subtle)]">
-                  <div className="mb-3 flex size-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-primary)] shadow-2xs">
-                    <Database className="size-5" aria-hidden="true" />
-                  </div>
-                  <h3 className="text-base font-bold text-[var(--color-text-primary)]">
-                    IndexedDB Local Storage
-                  </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    Works completely offline and stores records in your browser.
-                  </p>
-                </div>
-
-                {/* Feature 2: Full Export & Erasure */}
-                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)]/60 p-5 transition-all duration-200 hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-surface-subtle)]">
-                  <div className="mb-3 flex size-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-primary)] shadow-2xs">
+              {/* Feature Highlight: Full Export & Erasure */}
+              <div className="mt-8 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)]/60 p-5 transition-all duration-200 hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-surface-subtle)]">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-primary)] shadow-2xs">
                     <Download className="size-5" aria-hidden="true" />
                   </div>
-                  <h3 className="text-base font-bold text-[var(--color-text-primary)]">
-                    Full Export &amp; Erasure
-                  </h3>
-                  <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-text-secondary)]">
-                    Export your complete JSON history or delete local data with one tap.
-                  </p>
+                  <div>
+                    <h3 className="text-base font-bold text-[var(--color-text-primary)]">
+                      Full Export &amp; Erasure
+                    </h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
+                      Export your complete JSON history or delete local data with one tap. No vendor
+                      lock-in, ever.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
