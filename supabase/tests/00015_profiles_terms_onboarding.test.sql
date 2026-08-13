@@ -8,11 +8,11 @@ values ('10000000-0000-4000-8000-000000000002', 'fixture-owner@example.invalid')
 insert into public.profiles (id, timezone)
 values ('10000000-0000-4000-8000-000000000002', 'Asia/Jakarta');
 
-select has_column('public', 'profiles', 'terms_accepted_at');
-select has_column('public', 'profiles', 'onboarding_completed_at');
+select has_column('public', 'profiles', 'terms_accepted_at', 'profiles expose terms acceptance');
+select has_column('public', 'profiles', 'onboarding_completed_at', 'profiles expose onboarding completion');
 
-select col_is_nullable('public', 'profiles', 'terms_accepted_at');
-select col_is_nullable('public', 'profiles', 'onboarding_completed_at');
+select col_is_nullable('public', 'profiles', 'terms_accepted_at', 'terms acceptance is nullable');
+select col_is_nullable('public', 'profiles', 'onboarding_completed_at', 'onboarding completion is nullable');
 
 select is(
   (select terms_accepted_at from public.profiles where id = '10000000-0000-4000-8000-000000000002'),

@@ -54,6 +54,8 @@ insert into public.profiles (
   locale,
   timezone,
   week_start,
+  terms_accepted_at,
+  onboarding_completed_at,
   plan_code
 )
 values (
@@ -62,13 +64,17 @@ values (
   'en-US',
   'Asia/Jakarta',
   1,
+  '2026-01-01 00:00:00+00',
+  '2026-01-01 00:00:00+00',
   'free'
 )
 on conflict (id) do update set
   display_name = excluded.display_name,
   locale = excluded.locale,
   timezone = excluded.timezone,
-  week_start = excluded.week_start;
+  week_start = excluded.week_start,
+  terms_accepted_at = excluded.terms_accepted_at,
+  onboarding_completed_at = excluded.onboarding_completed_at;
 
 insert into public.habits (
   id,
