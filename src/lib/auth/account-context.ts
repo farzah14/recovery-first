@@ -5,6 +5,7 @@ export type AccountContext = {
   displayName: string;
   planTier: PlanTier;
   timezone: string;
+  weekStart: number;
 };
 
 type AuthUser = {
@@ -16,6 +17,7 @@ type Profile = {
   display_name: string | null;
   plan_code: PlanTier;
   timezone: string;
+  week_start: number | null;
 };
 
 export function buildAccountContext(user: AuthUser, profile: Profile | null): AccountContext {
@@ -25,5 +27,6 @@ export function buildAccountContext(user: AuthUser, profile: Profile | null): Ac
     displayName: profile?.display_name?.trim() || fallbackName,
     planTier: profile?.plan_code ?? 'free',
     timezone: profile?.timezone || 'UTC',
+    weekStart: profile?.week_start ?? 1,
   };
 }

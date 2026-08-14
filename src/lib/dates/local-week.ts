@@ -34,11 +34,11 @@ export function getLocalDateForTimezone(timezone: string, now = new Date()): str
   }
 }
 
-export function getLocalWeekRange(localDate: string): LocalWeekRange {
+export function getLocalWeekRange(localDate: string, weekStart = 1): LocalWeekRange {
   const date = parseLocalDate(localDate);
-  const mondayOffset = (date.getUTCDay() + 6) % 7;
+  const firstDayOffset = (date.getUTCDay() + 7 - weekStart) % 7;
   const start = new Date(date);
-  start.setUTCDate(start.getUTCDate() - mondayOffset);
+  start.setUTCDate(start.getUTCDate() - firstDayOffset);
 
   const dates = Array.from({ length: 7 }, (_, index) => {
     const day = new Date(start);

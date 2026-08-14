@@ -36,3 +36,44 @@ describe('getLocalWeekRange', () => {
     });
   });
 });
+
+describe('getLocalWeekRange with a custom week start', () => {
+  it('returns the Sunday-to-Saturday window when the week starts on Sunday', () => {
+    expect(getLocalWeekRange('2026-08-06', 7)).toEqual({
+      todayDate: '2026-08-06',
+      startDate: '2026-08-02',
+      endDate: '2026-08-08',
+      dates: [
+        '2026-08-02',
+        '2026-08-03',
+        '2026-08-04',
+        '2026-08-05',
+        '2026-08-06',
+        '2026-08-07',
+        '2026-08-08',
+      ],
+    });
+  });
+
+  it('treats the week start day as the first day of the window', () => {
+    expect(getLocalWeekRange('2026-08-09', 7)).toMatchObject({
+      todayDate: '2026-08-09',
+      startDate: '2026-08-09',
+      endDate: '2026-08-15',
+    });
+  });
+
+  it('treats Saturday as the last day when the week starts on Sunday', () => {
+    expect(getLocalWeekRange('2026-08-08', 7)).toMatchObject({
+      startDate: '2026-08-02',
+      endDate: '2026-08-08',
+    });
+  });
+
+  it('keeps the Monday default when weekStart is omitted', () => {
+    expect(getLocalWeekRange('2026-08-06')).toMatchObject({
+      startDate: '2026-08-03',
+      endDate: '2026-08-09',
+    });
+  });
+});

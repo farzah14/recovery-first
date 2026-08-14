@@ -3,12 +3,13 @@
 import React from 'react';
 import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
-import { AccountTierSummary } from '@/components/account/account-state';
-import { Settings, User, Shield, CreditCard } from 'lucide-react';
+import { AccountTierSummary, useAccountState } from '@/components/account/account-state';
+import { Settings, User, Shield, CreditCard, Globe } from 'lucide-react';
 import { routes } from '@/lib/navigation/route-definitions';
 import { Button } from '@/components/ui/button';
 
 export default function SettingsPage(): React.JSX.Element {
+  const account = useAccountState();
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -37,6 +38,18 @@ export default function SettingsPage(): React.JSX.Element {
                 </h2>
                 <p className="text-xs text-[var(--color-text-muted)]">
                   <AccountTierSummary />
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-4">
+              <Globe className="size-4 shrink-0 text-[var(--color-text-secondary)]" />
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  Time zone: {account.timezone ?? 'UTC'}
+                </p>
+                <p className="text-xs text-[var(--color-text-muted)]">
+                  Detected automatically from this device&apos;s settings.
                 </p>
               </div>
             </div>

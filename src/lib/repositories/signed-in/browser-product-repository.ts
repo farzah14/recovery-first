@@ -22,7 +22,7 @@ function hasConfiguredSupabase(): boolean {
 }
 
 export function createBrowserProductRepository(
-  account: Pick<AccountState, 'accountId' | 'planTier' | 'timezone'>,
+  account: Pick<AccountState, 'accountId' | 'planTier' | 'timezone' | 'weekStart'>,
 ): ProductRepository | null {
   const owner = getBrowserProductOwner(account);
   if (!owner || !hasConfiguredSupabase()) return null;
@@ -34,7 +34,7 @@ export function createBrowserProductRepository(
 }
 
 export function getBrowserProductOwner(
-  account: Pick<AccountState, 'accountId' | 'planTier' | 'timezone'>,
+  account: Pick<AccountState, 'accountId' | 'planTier' | 'timezone' | 'weekStart'>,
 ): ProductOwner | null {
   if (!account.accountId) return null;
   return {
@@ -42,5 +42,6 @@ export function getBrowserProductOwner(
     identityMode: 'account',
     planTier: account.planTier,
     timezone: account.timezone ?? 'UTC',
+    weekStart: account.weekStart ?? 1,
   };
 }
