@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { AccountStateProvider } from '@/components/account/account-state';
+import { DeviceTimeSync } from '@/components/account/device-time-sync';
 import { requireAccount } from '@/lib/auth/require-account';
 import { buildAccountContext } from '@/lib/auth/account-context';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -11,13 +11,14 @@ export default async function ApplicationLayout({ children }: { children: ReactN
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name,plan_code,timezone,terms_accepted_at,onboarding_completed_at')
+    .select('display_name,plan_code,timezone,week_start')
     .eq('id', account.id)
     .maybeSingle();
-  if (!profile?.onboarding_completed_at) {
-    redirect('/onboarding');
-  }
   const accountContext = buildAccountContext(account, profile);
 
-  return <AccountStateProvider account={accountContext}>{children}</AccountStateProvider>;
+  return (
+    <AccountStateProvider account={accountContext}>
+      <DeviceTimeSync>{children}</DeviceTimeSync>
+    </AccountStateProvider>
+  );
 }

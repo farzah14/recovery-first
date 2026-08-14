@@ -23,7 +23,6 @@ export const routes = {
   signUp: '/auth/sign-up',
   forgotPassword: '/auth/forgot-password',
   updatePassword: '/auth/update-password',
-  onboarding: '/onboarding',
   app: '/app',
   today: '/app/today',
   habits: '/app/habits',
