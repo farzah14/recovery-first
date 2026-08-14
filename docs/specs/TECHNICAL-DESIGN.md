@@ -401,7 +401,6 @@ recovery-first-habit-tracker/
 │   │
 │   ├── features/
 │   │   ├── authentication/
-│   │   ├── onboarding/
 │   │   ├── habits/
 │   │   ├── check-ins/
 │   │   ├── reminders/
@@ -589,12 +588,11 @@ Use Supabase Edge Functions for privileged or externally triggered workflows:
 /auth/forgot-password
 /auth/update-password
 /auth/callback
-/onboarding
 ```
 
 Public content uses static generation or cached server rendering where practical. Private data is never embedded in public-page output.
 
-The `/onboarding` route group is authenticated but sits outside the private application group so it can render while `onboarding_completed_at` is unset. The private application layout redirects to `/onboarding` until onboarding completes.
+Private application routes are authenticated-only. Time is device-derived: a client component detects the device timezone and week-start day on load, applies them before the first render, and syncs them to the profile idempotently when they differ.
 
 ## 7.2 Application routes
 
@@ -697,7 +695,7 @@ src/lib/supabase/admin.ts    → privileged server-only client
 5. The server loads plan and entitlement state.
 6. The browser initializes the signed-in local cache.
 7. If legacy local data exists, the recovery or export flow is offered contextually.
-8. While `onboarding_completed_at` is unset, private application routes redirect to `/onboarding`; completing the wizard sets the completion timestamp and lands the user on Today.
+8. The client detects the device timezone and week-start day, applies them immediately, and syncs them to the profile when they differ; the account lands on Today.
 
 ## 8.5 Authorization layers
 
@@ -804,12 +802,10 @@ Core local tables:
 | `id` | uuid | Equals `auth.users.id` |
 | `display_name` | text | Optional |
 | `locale` | text | BCP 47 language tag |
-| `timezone` | text | IANA timezone |
-| `week_start` | smallint | Validated 1–7 |
+| `timezone` | text | IANA timezone, synced from the device on application load |
+| `week_start` | smallint | Validated 1–7, synced from the device locale on application load |
 | `quiet_hours_start` | time | Optional |
 | `quiet_hours_end` | time | Optional |
-| `terms_accepted_at` | timestamptz | One-time consent record, written by onboarding, never cleared |
-| `onboarding_completed_at` | timestamptz | One-time onboarding gate, written by onboarding, never cleared |
 | `plan_code` | text | Cached display value, not sole entitlement authority |
 | `created_at` | timestamptz | Server-generated |
 | `updated_at` | timestamptz | Server-generated |

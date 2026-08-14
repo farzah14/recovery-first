@@ -24,12 +24,11 @@ A modern, responsive web application built on an intentional, non-punitive **Rec
   - ⚪ **Skipped**: Explicitly recorded skips with structured friction capture (e.g., fatigue, busy schedule, illness) to prevent ghosting.
 - **Adaptive Recovery Engine**: Detects consecutive skips and proposes structured, low-friction recovery plans.
 
-### 2. Onboarding, Consent & Authentication
+### 2. Authentication & Device-Based Time
 
-- **Terms & Privacy Consent**: Explicit, mandatory legal consent before entering private account surfaces.
-- **One-Time Onboarding Wizard**: A 3-step guided flow (`/onboarding`) covering legal consent, user localization preferences (display name, timezone, week-start day, quiet hours), and first habit creation.
 - **Comprehensive Auth Flow**: Google SSO and email/password authentication powered by Supabase Auth with PKCE and SSR cookie sessions.
 - **Password Recovery**: Secure password reset flow (`/auth/forgot-password` and `/auth/update-password`).
+- **Device-Based Time**: Timezone and week-start day are detected from the user's device automatically — no manual configuration.
 
 ### 3. Tiered Account & Entitlement System
 
@@ -74,7 +73,6 @@ A modern, responsive web application built on an intentional, non-punitive **Rec
 ├── src/                            # Application Source Code
 │   ├── app/                        # Next.js App Router Pages & Layouts
 │   │   ├── (app)/app/              # Authenticated App Routes (Today, Habits, Review, Settings)
-│   │   ├── (app)/onboarding/       # 3-Step Required Onboarding Wizard
 │   │   ├── (public)/               # Marketing Surfaces (Landing, Pricing, Features, About)
 │   │   ├── auth/                   # Authentication Pages (Sign-In, Sign-Up, Password Reset)
 │   │   └── api/                    # API Endpoints (Billing, Webhooks, Health)
@@ -204,7 +202,7 @@ pnpm verify:full
 For in-depth architectural details, refer to the authoritative specification documents:
 
 1. [**Product Requirements Document (PRD)**](file:///D:/tracker-habits/docs/specs/PRD.md) — Comprehensive functional requirements, user personas, and habit mechanics.
-2. [**UX Flows & Journeys**](file:///D:/tracker-habits/docs/specs/UX-FLOWS.md) — Step-by-step state diagrams, onboarding wizard flows, and error handling.
+2. [**UX Flows & Journeys**](file:///D:/tracker-habits/docs/specs/UX-FLOWS.md) — Step-by-step state diagrams, application entry flows, and error handling.
 3. [**UI & Design System Specifications**](file:///D:/tracker-habits/docs/specs/UI-SPEC.md) — Visual tokens, accessibility standards, colors, and responsive layouts.
 4. [**Technical Architecture & Design**](file:///D:/tracker-habits/docs/specs/TECHNICAL-DESIGN.md) — Data contracts, database schema, RLS policies, and billing services.
 5. [**Master Implementation Plan**](file:///D:/tracker-habits/docs/implementation/IMPLEMENTATION-PLAN.md) — Execution blueprint across all development phases.

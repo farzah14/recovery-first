@@ -373,7 +373,7 @@ Delete Account remains inside Account Settings and requires a separate confirmat
 
 # 6. Functional Requirements
 
-## 6.1 Public website, onboarding, and account conversion
+## 6.1 Public website, account entry, and account conversion
 
 ### FR-PUB-01 — Public website
 
@@ -389,7 +389,7 @@ The primary Start action shall allow the visitor to create or sign in to an acco
 
 ### FR-ONB-01 — Account-first entry
 
-The application shall require an authenticated account before private onboarding and habit tracking.
+The application shall require an authenticated account before habit tracking.
 
 **Acceptance:** A first-time visitor is sent through account creation or sign-in, receives a Free profile, and can then create and check in to a habit.
 
@@ -440,28 +440,16 @@ The product shall support password reset through a Supabase Auth recovery link f
 - The new password requires at least 8 characters and a matching confirmation, with inline validation.
 - Expired, reused, or malformed recovery links fail safely back to a stable auth surface without changing the password.
 
-### FR-ONB-09 — Terms and Privacy Policy consent
+### FR-ONB-10 — Device-based time settings
 
-Account creation for both Google and email authentication shall require explicit consent to the Terms of Service and Privacy Policy before private application access.
-
-**Acceptance:**
-
-- Consent is a required step for every new account regardless of authentication method.
-- The consent step links to the current Terms of Service and Privacy Policy documents.
-- The application records the consent timestamp in the account profile and never clears it.
-- Consent is not implicitly granted by sign-up alone.
-
-### FR-ONB-10 — Required one-time onboarding
-
-New accounts shall complete a required one-time onboarding wizard — consent, profile, and first habit — before private application routes open.
+The application shall derive time and week-start settings from the user's device instead of requiring manual configuration.
 
 **Acceptance:**
 
-- Every private application route redirects to onboarding until `onboarding_completed_at` is set.
-- The wizard consists of consent, profile (display name, timezone, week start, quiet hours), and first-habit steps, each with one primary action.
-- The profile step persists timezone, week-start, and quiet-hours preferences.
-- The first-habit step reuses the standard habit-creation rules and Free active-habit limits.
-- Completing the wizard lands the user on Today.
+- The device timezone is detected automatically and applied to session generation and local-date calculations.
+- The week-start day follows the device locale (Sunday, Monday, or Saturday) without user configuration.
+- Detected settings sync to the profile on each application load and follow the device when the user's timezone or week start changes.
+- Settings surfaces show the active timezone and label it as detected from the device.
 
 ## 6.2 Habit creation and structure
 
@@ -1262,7 +1250,7 @@ The product should optimize for sustainable eligible-session success and success
 
 | **Metric** | **Definition** | **Why it matters** |
 |---|---|---|
-| First habit activation | First website session → first active habit | Measures onboarding effectiveness |
+| First habit activation | First sign-in → first active habit | Measures activation efficiency |
 | First check-in completion | First active habit → first Full/Minimum/Skipped | Measures comprehension and immediate utility |
 | 7-day eligible consistency | Full + Minimum / eligible sessions in first 7 days | Measures early behavior fit |
 | Minimum utilization | Share of successes recorded as Minimum | Shows whether flexible execution is used |
@@ -1300,7 +1288,6 @@ The product should optimize for sustainable eligible-session success and success
 Analytics events should describe user intent and system state without transmitting unnecessary personal content. Recommended event groups:
 
 - public_site
-- onboarding
 - authentication
 - habit_configuration
 - session_checkin
@@ -1456,7 +1443,7 @@ Analytics events must not include:
 
 - Public Landing, Pricing, Help, and required legal pages.
 
-- Authenticated Free onboarding and account-backed persistence.
+- Authenticated account entry and account-backed persistence.
 
 - Basic templates and custom habit wizard.
 
@@ -1564,7 +1551,7 @@ Analytics events must not include:
 | One recommendation improves trust | Change one variable at a time | Acceptance, customization, and revert rates |
 | Three-day Premium simulation demonstrates value | Days 1–3 interactive | Preview completion and View Plans conversion |
 | Fixed weekly review is easier to build as a routine | Default Sunday | Review completion and rescheduling behavior |
-| Account-first onboarding reduces activation | Authentication adds first-use friction | Account completion, first habit activation, and first check-in |
+| Sign-up friction reduces activation | Account creation adds first-use friction | Account completion, first habit activation, and first check-in |
 | Email fallback improves reminder reliability | Available to signed-in users | Reminder engagement without excessive unsubscribe rate |
 | Responsive desktop navigation improves review behavior | Persistent sidebar on larger screens | Review completion and route discoverability |
 

@@ -27,7 +27,7 @@
 3. [Route and Screen Inventory](#3-route-and-screen-inventory)
 4. [Global Website Shell](#4-global-website-shell)
 5. [Public Website Flows](#5-public-website-flows)
-6. [Application Entry and Account Onboarding](#6-application-entry-and-account-onboarding)
+6. [Application Entry](#6-application-entry)
 7. [Habit Creation](#7-habit-creation)
 8. [Today and Daily Check-ins](#8-today-and-daily-check-ins)
 9. [Unrecorded Sessions and Check-in Review](#9-unrecorded-sessions-and-check-in-review)
@@ -539,7 +539,7 @@ Only one persistent banner should dominate a page at a time. Lower-priority item
 
 **Requirement references:** FR-PUB-01.
 
-# 6. Application Entry and Account Onboarding
+# 6. Application Entry
 
 ## 6.1 UX-APP-01 — Resolve application entry
 
@@ -562,8 +562,8 @@ flowchart TD
 2. The visitor sees `Create Account` and `Sign In`.
 3. Successful authentication creates or restores a Free account.
 4. If legacy local data exists, the website offers transfer or export before opening the account workspace.
-5. The first-habit onboarding begins after account resolution.
-6. New accounts complete the required one-time onboarding wizard before private application routes open (see UX-APP-03).
+5. The account opens at the requested route, or Today.
+6. The device timezone and week-start day are detected and applied automatically (see UX-APP-04).
 
 **Primary path: returning account user**
 
@@ -625,47 +625,34 @@ After first account sign-in with no habits:
 
 **Requirement references:** FR-ONB-01, FR-ONB-02, FR-ONB-04.
 
-## 6.4 UX-APP-04 — Required one-time onboarding wizard
+## 6.4 UX-APP-04 — Device-based time settings
 
 **Trigger**
 
-- A new account completes authentication for the first time, or any signed-in user with `onboarding_completed_at` unset attempts a private application route.
+- Any signed-in user opens a private application route.
 
-**Gate behavior**
+**Behavior**
 
-- Every private application route redirects to `/onboarding` while `onboarding_completed_at` is unset.
-- `/onboarding` itself, the auth routes, and public content are never redirected.
-- The account profile remains readable at all times; the wizard writes only the caller's own profile row.
+- On application load, the device timezone is detected from the browser and applied to session generation and local-date calculations before the first render.
+- The week-start day follows the device locale (Sunday, Monday, or Saturday).
+- When the detected settings differ from the stored profile, the profile is updated silently and idempotently; the device remains the source of truth on every visit.
+- The profile write is best-effort: if it fails, the detected settings still apply for the session and the next visit retries.
 
-**Wizard steps**
+**Settings surface**
 
-1. **Consent** — the user selects a checkbox confirming acceptance of the Terms of Service and Privacy Policy (both linked). Without consent, the primary action shows an inline error and does not advance.
-2. **Profile** — display name (optional), timezone (supported IANA options), week start day, and quiet hours (optional start/end pair). Saving persists the profile and records the consent timestamp.
-3. **First habit** — name, category, Normal version, Minimum version, icon, and schedule range. The step reuses the standard habit-creation rules and Free active-habit limits.
-
-**Primary path**
-
-1. The wizard opens at step 1.
-2. The user accepts the terms and selects Continue.
-3. The user reviews or adjusts the profile and selects Continue.
-4. The user names the first habit and selects Finish.
-5. The account lands on Today.
+- Settings shows the active timezone and labels it as detected from the device.
 
 **Failure states**
 
-- Consent not checked: inline error, step does not advance.
-- Profile save fails: inline error, retry keeps entered values.
-- First-habit creation fails: inline error, retry; no completion timestamp is written.
-- Completion timestamp write fails: inline error, retry; the habit already created is not duplicated (standard idempotency rules apply).
-- Mid-wizard refresh: the wizard restarts at step 1; nothing is lost because nothing was persisted until a step saved.
+- Detection unavailable: falls back to UTC and Monday.
+- Profile sync fails: the session keeps the detected values; no blocking error is shown.
 
 **UX rules**
 
-- Each step has one primary action and visible progress.
-- Back navigation returns to the previous step with entered values preserved.
-- The wizard is keyboard-operable and never uses color alone to communicate state.
+- No configuration step is required from the user.
+- The active timezone is visible in Settings without editing controls.
 
-**Requirement references:** FR-ONB-01, FR-ONB-02, FR-ONB-09, FR-ONB-10.
+**Requirement references:** FR-ONB-10.
 
 # 7. Habit Creation
 
