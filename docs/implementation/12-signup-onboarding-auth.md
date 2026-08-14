@@ -57,7 +57,7 @@ This plan does not implement:
 
 - [x] Migration written and reviewed.
 - [x] Database test written (plan 8, fixture `10000000-0000-0000-0000-000000000002`).
-- [ ] `supabase db reset` verified (blocked: no Docker on this machine; must run in CI or a Supabase environment before release).
+- [x] `supabase db reset` verified locally on 2026-08-14 (all 19 migrations applied; 13 pgTAP files / 135 tests pass, including `00015_profiles_terms_onboarding`).
 
 **Commit:** `feat: add terms acceptance and onboarding completion to profiles`
 
