@@ -13,6 +13,8 @@ import {
   FileJson,
   HardDrive,
   Lock,
+  Sparkles,
+  XCircle,
 } from 'lucide-react';
 
 import { ContentContainer } from '@/components/layout/content-container';
@@ -20,15 +22,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FaqSection } from '@/components/home/faq-section';
 import { HeroMockup } from '@/components/home/hero-mockup';
+import { WorkflowSection } from '@/components/home/workflow-section';
+import { FeaturesBento } from '@/components/home/features-bento';
+import { PlanSummarySection } from '@/components/home/plan-summary-section';
+import { FinalCtaSection } from '@/components/home/final-cta-section';
 import { routes } from '@/lib/navigation/route-definitions';
 
 export default function HomePage(): React.JSX.Element {
   return (
     <>
-      {/* 1. Hero Section */}
+      {/* 1. Hero Section (PUB-001.2, PUB-001.3, PUB-001.4, PUB-001.5) */}
       <section className="relative w-full border-b border-[var(--color-border)] bg-[linear-gradient(180deg,var(--color-emerald-50),var(--color-page))] py-16 lg:py-20">
         <ContentContainer className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6">
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-[var(--color-primary)]/20 bg-white/80 px-3.5 py-1 text-xs font-semibold text-[var(--color-primary)] shadow-2xs">
+              <Sparkles className="size-3.5" />
+              <span>The Anti-Shame Habit Tracker</span>
+            </div>
+
             <h1 className="text-4xl leading-[1.1] font-bold tracking-tight text-[var(--color-primary)] sm:text-5xl lg:text-6xl">
               Build habits that actually stick.
               <br />
@@ -75,7 +86,7 @@ export default function HomePage(): React.JSX.Element {
         </ContentContainer>
       </section>
 
-      {/* 2. Recovery-First Philosophy Section */}
+      {/* 2. Recovery-First Philosophy Section (PUB-001.6) */}
       <section className="relative border-b border-[var(--color-border)] bg-[var(--color-surface)] py-20 lg:py-24">
         <ContentContainer className="relative z-10">
           <div className="mx-auto mb-16 max-w-[800px] text-center">
@@ -87,6 +98,37 @@ export default function HomePage(): React.JSX.Element {
               RecoveryFirst uses misses as data to help you adapt, ensuring long-term sustainability
               over brittle streaks.
             </p>
+          </div>
+
+          {/* Side-by-Side Comparison Box */}
+          <div className="mx-auto mb-14 max-w-4xl overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-page)] p-6 shadow-sm sm:p-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* The Old Way */}
+              <div className="rounded-xl border border-red-200/60 bg-red-50/40 p-5">
+                <div className="flex items-center gap-2 text-sm font-bold text-red-700">
+                  <XCircle className="size-4 text-red-600" />
+                  <span>The Old Way (Punitive Streaks)</span>
+                </div>
+                <ul className="mt-3 space-y-2 text-xs text-red-950/80">
+                  <li>• Miss one day due to illness → Streak reset to 0</li>
+                  <li>• Guilt-inducing red X&apos;s and aggressive alert badges</li>
+                  <li>• All-or-nothing mindset leading to total abandonment</li>
+                </ul>
+              </div>
+
+              {/* The Recovery-First Way */}
+              <div className="rounded-xl border border-[var(--color-primary)]/20 bg-[var(--color-emerald-50)] p-5">
+                <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-primary)]">
+                  <CheckCircle2 className="size-4 text-[var(--color-primary)]" />
+                  <span>The Recovery-First Way (Continuity)</span>
+                </div>
+                <ul className="mt-3 space-y-2 text-xs text-[var(--color-emerald-950)]/90">
+                  <li>• Low energy? 2-minute Minimum floor counts as continuity</li>
+                  <li>• Missed days are treated as neutral friction data</li>
+                  <li>• Guided step-by-step recovery ramp back to full routine</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -141,7 +183,16 @@ export default function HomePage(): React.JSX.Element {
         </ContentContainer>
       </section>
 
-      {/* 3. Privacy & Control Section */}
+      {/* 3. Three-Step Workflow Loop Section (PUB-001.7) */}
+      <WorkflowSection />
+
+      {/* 4. Feature Highlights Bento Showcase (PUB-001.8) */}
+      <FeaturesBento />
+
+      {/* 5. Plan Summary Section (PUB-001.9) */}
+      <PlanSummarySection />
+
+      {/* 6. Privacy & Control Section (PUB-001.10) */}
       <section className="w-full border-b border-[var(--color-border)] bg-[var(--color-surface)] py-20 lg:py-28">
         <ContentContainer>
           <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
@@ -295,7 +346,7 @@ export default function HomePage(): React.JSX.Element {
         </ContentContainer>
       </section>
 
-      {/* 4. FAQ Section */}
+      {/* 7. FAQ Section (PUB-001.11) */}
       <section className="w-full border-b border-[var(--color-border)] bg-[var(--color-page)] py-20 lg:py-24">
         <ContentContainer>
           <div className="mx-auto mb-16 max-w-[800px] text-center">
@@ -310,6 +361,9 @@ export default function HomePage(): React.JSX.Element {
           <FaqSection />
         </ContentContainer>
       </section>
+
+      {/* 8. Final Conversion CTA Section (PUB-001.12) */}
+      <FinalCtaSection />
     </>
   );
 }

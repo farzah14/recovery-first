@@ -12,6 +12,7 @@ const owner: ProductOwner = {
   identityMode: 'account',
   planTier: 'free',
   timezone: 'Asia/Jakarta',
+  weekStart: 1,
 };
 
 const form: HabitFormInput = {

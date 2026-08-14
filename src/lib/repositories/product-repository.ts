@@ -9,6 +9,7 @@ export type ProductOwner = {
   identityMode: IdentityMode;
   planTier: PlanTier;
   timezone: string;
+  weekStart: number;
 };
 
 export type HabitTarget = {

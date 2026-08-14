@@ -9,6 +9,7 @@ export type AccountState = {
   displayName: string;
   planTier: PlanTier;
   timezone?: string;
+  weekStart?: number;
   entitlementStatus?:
     'resolved' | 'loading' | 'unavailable' | 'downgrade_required' | 'legacy_recovery';
 };
@@ -17,6 +18,7 @@ const defaultAccountState: AccountState = {
   displayName: 'Account',
   planTier: 'free',
   timezone: 'UTC',
+  weekStart: 1,
   entitlementStatus: 'resolved',
 };
 
@@ -26,7 +28,7 @@ const planTierLabels: Readonly<Record<PlanTier, string>> = {
   premium: 'Premium',
 };
 
-const AccountStateContext = createContext<AccountState>(defaultAccountState);
+export const AccountStateContext = createContext<AccountState>(defaultAccountState);
 
 export function AccountStateProvider({
   account,

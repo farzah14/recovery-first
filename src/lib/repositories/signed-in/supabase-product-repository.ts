@@ -496,7 +496,7 @@ export function createSupabaseProductRepository({
       localDate: string,
     ): Promise<WeeklyOverviewRead> {
       assertOwner(candidate);
-      const range = getLocalWeekRange(localDate);
+      const range = getLocalWeekRange(localDate, owner.weekStart);
       const { data: activeHabits, error: habitsError } = await client
         .from('habits')
         .select('id')

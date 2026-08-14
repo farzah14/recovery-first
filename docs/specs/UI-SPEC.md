@@ -645,7 +645,6 @@ Illustrations are optional and limited to:
 
 - public landing sections;
 - empty states;
-- first-time onboarding;
 - Recovery introduction;
 - Premium program preview.
 
