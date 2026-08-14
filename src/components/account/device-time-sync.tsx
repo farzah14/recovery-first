@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from 'react';
 
 import { AccountStateContext, useAccountState } from '@/components/account/account-state';
 import { detectDeviceTimezone, detectWeekStart } from '@/lib/dates/device-time';
@@ -32,10 +32,14 @@ function subscribeToDeviceSettings(): () => void {
 
 export function DeviceTimeSync({ children }: { children: ReactNode }): React.JSX.Element {
   const account = useAccountState();
+  const serverSettings = useMemo(
+    () => ({ timezone: account.timezone ?? 'UTC', weekStart: account.weekStart ?? 1 }),
+    [account.timezone, account.weekStart],
+  );
   const deviceSettings = useSyncExternalStore(
     subscribeToDeviceSettings,
     readDeviceSettings,
-    () => ({ timezone: account.timezone ?? 'UTC', weekStart: account.weekStart ?? 1 }),
+    () => serverSettings,
   );
 
   useEffect(() => {
