@@ -1,3 +1,5 @@
+export type WeekStartDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
 export type LocalWeekRange = {
   todayDate: string;
   startDate: string;
@@ -34,11 +36,12 @@ export function getLocalDateForTimezone(timezone: string, now = new Date()): str
   }
 }
 
-export function getLocalWeekRange(localDate: string): LocalWeekRange {
+export function getLocalWeekRange(localDate: string, weekStart: WeekStartDay = 1): LocalWeekRange {
   const date = parseLocalDate(localDate);
-  const mondayOffset = (date.getUTCDay() + 6) % 7;
+  const day = date.getUTCDay() || 7;
+  const startOffset = (day - weekStart + 7) % 7;
   const start = new Date(date);
-  start.setUTCDate(start.getUTCDate() - mondayOffset);
+  start.setUTCDate(start.getUTCDate() - startOffset);
 
   const dates = Array.from({ length: 7 }, (_, index) => {
     const day = new Date(start);

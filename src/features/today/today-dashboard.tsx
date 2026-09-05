@@ -309,6 +309,7 @@ function getDynamicGreeting(
 
 export function TodayDashboard(): React.JSX.Element {
   const account = useAccountState();
+  const weekStart = account.weekStart ?? 1;
   const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
   const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
   const [dashboardDate, setDashboardDate] = useState(DESIGN_REFERENCE_DATE);
@@ -328,12 +329,12 @@ export function TodayDashboard(): React.JSX.Element {
     try {
       setRemoteDataReady(false);
       setRemoteError(null);
-      const weekRange = getLocalWeekRange(localDate);
+      const weekRange = getLocalWeekRange(localDate, weekStart);
       await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
       await repository.ensureSessionHorizon(owner, weekRange.endDate);
       const [today, overview] = await Promise.all([
         repository.getToday(owner, localDate),
-        repository.getWeeklyOverview(owner, localDate),
+        repository.getWeeklyOverview(owner, localDate, weekStart),
       ]);
       setHabits(
         today.sessions.map((session) => {
@@ -353,7 +354,7 @@ export function TodayDashboard(): React.JSX.Element {
         error instanceof Error ? error.message : 'Unable to load today from Supabase.',
       );
     }
-  }, [owner, repository]);
+  }, [owner, repository, weekStart]);
 
   // Rebuild Today from Supabase for signed-in users and from local library records otherwise.
   React.useEffect(() => {
@@ -675,6 +676,7 @@ export function TodayDashboard(): React.JSX.Element {
       todayCompletedCount={completedCount}
       todayTotalCount={totalCount}
       {...(weeklyOverview ? { weeklyOverview } : {})}
+      weekStart={account.weekStart ?? 1}
       currentDate={dashboardDate}
       habitCountForDate={getLibraryHabitCountForDate}
       reflectionNote={reflectionNote}

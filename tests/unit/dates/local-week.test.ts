@@ -35,4 +35,28 @@ describe('getLocalWeekRange', () => {
       endDate: '2026-08-09',
     });
   });
+
+  it('returns a Sunday-to-Saturday window when the account starts weeks on Sunday', () => {
+    expect(getLocalWeekRange('2026-08-06', 7)).toEqual({
+      todayDate: '2026-08-06',
+      startDate: '2026-08-02',
+      endDate: '2026-08-08',
+      dates: [
+        '2026-08-02',
+        '2026-08-03',
+        '2026-08-04',
+        '2026-08-05',
+        '2026-08-06',
+        '2026-08-07',
+        '2026-08-08',
+      ],
+    });
+  });
+
+  it('supports every valid persisted weekday as the week start', () => {
+    expect(getLocalWeekRange('2026-08-06', 6)).toMatchObject({
+      startDate: '2026-08-01',
+      endDate: '2026-08-07',
+    });
+  });
 });

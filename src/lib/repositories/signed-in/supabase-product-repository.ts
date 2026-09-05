@@ -20,6 +20,7 @@ import type {
   WeeklyOverviewRead,
 } from '@/lib/repositories/product-repository';
 import { getLocalWeekRange } from '@/lib/dates/local-week';
+import type { WeekStartDay } from '@/lib/dates/local-week';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import {
   decodeHabitVersionPayload,
@@ -539,9 +540,10 @@ export function createSupabaseProductRepository({
     async getWeeklyOverview(
       candidate: ProductOwner,
       localDate: string,
+      weekStart: WeekStartDay = 1,
     ): Promise<WeeklyOverviewRead> {
       assertOwner(candidate);
-      const range = getLocalWeekRange(localDate);
+      const range = getLocalWeekRange(localDate, weekStart);
       const { data: activeHabits, error: habitsError } = await client
         .from('habits')
         .select('id')
