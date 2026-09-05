@@ -1001,6 +1001,10 @@ export type Database = {
       }
     }
     Functions: {
+      effective_plan_tier: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["plan_tier"]
+      }
       activate_habit: {
         Args: {
           p_command_id: string

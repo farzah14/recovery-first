@@ -6,6 +6,7 @@ type HabitRow = Database['public']['Tables']['habits']['Row'];
 type HabitInsert = Database['public']['Tables']['habits']['Insert'];
 type SessionRow = Database['public']['Tables']['sessions']['Row'];
 type ActivateHabitArgs = Database['public']['Functions']['activate_habit']['Args'];
+type EffectivePlanTierResult = Database['public']['Functions']['effective_plan_tier']['Returns'];
 type TodaySessionRow = Database['public']['Views']['today_session_view']['Row'];
 
 describe('generated database types', () => {
@@ -15,6 +16,7 @@ describe('generated database types', () => {
     expectTypeOf<HabitInsert['title']>().toEqualTypeOf<string>();
     expectTypeOf<SessionRow['timezone_snapshot']>().toEqualTypeOf<string>();
     expectTypeOf<ActivateHabitArgs['p_command_id']>().toEqualTypeOf<string>();
+    expectTypeOf<EffectivePlanTierResult>().toEqualTypeOf<'free' | 'lite' | 'premium'>();
     expectTypeOf<TodaySessionRow['session_id']>().toEqualTypeOf<string | null>();
   });
 });

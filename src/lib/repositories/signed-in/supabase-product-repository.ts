@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database, Json } from '@/lib/supabase/database.types';
+import { activeHabitLimitFor } from '@/domain/habits/active-slot-policy';
 import { zonedLocalDateTimeToUtc } from '@/lib/dates/zoned-time';
 import type {
   CreateHabitCommand,
@@ -531,8 +532,7 @@ export function createSupabaseProductRepository({
         ),
       );
       const activeHabitCount = habits.filter((habit) => habit.status === 'Active').length;
-      const activeHabitLimit =
-        owner.planTier === 'premium' ? 30 : owner.planTier === 'lite' ? 10 : 5;
+      const activeHabitLimit = activeHabitLimitFor(owner.planTier);
       return { localDate, sessions, activeHabitCount, activeHabitLimit };
     },
 
