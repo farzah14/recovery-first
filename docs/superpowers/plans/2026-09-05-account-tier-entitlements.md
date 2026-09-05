@@ -99,7 +99,7 @@ Verification: the focused affected run passed 6 files and 44 tests.
 ### Task 3: Add the database RPC and restrict profile writes
 
 **Files:**
-- Create: `supabase/migrations/20260905010000_expose_verified_plan_tier.sql`
+- Create: `supabase/migrations/20260905050000_expose_verified_plan_tier.sql`
 - Create: `supabase/tests/00055_verified_plan_tier_access.test.sql`
 - Modify: `src/app/auth/callback/route.ts`
 
@@ -160,7 +160,7 @@ Expected: the full Vitest suite, repository checks, production build, database r
 Review `git status --short`, `git diff --stat`, and the staged diff to confirm only Task 12 files changed. Mark plan checkboxes complete after the fresh verification succeeds, then commit:
 
 ```bash
-git add docs/superpowers/specs/2026-09-05-account-tier-entitlements-design.md docs/superpowers/plans/2026-09-05-account-tier-entitlements.md src/lib/auth/account-context.ts src/lib/auth/verified-account-tier.ts 'src/app/(app)/app/layout.tsx' 'src/app/(app)/onboarding/layout.tsx' src/lib/repositories/signed-in/supabase-product-repository.ts src/lib/supabase/database.types.ts tests/unit/auth/account-context.test.ts tests/unit/auth/verified-account-tier.test.ts tests/unit/repositories/supabase-product-repository.test.ts supabase/migrations/20260905010000_expose_verified_plan_tier.sql supabase/tests/00055_verified_plan_tier_access.test.sql src/app/auth/callback/route.ts
+git add docs/superpowers/specs/2026-09-05-account-tier-entitlements-design.md docs/superpowers/plans/2026-09-05-account-tier-entitlements.md src/lib/auth/account-context.ts src/lib/auth/verified-account-tier.ts 'src/app/(app)/app/layout.tsx' 'src/app/(app)/onboarding/layout.tsx' src/lib/repositories/signed-in/supabase-product-repository.ts src/lib/supabase/database.types.ts tests/unit/auth/account-context.test.ts tests/unit/auth/verified-account-tier.test.ts tests/unit/repositories/supabase-product-repository.test.ts supabase/migrations/20260905050000_expose_verified_plan_tier.sql supabase/tests/00055_verified_plan_tier_access.test.sql src/app/auth/callback/route.ts
 git diff --cached --check
 git commit -m "fix: derive account tier from verified entitlements"
 ```
