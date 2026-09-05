@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { getLocalDateForTimezone } from '@/lib/dates/local-week';
 import type { ProductOwner } from '@/lib/repositories/product-repository';
 import { createSupabaseProductRepository } from '@/lib/repositories/signed-in/supabase-product-repository';
 
@@ -10,12 +11,20 @@ const owner: ProductOwner = {
   timezone: 'Asia/Jakarta',
 };
 
+function shiftLocalDate(localDate: string, days: number): string {
+  const date = new Date(`${localDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 function createFakeClient({
   tableRows = {},
   rpcRows = {},
+  rpcErrors = {},
 }: {
   tableRows?: Record<string, unknown>;
   rpcRows?: Record<string, unknown>;
+  rpcErrors?: Record<string, { code: string; message: string }>;
 } = {}) {
   const calls: Array<{ kind: 'from' | 'rpc'; name: string; args?: unknown }> = [];
   const client = {
@@ -53,7 +62,7 @@ function createFakeClient({
     },
     async rpc(name: string, args: unknown) {
       calls.push({ kind: 'rpc', name, args });
-      return { data: rpcRows[name] ?? {}, error: null };
+      return { data: rpcRows[name] ?? {}, error: rpcErrors[name] ?? null };
     },
   } as unknown as Parameters<typeof createSupabaseProductRepository>[0]['client'];
 
@@ -167,6 +176,52 @@ describe('SupabaseProductRepository', () => {
       p_expected_session_revision: 1,
       p_friction_code: 'too_tired',
     });
+  });
+
+  it('reuses the complete database request when a check-in command is retried', async () => {
+    const { client, calls } = createFakeClient();
+    const repository = createSupabaseProductRepository({ client, owner });
+    const command = {
+      commandId: '45000000-0000-4000-8000-000000000003',
+      owner,
+      sessionId: '55000000-0000-4000-8000-000000000001',
+      outcome: 'full' as const,
+      frictionCode: null,
+      frictionNote: null,
+      expectedSessionRevision: 1,
+      clientRecordedAt: '2026-08-06T01:00:00.000Z',
+    };
+
+    await repository.recordCheckIn(command);
+    await repository.recordCheckIn(command);
+
+    expect(calls[1]?.args).toEqual(calls[0]?.args);
+  });
+
+  it.each([
+    ['session_not_yet_eligible', 'session_not_eligible'],
+    ['session_resolution_window_closed', 'session_not_eligible'],
+    ['session_permanently_locked', 'session_not_eligible'],
+    ['session_already_resolved', 'session_not_eligible'],
+    ['check_in_edit_window_closed', 'same_day_edit_closed'],
+  ] as const)('maps %s to the repository error %s', async (message, expectedCode) => {
+    const { client } = createFakeClient({
+      rpcErrors: { record_check_in: { code: '55000', message } },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const operation = repository.recordCheckIn({
+      commandId: '45000000-0000-4000-8000-000000000004',
+      owner,
+      sessionId: '55000000-0000-4000-8000-000000000001',
+      outcome: 'full',
+      frictionCode: null,
+      frictionNote: null,
+      expectedSessionRevision: 1,
+      clientRecordedAt: '2026-08-06T01:00:00.000Z',
+    });
+
+    await expect(operation).rejects.toMatchObject({ code: expectedCode, message });
   });
 
   it('redesigns a habit with a new immutable version and presentation metadata', async () => {
@@ -439,5 +494,131 @@ describe('SupabaseProductRepository', () => {
       completedCount: 1,
       totalCount: 1,
     });
+  });
+
+  it('catches up from the latest persisted session date', async () => {
+    const today = getLocalDateForTimezone(owner.timezone);
+    const latestPersistedDate = shiftLocalDate(today, -2);
+    const throughDate = shiftLocalDate(today, 1);
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000010',
+            user_id: owner.ownerId,
+            current_version_id: '35000000-0000-0000-0000-000000000010',
+            lifecycle_state: 'active',
+            deleted_at: null,
+          },
+        ],
+        habit_versions: [
+          {
+            id: '35000000-0000-0000-0000-000000000010',
+            habit_id: '25000000-0000-0000-0000-000000000010',
+            version_number: 1,
+            metadata: {
+              description: 'Catch-up fixture',
+              icon: 'book',
+              fromTime: '08:00',
+              untilTime: '09:00',
+              timingContext: '08:00 AM - 09:00 AM',
+              startLocalDate: shiftLocalDate(today, -10),
+              recurrence: { kind: 'daily' },
+              cue: { type: 'time', value: '08:00' },
+            },
+            normal_target: { action: 'read', quantity: 20, unit: 'minutes' },
+            minimum_target: { action: 'read', quantity: 1, unit: 'page' },
+            schedule_rule: { kind: 'daily' },
+            source: 'creation',
+            created_at: '2026-08-01T00:00:00.000Z',
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-0000-0000-000000000010',
+            habit_version_id: '35000000-0000-0000-0000-000000000010',
+            user_id: owner.ownerId,
+            scheduled_local_date: latestPersistedDate,
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    await repository.ensureSessionHorizon(owner, throughDate);
+
+    const generatedDates = calls
+      .filter((call) => call.kind === 'rpc' && call.name === 'ensure_session')
+      .map((call) => (call.args as { p_scheduled_local_date: string }).p_scheduled_local_date);
+    expect(generatedDates).toEqual([shiftLocalDate(today, -1), today, throughDate]);
+  });
+
+  it('derives session timestamps from the scheduled local time and timezone', async () => {
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000011',
+            user_id: owner.ownerId,
+            current_version_id: '35000000-0000-0000-0000-000000000011',
+            lifecycle_state: 'active',
+            deleted_at: null,
+          },
+        ],
+        habit_versions: [
+          {
+            id: '35000000-0000-0000-0000-000000000011',
+            habit_id: '25000000-0000-0000-0000-000000000011',
+            version_number: 1,
+            metadata: {
+              description: 'Timezone fixture',
+              icon: 'book',
+              fromTime: '08:00',
+              untilTime: '09:00',
+              timingContext: '08:00 AM - 09:00 AM',
+              startLocalDate: '2026-09-01',
+              recurrence: { kind: 'daily' },
+              cue: { type: 'time', value: '08:00' },
+            },
+            normal_target: { action: 'read', quantity: 20, unit: 'minutes' },
+            minimum_target: { action: 'read', quantity: 1, unit: 'page' },
+            schedule_rule: { kind: 'daily' },
+            source: 'creation',
+            created_at: '2026-09-01T00:00:00.000Z',
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-0000-0000-000000000011',
+            habit_version_id: '35000000-0000-0000-0000-000000000011',
+            user_id: owner.ownerId,
+            scheduled_local_date: '2026-09-03',
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    await repository.ensureSessionHorizon(owner, '2026-09-04');
+
+    const sessionCall = calls.find((call) => call.kind === 'rpc' && call.name === 'ensure_session');
+    expect(sessionCall?.args).toMatchObject({
+      p_scheduled_local_date: '2026-09-04',
+      p_eligible_at: '2026-09-04T01:00:00.000Z',
+      p_resolution_due_at: '2026-09-07T16:59:59.000Z',
+    });
+  });
+
+  it('resolves expired unrecorded sessions through the owner-scoped RPC', async () => {
+    const { client, calls } = createFakeClient({
+      rpcRows: { resolve_expired_unrecorded: 3 },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const resolved = await repository.resolveExpiredUnrecorded(owner, '2026-08-06T04:00:00.000Z');
+
+    expect(resolved).toBe(3);
+    expect(calls[0]).toMatchObject({ kind: 'rpc', name: 'resolve_expired_unrecorded' });
+    expect(calls[0]?.args).toEqual({ p_now: '2026-08-06T04:00:00.000Z' });
   });
 });

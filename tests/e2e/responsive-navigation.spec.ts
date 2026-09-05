@@ -1,5 +1,7 @@
 import { expect, test } from './fixtures';
 
+const fixtureNow = new Date('2026-01-15T10:00:00Z');
+
 const mobileViewports = [
   { name: 'mobile', width: 390, height: 844 },
   { name: 'tablet', width: 834, height: 1112 },
@@ -15,6 +17,7 @@ test.describe('Responsive Navigation', () => {
   for (const viewport of desktopViewports) {
     test(`displays the sidebar at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.clock.install({ time: fixtureNow });
       await page.goto('/app/today');
 
       await expect(page.getByTestId('application-sidebar')).toBeVisible();
@@ -26,6 +29,7 @@ test.describe('Responsive Navigation', () => {
   for (const viewport of mobileViewports) {
     test(`displays bottom navigation at ${viewport.name} width`, async ({ authPage: page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.clock.install({ time: fixtureNow });
       await page.goto('/app/today');
 
       await expect(page.getByTestId('application-sidebar')).toBeHidden();

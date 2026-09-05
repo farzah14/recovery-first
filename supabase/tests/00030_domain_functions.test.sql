@@ -1,6 +1,6 @@
 begin;
 
-select plan(16);
+select plan(28);
 
 insert into auth.users (id, email)
 values ('11000000-0000-4000-8000-000000000001', 'function-owner@example.invalid');
@@ -103,11 +103,11 @@ select lives_ok(
     '51000000-0000-4000-8000-000000000001',
     '21000000-0000-4000-8000-000000000001',
     '31000000-0000-4000-8000-000000000001',
-    '2026-08-01',
+    (now() at time zone 'Asia/Jakarta')::date,
     '07:30',
     'Asia/Jakarta',
-    '2026-08-01 00:30:00+00',
-    '2026-08-04 16:59:59+00',
+    now() - interval '1 hour',
+    now() + interval '3 days',
     '43000000-0000-4000-8000-000000000001'
   )$$,
   'deterministic session creation succeeds'
@@ -118,11 +118,11 @@ select lives_ok(
     '51000000-0000-4000-8000-000000000099',
     '21000000-0000-4000-8000-000000000001',
     '31000000-0000-4000-8000-000000000001',
-    '2026-08-01',
+    (now() at time zone 'Asia/Jakarta')::date,
     '07:30',
     'Asia/Jakarta',
-    '2026-08-01 00:30:00+00',
-    '2026-08-04 16:59:59+00',
+    now() - interval '1 hour',
+    now() + interval '3 days',
     '43000000-0000-4000-8000-000000000002'
   )$$,
   'duplicate occurrence resolves to the existing session'
@@ -141,7 +141,7 @@ select lives_ok(
     'manual_skipped',
     'too_tired',
     null,
-    '2026-08-01 07:35:00+07',
+    now(),
     'Asia/Jakarta',
     1,
     '44000000-0000-4000-8000-000000000001'
@@ -162,7 +162,7 @@ select lives_ok(
     'minimum',
     null,
     null,
-    '2026-08-01 08:00:00+07',
+    now(),
     'Asia/Jakarta',
     2,
     '44000000-0000-4000-8000-000000000002'
@@ -180,6 +180,154 @@ select results_eq(
   $$select consecutive_manual_skips from public.habits where id = '21000000-0000-4000-8000-000000000001'$$,
   $$values (0)$$,
   'Minimum resets the Recovery counter'
+);
+
+update public.habits
+set lifecycle_state = 'active'
+where id = '21000000-0000-4000-8000-000000000001';
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000002',
+    '51000000-0000-4000-8000-000000000001',
+    'manual_skipped',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    3,
+    '44000000-0000-4000-8000-000000000003'
+  )$$,
+  'editing a completed session to Manual Skipped succeeds'
+);
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000003',
+    '51000000-0000-4000-8000-000000000001',
+    'manual_skipped',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    4,
+    '44000000-0000-4000-8000-000000000004'
+  )$$,
+  'editing the same Manual Skipped session again succeeds'
+);
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000004',
+    '51000000-0000-4000-8000-000000000001',
+    'manual_skipped',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    5,
+    '44000000-0000-4000-8000-000000000005'
+  )$$,
+  'a third edit of the same Manual Skipped session succeeds'
+);
+
+select results_eq(
+  $$select consecutive_manual_skips from public.habits where id = '21000000-0000-4000-8000-000000000001'$$,
+  $$values (1)$$,
+  'repeated edits of one session count as one Manual Skipped session'
+);
+
+select results_eq(
+  $$select lifecycle_state::text from public.habits where id = '21000000-0000-4000-8000-000000000001'$$,
+  $$values ('active'::text)$$,
+  'repeated edits of one session do not trigger Recovery'
+);
+
+select lives_ok(
+  $$select public.ensure_session(
+    '51000000-0000-4000-8000-000000000002',
+    '21000000-0000-4000-8000-000000000001',
+    '31000000-0000-4000-8000-000000000001',
+    (now() at time zone 'Asia/Jakarta')::date,
+    '08:30',
+    'Asia/Jakarta',
+    now() - interval '1 hour',
+    now() + interval '3 days',
+    '43000000-0000-4000-8000-000000000003'
+  )$$,
+  'second scheduled session is created'
+);
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000005',
+    '51000000-0000-4000-8000-000000000002',
+    'manual_skipped',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    1,
+    '44000000-0000-4000-8000-000000000006'
+  )$$,
+  'second scheduled Manual Skipped session is recorded'
+);
+
+select lives_ok(
+  $$select public.ensure_session(
+    '51000000-0000-4000-8000-000000000003',
+    '21000000-0000-4000-8000-000000000001',
+    '31000000-0000-4000-8000-000000000001',
+    (now() at time zone 'Asia/Jakarta')::date,
+    '09:30',
+    'Asia/Jakarta',
+    now() - interval '1 hour',
+    now() + interval '3 days',
+    '43000000-0000-4000-8000-000000000004'
+  )$$,
+  'third scheduled session is created'
+);
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000006',
+    '51000000-0000-4000-8000-000000000003',
+    'manual_skipped',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    1,
+    '44000000-0000-4000-8000-000000000007'
+  )$$,
+  'third scheduled Manual Skipped session is recorded'
+);
+
+select results_eq(
+  $$select consecutive_manual_skips from public.habits where id = '21000000-0000-4000-8000-000000000001'$$,
+  $$values (3)$$,
+  'three distinct consecutive Manual Skipped sessions trigger the threshold'
+);
+
+select lives_ok(
+  $$select public.record_check_in(
+    '61000000-0000-4000-8000-000000000007',
+    '51000000-0000-4000-8000-000000000001',
+    'minimum',
+    null,
+    null,
+    now(),
+    'Asia/Jakarta',
+    6,
+    '44000000-0000-4000-8000-000000000008'
+  )$$,
+  'an older scheduled session can be corrected'
+);
+
+select results_eq(
+  $$select consecutive_manual_skips from public.habits where id = '21000000-0000-4000-8000-000000000001'$$,
+  $$values (2)$$,
+  'an older correction preserves newer consecutive Manual Skipped sessions'
 );
 
 select throws_ok(

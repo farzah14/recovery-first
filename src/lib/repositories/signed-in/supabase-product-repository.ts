@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database, Json } from '@/lib/supabase/database.types';
+import { zonedLocalDateTimeToUtc } from '@/lib/dates/zoned-time';
 import type {
   CreateHabitCommand,
   CreateHabitResult,
@@ -17,7 +18,7 @@ import type {
   UpdateHabitVersionCommand,
   WeeklyOverviewRead,
 } from '@/lib/repositories/product-repository';
-import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
+import { getLocalWeekRange } from '@/lib/dates/local-week';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import {
   decodeHabitVersionPayload,
@@ -104,6 +105,19 @@ function mapError(error: {
   if (code === '40001' || error.message === 'revision_conflict') {
     return new ProductRepositoryError('stale_revision', error.message ?? 'revision_conflict');
   }
+  if (code === '55000') {
+    if (error.message === 'check_in_edit_window_closed') {
+      return new ProductRepositoryError('same_day_edit_closed', error.message);
+    }
+    if (
+      error.message === 'session_not_yet_eligible' ||
+      error.message === 'session_resolution_window_closed' ||
+      error.message === 'session_permanently_locked' ||
+      error.message === 'session_already_resolved'
+    ) {
+      return new ProductRepositoryError('session_not_eligible', error.message);
+    }
+  }
   if (code === 'P0002') {
     return new ProductRepositoryError('habit_not_found', error.message ?? 'habit_not_found');
   }
@@ -140,6 +154,12 @@ function daysBetween(start: string, end: string): string[] {
     current.setUTCDate(current.getUTCDate() + 1);
   }
   return result;
+}
+
+function shiftIsoDate(localDate: string, days: number): string {
+  const date = new Date(`${localDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 function isScheduledOnDate(
@@ -432,20 +452,44 @@ export function createSupabaseProductRepository({
       const activeRows = habits ?? [];
       const versions = await loadVersions(activeRows.map((row) => row.id));
       const versionById = new Map(versions.map((version) => [version.id, version]));
-      const today = getLocalDateForTimezone(owner.timezone);
       let ensured = 0;
 
       for (const habit of activeRows) {
         const version = versionById.get(habit.current_version_id ?? '');
         if (!version) continue;
         const payload = decodeHabitVersionPayload(version.metadata);
-        const firstDate = payload.startLocalDate > today ? payload.startLocalDate : today;
-        for (const date of daysBetween(firstDate, throughLocalDate)) {
+        const { data: existingSessions, error: sessionsError } = await client
+          .from('sessions')
+          .select('scheduled_local_date')
+          .eq('user_id', owner.ownerId)
+          .eq('habit_id', habit.id)
+          .eq('habit_version_id', version.id)
+          .lte('scheduled_local_date', throughLocalDate);
+        if (sessionsError) throw mapError(sessionsError);
+
+        const latestSessionDate = (existingSessions ?? []).reduce<string | null>(
+          (latest, session) =>
+            latest === null || session.scheduled_local_date > latest
+              ? session.scheduled_local_date
+              : latest,
+          null,
+        );
+        const firstDate = latestSessionDate
+          ? shiftIsoDate(latestSessionDate, 1)
+          : payload.startLocalDate;
+        const generationStart =
+          firstDate < payload.startLocalDate ? payload.startLocalDate : firstDate;
+
+        for (const date of daysBetween(generationStart, throughLocalDate)) {
           if (!isScheduledOnDate(payload.recurrence, date)) continue;
           const localTime = payload.fromTime || '08:00';
-          const eligibleAt = new Date(`${date}T00:00:00.000Z`);
-          const resolutionDueAt = new Date(eligibleAt);
-          resolutionDueAt.setUTCDate(resolutionDueAt.getUTCDate() + 3);
+          const localTimeWithSeconds = localTime.length === 5 ? `${localTime}:00` : localTime;
+          const eligibleAt = zonedLocalDateTimeToUtc(date, localTimeWithSeconds, owner.timezone);
+          const resolutionDueAt = zonedLocalDateTimeToUtc(
+            shiftIsoDate(date, 3),
+            '23:59:59',
+            owner.timezone,
+          );
           const { error } = await client.rpc('ensure_session', {
             p_session_id: createId(),
             p_habit_id: habit.id,
@@ -453,8 +497,8 @@ export function createSupabaseProductRepository({
             p_scheduled_local_date: date,
             p_scheduled_local_time: localTime,
             p_timezone_snapshot: owner.timezone,
-            p_eligible_at: eligibleAt.toISOString(),
-            p_resolution_due_at: resolutionDueAt.toISOString(),
+            p_eligible_at: eligibleAt,
+            p_resolution_due_at: resolutionDueAt,
             p_command_id: createId(),
           });
           if (error) throw mapError(error);
@@ -547,7 +591,7 @@ export function createSupabaseProductRepository({
     async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {
       assertOwner(command.owner);
       const { data, error } = await client.rpc('record_check_in', {
-        p_check_in_id: createId(),
+        p_check_in_id: command.commandId,
         p_session_id: command.sessionId,
         p_outcome: command.outcome,
         p_friction_code: command.frictionCode as string,
@@ -590,8 +634,13 @@ export function createSupabaseProductRepository({
       return undefined;
     },
 
-    async resolveExpiredUnrecorded(): Promise<number> {
-      return 0;
+    async resolveExpiredUnrecorded(candidate: ProductOwner, now: string): Promise<number> {
+      assertOwner(candidate);
+      const { data, error } = await client.rpc('resolve_expired_unrecorded', {
+        p_now: now,
+      });
+      if (error) throw mapError(error);
+      return typeof data === 'number' ? data : 0;
     },
   };
 }

@@ -324,6 +324,7 @@ export function HabitsManagement(): React.JSX.Element {
       setRemoteError(null);
       const localDate = getLocalDateForTimezone(owner.timezone);
       const weekRange = getLocalWeekRange(localDate);
+      await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
       await repository.ensureSessionHorizon(owner, weekRange.endDate);
       const [remoteHabits, overview] = await Promise.all([
         repository.listHabits(owner),

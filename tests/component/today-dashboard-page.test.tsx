@@ -231,6 +231,19 @@ describe('TodayDashboard', () => {
     expect(screen.queryByRole('button', { name: /Adjust Plan/i })).toBeNull();
   });
 
+  it('marks target switching unavailable instead of claiming an unpersisted change', () => {
+    render(<TodayDashboard />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }));
+
+    expect(
+      screen.getByText(/Target switching is unavailable until a recovery plan is connected/i),
+    ).toBeVisible();
+    const switchButton = screen.getByRole('button', { name: /Switch to Minimum Target/i });
+    expect(switchButton).toBeDisabled();
+    expect(screen.queryByText(/target adjusted/i)).toBeNull();
+  });
+
   it('renders Daily Reflection card with default ..... text and updates to Edit Reflection Note when note is saved', () => {
     render(<TodayDashboard />);
 

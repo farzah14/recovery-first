@@ -297,6 +297,11 @@ on conflict (
   scheduled_local_time
 ) do nothing;
 
+-- These fixed historical fixtures intentionally bypass the runtime write-window
+-- trigger. Supabase executes seed.sql as a trusted database owner after all
+-- migrations, while application writes still run with the trigger enabled.
+set session_replication_role = replica;
+
 insert into public.check_ins (
   id,
   session_id,
@@ -323,6 +328,8 @@ values
     'Asia/Jakarta'
   )
 on conflict (id) do nothing;
+
+set session_replication_role = origin;
 
 insert into public.sessions (
   id,
@@ -352,6 +359,9 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Keep the historical demo record stable without weakening production guards.
+set session_replication_role = replica;
+
 insert into public.check_ins (
   id,
   session_id,
@@ -369,3 +379,5 @@ values (
   'Asia/Jakarta'
 )
 on conflict (id) do nothing;
+
+set session_replication_role = origin;
