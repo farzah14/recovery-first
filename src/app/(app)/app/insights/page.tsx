@@ -1,10 +1,28 @@
-'use client';
+import type { JSX } from 'react';
+import { BarChart3 } from 'lucide-react';
 
-import React from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { BarChart3, TrendingUp, Sparkles } from 'lucide-react';
+import { InsightsPanel } from '@/components/account/account-data-panels';
+import { requireAccount } from '@/lib/auth/require-account';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { readAccountSurfaces } from '@/server/account/account-surfaces';
 
-export default function InsightsPage(): React.JSX.Element {
+export const dynamic = 'force-dynamic';
+
+export default async function InsightsPage(): Promise<JSX.Element> {
+  const account = await requireAccount({ returnTo: '/app/insights' });
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('timezone')
+    .eq('id', account.id)
+    .maybeSingle();
+  const read = await readAccountSurfaces({
+    client: supabase,
+    userId: account.id,
+    timezone: profile?.timezone ?? 'UTC',
+  });
+
   return (
     <AppShell>
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -24,42 +42,7 @@ export default function InsightsPage(): React.JSX.Element {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
-                Consistency Breakdown
-              </h2>
-              <TrendingUp className="size-5 text-[var(--color-primary)]" />
-            </div>
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Your overall habit completion rate across normal and minimum targets.
-            </p>
-            <div className="flex items-center justify-around pt-4 text-center">
-              <div>
-                <span className="text-3xl font-extrabold text-[var(--color-primary)]">92%</span>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">Normal Target Rate</p>
-              </div>
-              <div>
-                <span className="text-3xl font-extrabold text-amber-500">98%</span>
-                <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                  Non-Zero Baseline Rate
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-sm font-bold text-[var(--color-text-primary)]">
-              <Sparkles className="size-5 text-[var(--color-primary)]" />
-              <span>Smart Recommendations</span>
-            </div>
-            <p className="text-xs leading-relaxed text-[var(--color-text-secondary)]">
-              You maintain high consistency on morning routines. Consider adjusting evening habit
-              timings to match your peak energy hours.
-            </p>
-          </div>
-        </div>
+        <InsightsPanel read={read} />
       </div>
     </AppShell>
   );

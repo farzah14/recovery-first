@@ -1,12 +1,30 @@
-'use client';
+import type { JSX } from 'react';
+import { Bell } from 'lucide-react';
 
-import React from 'react';
 import { AppShell } from '@/components/layout/app-shell';
-import { Bell, Clock } from 'lucide-react';
+import { RemindersPanel } from '@/components/account/account-data-panels';
+import { requireAccount } from '@/lib/auth/require-account';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { readAccountSurfaces } from '@/server/account/account-surfaces';
 
-export default function RemindersPage(): React.JSX.Element {
+export const dynamic = 'force-dynamic';
+
+export default async function RemindersPage(): Promise<JSX.Element> {
+  const account = await requireAccount({ returnTo: '/app/reminders' });
+  const supabase = await createSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('timezone')
+    .eq('id', account.id)
+    .maybeSingle();
+  const read = await readAccountSurfaces({
+    client: supabase,
+    userId: account.id,
+    timezone: profile?.timezone ?? 'UTC',
+  });
+
   return (
-    <AppShell>
+    <AppShell showCreateHabitActions={false}>
       <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
           <div>
@@ -23,41 +41,7 @@ export default function RemindersPage(): React.JSX.Element {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-          <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-4">
-            <div className="flex items-center gap-3">
-              <Clock className="size-5 text-[var(--color-primary)]" />
-              <div>
-                <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
-                  Morning Meditation
-                </h2>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Scheduled for 08:00 AM - 09:00 AM
-                </p>
-              </div>
-            </div>
-            <span className="rounded-full bg-[var(--color-emerald-50)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              Active
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Clock className="size-5 text-[var(--color-primary)]" />
-              <div>
-                <h2 className="text-sm font-bold text-[var(--color-text-primary)]">
-                  Hydration & Water
-                </h2>
-                <p className="text-xs text-[var(--color-text-muted)]">
-                  Scheduled for 11:00 AM - 12:00 PM
-                </p>
-              </div>
-            </div>
-            <span className="rounded-full bg-[var(--color-emerald-50)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              Active
-            </span>
-          </div>
-        </div>
+        <RemindersPanel read={read} />
       </div>
     </AppShell>
   );
