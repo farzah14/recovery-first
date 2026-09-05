@@ -1025,6 +1025,12 @@ export type Database = {
         }
         Returns: Json
       }
+      resolve_expired_unrecorded: {
+        Args: {
+          p_now: string
+        }
+        Returns: number
+      }
       record_check_in: {
         Args: {
           p_check_in_id: string

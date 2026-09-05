@@ -488,4 +488,17 @@ describe('SupabaseProductRepository', () => {
       totalCount: 1,
     });
   });
+
+  it('resolves expired unrecorded sessions through the owner-scoped RPC', async () => {
+    const { client, calls } = createFakeClient({
+      rpcRows: { resolve_expired_unrecorded: 3 },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const resolved = await repository.resolveExpiredUnrecorded(owner, '2026-08-06T04:00:00.000Z');
+
+    expect(resolved).toBe(3);
+    expect(calls[0]).toMatchObject({ kind: 'rpc', name: 'resolve_expired_unrecorded' });
+    expect(calls[0]?.args).toEqual({ p_now: '2026-08-06T04:00:00.000Z' });
+  });
 });

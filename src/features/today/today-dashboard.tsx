@@ -327,6 +327,7 @@ export function TodayDashboard(): React.JSX.Element {
       setRemoteDataReady(false);
       setRemoteError(null);
       const weekRange = getLocalWeekRange(localDate);
+      await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
       await repository.ensureSessionHorizon(owner, weekRange.endDate);
       const [today, overview] = await Promise.all([
         repository.getToday(owner, localDate),

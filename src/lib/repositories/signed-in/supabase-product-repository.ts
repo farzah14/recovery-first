@@ -603,8 +603,13 @@ export function createSupabaseProductRepository({
       return undefined;
     },
 
-    async resolveExpiredUnrecorded(): Promise<number> {
-      return 0;
+    async resolveExpiredUnrecorded(candidate: ProductOwner, now: string): Promise<number> {
+      assertOwner(candidate);
+      const { data, error } = await client.rpc('resolve_expired_unrecorded', {
+        p_now: now,
+      });
+      if (error) throw mapError(error);
+      return typeof data === 'number' ? data : 0;
     },
   };
 }
