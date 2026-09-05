@@ -108,7 +108,7 @@ Expected: the full Vitest suite, repository checks, and production build pass.
 
 Verification: `pnpm verify` passed with 87 test files, 356 tests, repository policy checks, and `next build`.
 
-- [ ] **Step 3: Run the database suite**
+- [x] **Step 3: Run the database suite**
 
 ```bash
 pnpm db:test
@@ -116,9 +116,9 @@ pnpm db:test
 
 Expected: all Supabase migrations and pgTAP tests pass; no migration is required because `profiles.week_start` already exists.
 
-Local limitation: `pnpm db:test` could not connect because no local Supabase/Postgres instance is running; Docker is not installed in this environment.
+Verification: GitHub Actions `Supabase database` passed all migration and pgTAP checks. The local command could not connect because no local Supabase/Postgres instance is running; Docker is not installed in this environment.
 
-- [ ] **Step 4: Run the browser smoke suite if the shell layout changes snapshots**
+- [x] **Step 4: Run the browser smoke suite if the shell layout changes snapshots**
 
 ```bash
 pnpm test:e2e
@@ -126,7 +126,7 @@ pnpm test:e2e
 
 Expected: browser smoke tests pass with no unexplained visual changes.
 
-Local limitation: `pnpm test:e2e` reached the app but 16 authenticated/navigation cases failed because the required Supabase environment variables are absent. The public foundation case also retains its existing Start Free redirect failure; the public visual baseline passed.
+Verification: GitHub Actions `Browser smoke tests` passed with the hosted Supabase and browser environment. The local command could not run authenticated cases because the required Supabase environment variables are absent.
 
 - [x] **Step 5: Review, mark the plan, and commit**
 
