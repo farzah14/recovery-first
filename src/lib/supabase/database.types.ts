@@ -414,6 +414,36 @@ export type Database = {
         }
         Relationships: []
       }
+      reflection_notes: {
+        Row: {
+          created_at: string
+          id: string
+          local_date: string
+          note: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          local_date: string
+          note: string
+          timezone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          local_date?: string
+          note?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           capability_status: string

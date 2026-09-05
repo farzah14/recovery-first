@@ -48,6 +48,15 @@ function createFakeClient({
         filters.push((row) => values.includes(row[column]));
         return builder;
       };
+      builder.upsert = (values: unknown, options: unknown) => {
+        calls.push({ kind: 'from', name: `${table}.upsert`, args: { values, options } });
+        return Promise.resolve({ data: null, error: null });
+      };
+      builder.maybeSingle = () =>
+        Promise.resolve({
+          data: sourceRows.filter((row) => filters.every((filter) => filter(row)))[0] ?? null,
+          error: null,
+        });
       builder.gte = () => builder;
       builder.lte = () => builder;
       builder.order = () => builder;
@@ -175,6 +184,49 @@ describe('SupabaseProductRepository', () => {
       p_outcome: 'manual_skipped',
       p_expected_session_revision: 1,
       p_friction_code: 'too_tired',
+    });
+  });
+
+  it('reads and upserts a reflection note for the authenticated owner and local date', async () => {
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        reflection_notes: [
+          {
+            user_id: owner.ownerId,
+            local_date: '2026-08-06',
+            note: 'A short, steady practice felt sustainable.',
+            timezone: 'Asia/Jakarta',
+            updated_at: '2026-08-06T02:00:00.000Z',
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    await expect(repository.getReflectionNote(owner, '2026-08-06')).resolves.toEqual({
+      localDate: '2026-08-06',
+      note: 'A short, steady practice felt sustainable.',
+      timezone: 'Asia/Jakarta',
+      updatedAt: '2026-08-06T02:00:00.000Z',
+    });
+    await repository.saveReflectionNote(
+      owner,
+      '2026-08-06',
+      'A short, steady practice felt sustainable.',
+    );
+
+    expect(calls).toContainEqual({
+      kind: 'from',
+      name: 'reflection_notes.upsert',
+      args: {
+        values: {
+          user_id: owner.ownerId,
+          local_date: '2026-08-06',
+          timezone: owner.timezone,
+          note: 'A short, steady practice felt sustainable.',
+        },
+        options: { onConflict: 'user_id,local_date' },
+      },
     });
   });
 

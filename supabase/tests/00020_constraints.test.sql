@@ -1,6 +1,6 @@
 begin;
 
-select plan(12);
+select plan(13);
 
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000001', 'fixture-owner@example.invalid');
@@ -103,6 +103,7 @@ select has_table('public', 'review_cycles', 'review cycles table exists');
 select has_table('public', 'review_items', 'review items table exists');
 select has_table('public', 'reminder_configs', 'reminder configs table exists');
 select has_table('public', 'entitlements', 'entitlements table exists');
+select has_table('public', 'reflection_notes', 'reflection notes table exists');
 select has_table('private', 'idempotency_records', 'idempotency records are private');
 
 select * from finish();

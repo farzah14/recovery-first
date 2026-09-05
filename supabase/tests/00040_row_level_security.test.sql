@@ -168,9 +168,17 @@ values (
   '2026-09-01'
 );
 
+insert into public.reflection_notes (user_id, local_date, timezone, note)
+values (
+  '12000000-0000-4000-8000-000000000001',
+  '2026-08-06',
+  'Asia/Jakarta',
+  'Owner reflection'
+);
+
 select ok(
   (
-    select count(*) = 15
+    select count(*) = 16
     from pg_class c
     join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public'
@@ -179,7 +187,7 @@ select ok(
         'profiles', 'browser_installations', 'habits', 'habit_versions',
         'sessions', 'check_ins', 'check_in_history', 'recommendations',
         'recovery_plans', 'review_cycles', 'review_items', 'reminder_configs',
-        'push_subscriptions', 'email_preferences', 'entitlements'
+        'push_subscriptions', 'email_preferences', 'entitlements', 'reflection_notes'
       )
       and c.relrowsecurity
   ),
@@ -237,6 +245,7 @@ select results_eq(
       union all select count(*) from public.push_subscriptions
       union all select count(*) from public.email_preferences
       union all select count(*) from public.entitlements
+      union all select count(*) from public.reflection_notes
     ) visible
   $$,
   $$values (0::bigint)$$,

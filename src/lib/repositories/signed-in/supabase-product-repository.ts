@@ -10,6 +10,7 @@ import type {
   HabitTarget,
   ProductOwner,
   ProductRepository,
+  ReflectionNoteRead,
   RecordCheckInRepositoryCommand,
   RecordCheckInResult,
   SessionSummary,
@@ -586,6 +587,45 @@ export function createSupabaseProductRepository({
           totalCount: counts.get(date)?.totalCount ?? 0,
         })),
       };
+    },
+
+    async getReflectionNote(
+      candidate: ProductOwner,
+      localDate: string,
+    ): Promise<ReflectionNoteRead | null> {
+      assertOwner(candidate);
+      const { data, error } = await client
+        .from('reflection_notes')
+        .select('local_date,note,timezone,updated_at')
+        .eq('user_id', owner.ownerId)
+        .eq('local_date', localDate)
+        .maybeSingle();
+      if (error) throw mapError(error);
+      if (!data) return null;
+      return {
+        localDate: data.local_date,
+        note: data.note,
+        timezone: data.timezone,
+        updatedAt: data.updated_at,
+      };
+    },
+
+    async saveReflectionNote(
+      candidate: ProductOwner,
+      localDate: string,
+      note: string,
+    ): Promise<void> {
+      assertOwner(candidate);
+      const { error } = await client.from('reflection_notes').upsert(
+        {
+          user_id: owner.ownerId,
+          local_date: localDate,
+          timezone: owner.timezone,
+          note: note.trim(),
+        },
+        { onConflict: 'user_id,local_date' },
+      );
+      if (error) throw mapError(error);
     },
 
     async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {
