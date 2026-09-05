@@ -124,6 +124,13 @@ export type WeeklyOverviewRead = {
   days: WeeklyOverviewDay[];
 };
 
+export type ReflectionNoteRead = {
+  localDate: string;
+  note: string;
+  timezone: string;
+  updatedAt: string;
+};
+
 export type RecordCheckInRepositoryCommand = {
   commandId: string;
   owner: ProductOwner;
@@ -212,6 +219,8 @@ export interface ProductRepository {
   resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number>;
   getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead>;
   getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead>;
+  getReflectionNote(owner: ProductOwner, localDate: string): Promise<ReflectionNoteRead | null>;
+  saveReflectionNote(owner: ProductOwner, localDate: string, note: string): Promise<void>;
   recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult>;
   editCheckIn(command: EditCheckInRepositoryCommand): Promise<RecordCheckInResult>;
 }

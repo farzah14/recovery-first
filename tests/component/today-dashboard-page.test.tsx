@@ -283,6 +283,28 @@ describe('TodayDashboard', () => {
     expect(screen.getByRole('button', { name: /Edit Reflection Note/i })).toBeVisible();
   });
 
+  it('restores a guest reflection note after the dashboard remounts', async () => {
+    const { unmount } = render(<TodayDashboard />);
+
+    const [addReflectionButton] = screen.getAllByRole('button', {
+      name: /Add Reflection Note/i,
+    });
+    if (!addReflectionButton) throw new Error('Add Reflection Note button was not rendered.');
+    fireEvent.click(addReflectionButton);
+    fireEvent.change(screen.getByPlaceholderText(/e\.g\. Focused on consistency today/i), {
+      target: { value: 'A note that should survive a remount.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save Reflection' }));
+    expect(screen.getByText(/A note that should survive a remount\./i)).toBeVisible();
+
+    unmount();
+    render(<TodayDashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/A note that should survive a remount\./i)).toBeVisible();
+    });
+  });
+
   it('renders toast notification at center bottom position with animation classes when action occurs', () => {
     render(<TodayDashboard />);
 

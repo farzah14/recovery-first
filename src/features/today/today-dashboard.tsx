@@ -62,6 +62,8 @@ import { DEFAULT_HABITS } from '@/domain/habits/default-habits';
 
 export type OutcomeType = 'unrecorded' | 'full' | 'minimum' | 'skipped';
 
+const REFLECTION_NOTE_STORAGE_PREFIX = 'recovery-first.reflection-note';
+
 export interface HabitSession {
   id: string;
   habitId?: string;
@@ -397,6 +399,8 @@ export function TodayDashboard(): React.JSX.Element {
   const [reflectionDialogOpen, setReflectionDialogOpen] = useState(false);
   const [reflectionNote, setReflectionNote] = useState('');
   const [reflectionInput, setReflectionInput] = useState('');
+  const reflectionLocalDate = getLocalDateForTimezone(owner?.timezone ?? account.timezone ?? 'UTC');
+  const reflectionStorageKey = `${REFLECTION_NOTE_STORAGE_PREFIX}.${reflectionLocalDate}`;
 
   // Edit Habit Form State
   const [editName, setEditName] = useState('');
@@ -414,7 +418,7 @@ export function TodayDashboard(): React.JSX.Element {
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toastExitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const showToast = (msg: string) => {
+  const showToast = React.useCallback((msg: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     if (toastExitTimeoutRef.current) clearTimeout(toastExitTimeoutRef.current);
 
@@ -429,7 +433,32 @@ export function TodayDashboard(): React.JSX.Element {
       setToastMessage(null);
       setToastExiting(false);
     }, 3000);
-  };
+  }, []);
+
+  React.useEffect(() => {
+    let active = true;
+
+    if (repository && owner) {
+      void repository
+        .getReflectionNote(owner, reflectionLocalDate)
+        .then((reflection) => {
+          if (active) setReflectionNote(reflection?.note ?? '');
+        })
+        .catch((error) => {
+          if (active) {
+            showToast(error instanceof Error ? error.message : 'Unable to load reflection note.');
+          }
+        });
+    } else if (!owner) {
+      void Promise.resolve(window.localStorage.getItem(reflectionStorageKey) ?? '').then((note) => {
+        if (active) setReflectionNote(note);
+      });
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [owner, reflectionLocalDate, reflectionStorageKey, repository, showToast]);
 
   const handleRecordOutcome = async (id: string, newOutcome: OutcomeType) => {
     const habit = habits.find((h) => h.id === id);
@@ -1478,18 +1507,35 @@ export function TodayDashboard(): React.JSX.Element {
           </DialogDescription>
 
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              if (reflectionInput.trim()) {
-                setReflectionNote(reflectionInput.trim());
+              const note = reflectionInput.trim();
+              if (!note) return;
+
+              try {
+                if (repository && owner) {
+                  await repository.saveReflectionNote(owner, reflectionLocalDate, note);
+                } else if (!owner) {
+                  window.localStorage.setItem(reflectionStorageKey, note);
+                } else {
+                  throw new Error(
+                    'Unable to save reflection note while account storage is offline.',
+                  );
+                }
+                setReflectionNote(note);
                 showToast('Reflection note saved!');
+                setReflectionDialogOpen(false);
+              } catch (error) {
+                showToast(
+                  error instanceof Error ? error.message : 'Unable to save reflection note.',
+                );
               }
-              setReflectionDialogOpen(false);
             }}
             className="mt-4 space-y-3 text-xs"
           >
             <textarea
               rows={3}
+              maxLength={2000}
               required
               placeholder="e.g. Focused on consistency today. Felt great about drinking water early."
               value={reflectionInput}
