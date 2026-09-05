@@ -16,7 +16,7 @@
 
 - Modify: `supabase/tests/00045_unrecorded_resolution.test.sql`
 
-- [ ] **Step 1: Extend the fixture for bounded cross-owner resolution**
+- [x] **Step 1: Extend the fixture for bounded cross-owner resolution**
 
 Increase the pgTAP plan and add three overdue `unrecorded` sessions after the existing owner-scoped assertions. Use both existing owners and distinct deadlines so the test can prove owner filtering, oldest-first selection, and a one-row batch limit.
 
@@ -52,7 +52,7 @@ select is(
 
 Add result assertions showing the oldest remaining deadline changed first, a later candidate remains `unrecorded`, the final batch resolves the backlog, revisions increment, counters do not change, and each transitioned session has one audit event but no check-in.
 
-- [ ] **Step 2: Add security and cron-contract assertions**
+- [x] **Step 2: Add security and cron-contract assertions**
 
 Add pgTAP assertions for the private function and named schedule:
 
@@ -85,7 +85,7 @@ select results_eq(
 
 Also inspect `pg_get_functiondef` and assert that the batch candidate query contains `FOR UPDATE SKIP LOCKED`.
 
-- [ ] **Step 3: Run the focused test and verify RED**
+- [x] **Step 3: Run the focused test and verify RED**
 
 Run:
 
@@ -104,7 +104,7 @@ Expected: the test fails because `private.resolve_expired_unrecorded_batch(uuid,
 
 - Create: `supabase/migrations/20260905031000_schedule_unrecorded_resolution.sql`
 
-- [ ] **Step 1: Create the bounded private resolver**
+- [x] **Step 1: Create the bounded private resolver**
 
 Create the migration with the following function shape:
 
@@ -175,7 +175,7 @@ $$;
 
 Revoke execution from `public`, `anon`, `authenticated`, and `service_role`. Keep every object reference schema-qualified and do not expose this function through the browser API.
 
-- [ ] **Step 2: Replace the authenticated wrapper with delegation**
+- [x] **Step 2: Replace the authenticated wrapper with delegation**
 
 Keep `public.resolve_expired_unrecorded(timestamptz)` compatible with the TypeScript adapter. Validate `auth.uid()` and non-null `p_now`, then return:
 
@@ -185,7 +185,7 @@ return private.resolve_expired_unrecorded_batch(v_user_id, 5000);
 
 Continue granting only the public wrapper to `authenticated`. The supplied timestamp remains a compatibility parameter; database `statement_timestamp()` is authoritative inside the private function.
 
-- [ ] **Step 3: Register the named schedule**
+- [x] **Step 3: Register the named schedule**
 
 Use the name-based `cron.schedule` overload so applying the migration leaves one job with the approved definition:
 
@@ -197,7 +197,7 @@ select cron.schedule(
 );
 ```
 
-- [ ] **Step 4: Run the focused test and verify GREEN**
+- [x] **Step 4: Run the focused test and verify GREEN**
 
 Apply the migration to a clean local database, then run:
 
@@ -208,7 +208,7 @@ psql -v ON_ERROR_STOP=1 -d recovery_windows_final \
 
 Expected: every assertion passes, including bounded ordering, cross-owner system resolution, account isolation, audit behavior, permissions, and the cron contract.
 
-- [ ] **Step 5: Commit the database behavior**
+- [x] **Step 5: Commit the database behavior**
 
 ```bash
 git add \
@@ -226,15 +226,15 @@ git commit -m "fix: schedule expired session resolution"
 - Verify: `supabase/migrations/*.sql`
 - Verify: `supabase/tests/*.sql`
 
-- [ ] **Step 1: Run a clean migration reset**
+- [x] **Step 1: Run a clean migration reset**
 
 Run the complete ordered migration chain against the PostgreSQL test environment. Confirm `pg_cron` loads, all migrations apply exactly once, and the seed completes.
 
-- [ ] **Step 2: Run every pgTAP file**
+- [x] **Step 2: Run every pgTAP file**
 
 Run each file under `supabase/tests/` with `ON_ERROR_STOP=1`. Record the exact number of files and assertions. No SQL failure or skipped required assertion is acceptable.
 
-- [ ] **Step 3: Inspect the registered job**
+- [x] **Step 3: Inspect the registered job**
 
 Run:
 
@@ -256,7 +256,7 @@ Check `cron.job_run_details` when the local scheduler supports background execut
 
 - Verify only; do not modify the unrelated reflection-note worktree changes.
 
-- [ ] **Step 1: Run application verification**
+- [x] **Step 1: Run application verification**
 
 Run against committed scheduled-expiration code without collecting the unrelated failing reflection-note tests:
 
@@ -272,7 +272,7 @@ pnpm build
 
 If the reflection-note red tests or contract changes prevent a clean current-worktree gate, create a temporary detached worktree at the scheduled-expiration commit and verify there. Do not stash, reset, overwrite, or commit the reflection-note files.
 
-- [ ] **Step 2: Review the final state**
+- [x] **Step 2: Review the final state**
 
 Run:
 
@@ -284,6 +284,6 @@ git log --oneline -5
 
 Confirm that only the previously existing reflection-note work remains uncommitted.
 
-- [ ] **Step 3: Report completion**
+- [x] **Step 3: Report completion**
 
 Report the migration and test files, commit hash, exact SQL and application test totals, build result, cron job definition, and any staging-only scheduler verification that remains.
