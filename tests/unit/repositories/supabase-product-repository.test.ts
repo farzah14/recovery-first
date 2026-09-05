@@ -13,9 +13,11 @@ const owner: ProductOwner = {
 function createFakeClient({
   tableRows = {},
   rpcRows = {},
+  rpcErrors = {},
 }: {
   tableRows?: Record<string, unknown>;
   rpcRows?: Record<string, unknown>;
+  rpcErrors?: Record<string, { code: string; message: string }>;
 } = {}) {
   const calls: Array<{ kind: 'from' | 'rpc'; name: string; args?: unknown }> = [];
   const client = {
@@ -53,7 +55,7 @@ function createFakeClient({
     },
     async rpc(name: string, args: unknown) {
       calls.push({ kind: 'rpc', name, args });
-      return { data: rpcRows[name] ?? {}, error: null };
+      return { data: rpcRows[name] ?? {}, error: rpcErrors[name] ?? null };
     },
   } as unknown as Parameters<typeof createSupabaseProductRepository>[0]['client'];
 
@@ -187,6 +189,32 @@ describe('SupabaseProductRepository', () => {
     await repository.recordCheckIn(command);
 
     expect(calls[1]?.args).toEqual(calls[0]?.args);
+  });
+
+  it.each([
+    ['session_not_yet_eligible', 'session_not_eligible'],
+    ['session_resolution_window_closed', 'session_not_eligible'],
+    ['session_permanently_locked', 'session_not_eligible'],
+    ['session_already_resolved', 'session_not_eligible'],
+    ['check_in_edit_window_closed', 'same_day_edit_closed'],
+  ] as const)('maps %s to the repository error %s', async (message, expectedCode) => {
+    const { client } = createFakeClient({
+      rpcErrors: { record_check_in: { code: '55000', message } },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const operation = repository.recordCheckIn({
+      commandId: '45000000-0000-4000-8000-000000000004',
+      owner,
+      sessionId: '55000000-0000-4000-8000-000000000001',
+      outcome: 'full',
+      frictionCode: null,
+      frictionNote: null,
+      expectedSessionRevision: 1,
+      clientRecordedAt: '2026-08-06T01:00:00.000Z',
+    });
+
+    await expect(operation).rejects.toMatchObject({ code: expectedCode, message });
   });
 
   it('redesigns a habit with a new immutable version and presentation metadata', async () => {

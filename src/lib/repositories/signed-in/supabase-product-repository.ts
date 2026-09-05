@@ -104,6 +104,19 @@ function mapError(error: {
   if (code === '40001' || error.message === 'revision_conflict') {
     return new ProductRepositoryError('stale_revision', error.message ?? 'revision_conflict');
   }
+  if (code === '55000') {
+    if (error.message === 'check_in_edit_window_closed') {
+      return new ProductRepositoryError('same_day_edit_closed', error.message);
+    }
+    if (
+      error.message === 'session_not_yet_eligible' ||
+      error.message === 'session_resolution_window_closed' ||
+      error.message === 'session_permanently_locked' ||
+      error.message === 'session_already_resolved'
+    ) {
+      return new ProductRepositoryError('session_not_eligible', error.message);
+    }
+  }
   if (code === 'P0002') {
     return new ProductRepositoryError('habit_not_found', error.message ?? 'habit_not_found');
   }
