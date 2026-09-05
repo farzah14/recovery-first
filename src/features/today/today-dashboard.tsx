@@ -1382,6 +1382,11 @@ export function TodayDashboard(): React.JSX.Element {
             Acknowledge friction without guilt or streak loss.
           </DialogDescription>
 
+          <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+            Target switching is unavailable until a recovery plan is connected. Your current targets
+            will remain unchanged.
+          </p>
+
           <div className="mt-4 space-y-4 text-xs">
             <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4">
               <h4 className="flex items-center gap-1.5 font-bold text-amber-900">
@@ -1412,12 +1417,10 @@ export function TodayDashboard(): React.JSX.Element {
               <Button
                 size="compact"
                 variant="primary"
-                onClick={() => {
-                  setReviewDialogOpen(false);
-                  showToast('Habit target adjusted to Minimum. Rest and continuity restored!');
-                }}
+                disabled
+                title="Target switching is unavailable until a recovery plan is connected"
               >
-                Switch to Minimum Target
+                Switch to Minimum Target (Unavailable)
               </Button>
             </div>
           </div>
