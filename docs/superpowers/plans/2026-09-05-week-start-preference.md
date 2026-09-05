@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make every weekly range and Weekly Overview honor the signed-in account's persisted Monday or Sunday week-start preference.
+**Goal:** Make every weekly range and Weekly Overview honor the signed-in account's persisted weekday week-start preference.
 
 **Architecture:** Normalize the existing `profiles.week_start` value into account context, pass it to the date and repository boundaries, and derive the shell's day labels from the resulting dates. Missing or invalid values fall back to Monday so existing accounts retain current behavior.
 
@@ -33,7 +33,7 @@ Expected: the new account assertion fails because `weekStart` is absent, and the
 
 - [ ] **Step 3: Implement the normalized contracts**
 
-Define `WeekStartDay = 1 | 7`, add `weekStart` to `AccountContext` and `AccountState`, and normalize profile input with `profile?.week_start === 7 ? 7 : 1`. Change `getLocalWeekRange(localDate, weekStart = 1)` to subtract `(day - weekStart + 7) % 7` and return seven dates.
+Define `WeekStartDay = 1 | 2 | 3 | 4 | 5 | 6 | 7`, add `weekStart` to `AccountContext` and `AccountState`, and normalize profile input with `profile?.week_start` when it is in the `1–7` range, otherwise `1`. Change `getLocalWeekRange(localDate, weekStart = 1)` to subtract `(day - weekStart + 7) % 7` and return seven dates.
 
 - [ ] **Step 4: Run the focused tests and typecheck**
 
@@ -59,7 +59,7 @@ Expected: all focused tests pass and TypeScript reports no errors.
 
 - [ ] **Step 1: Write failing repository and shell tests**
 
-Add a repository test that calls `getWeeklyOverview(owner, '2026-08-06', 7)` and asserts the sessions query uses `2026-08-02` and `2026-08-08`. Add an AppShell test with an account whose `weekStart` is `7` and a Thursday reference date; assert the first row is Sunday and the last row is Saturday.
+Add a repository test that calls `getWeeklyOverview(owner, '2026-08-06', 7)` and asserts the sessions query uses `2026-08-02` and `2026-08-08`. Add an AppShell test with an account whose `weekStart` is `7` and a Thursday reference date; assert the first row is Sunday and the last row is Saturday. Keep a Saturday (`6`) account covered by the date-range unit test to prove all persisted weekdays are supported.
 
 - [ ] **Step 2: Run affected tests and confirm RED**
 

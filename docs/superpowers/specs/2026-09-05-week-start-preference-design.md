@@ -10,13 +10,13 @@ This change covers Finding 10 only. It propagates the existing saved preference 
 
 ## Data contract
 
-The supported UI preference remains Monday (`1`) or Sunday (`7`), matching the values already persisted by onboarding. `AccountContext` and `AccountState` expose a normalized `weekStart` value. Missing or invalid profile data falls back to Monday to preserve current behavior and the existing database default.
+The supported UI preference remains any weekday from Monday (`1`) through Sunday (`7`), matching the values already persisted by onboarding and accepted by the database. `AccountContext` and `AccountState` expose a normalized `weekStart` value. Missing or invalid profile data falls back to Monday to preserve current behavior and the existing database default.
 
 Both authenticated layouts select `week_start` from `profiles`. The browser repository call receives the normalized preference from account state; it does not independently query the profile.
 
 ## Weekly range calculation
 
-`getLocalWeekRange(localDate, weekStart)` accepts the normalized start day and returns the seven calendar dates containing `localDate`. Monday-first ranges run Monday through Sunday. Sunday-first ranges run Sunday through Saturday.
+`getLocalWeekRange(localDate, weekStart)` accepts the normalized start day and returns the seven calendar dates containing `localDate`. The first returned date is the selected weekday, followed by the next six calendar dates.
 
 Today and Habits use the same preference when choosing the session horizon and when requesting weekly overview data. The Supabase repository uses it to query the same start and end dates, preventing the UI and database query from using different weeks.
 
