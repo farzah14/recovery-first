@@ -1,5 +1,7 @@
 begin;
 
+truncate table auth.users cascade;
+
 select plan(15);
 
 insert into auth.users (id, email)
