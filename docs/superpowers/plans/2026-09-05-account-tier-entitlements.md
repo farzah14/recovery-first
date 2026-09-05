@@ -20,7 +20,7 @@
 
 - [x] **Step 1: Write the failing tests**
 
-Update the account-context tests so a profile containing a stale `plan_code: 'premium'` does not control the result, while an explicitly supplied verified `planTier: 'lite'` does. Assert that the context carries `entitlementStatus: 'resolved'` for a verified result and defaults to Free/resolved when no result is supplied. Add a unit test for `readVerifiedAccountTier` that accepts a valid RPC tier and returns `{ planTier: 'premium', entitlementStatus: 'resolved' }`, and a second test that converts an RPC error into `{ planTier: 'free', entitlementStatus: 'unavailable' }`.
+Update the account-context tests so a profile containing a stale `plan_code: 'premium'` does not control the result, while an explicitly supplied verified `planTier: 'lite'` does. Assert that the context carries `entitlementStatus: 'resolved'` for a verified result and defaults to Free/resolved when no result is supplied. Add a unit test for `readVerifiedAccountTier` that accepts a valid RPC tier and returns `{ planTier: 'premium', entitlementStatus: 'resolved' }`, plus tests that convert a returned RPC error or rejected RPC promise into `{ planTier: 'free', entitlementStatus: 'unavailable' }`.
 
 - [x] **Step 2: Run the focused tests to verify RED**
 
@@ -103,7 +103,7 @@ Verification: the focused affected run passed 6 files and 44 tests.
 - Create: `supabase/tests/00055_verified_plan_tier_access.test.sql`
 - Modify: `src/app/auth/callback/route.ts`
 
-- [ ] **Step 1: Write the database contract test**
+- [x] **Step 1: Write the database contract test**
 
 Create a pgTAP test that inserts an auth user and profile, verifies `public.effective_plan_tier()` returns Free without an entitlement, inserts a valid Premium entitlement and verifies Premium, and asserts:
 
@@ -120,7 +120,7 @@ select ok(
 
 Run the database test/reset command. In an environment with the local database available, this test is expected to fail before the migration because the public RPC and restricted column grants do not yet exist.
 
-Verification: the test was written, but local RED verification is unavailable because the environment has no Docker/Postgres service.
+Verification: the pgTAP contract test was written and the local RED command was attempted; local execution remains unavailable because the environment has no Docker/Postgres service.
 
 - [x] **Step 2: Implement the migration**
 
@@ -130,7 +130,7 @@ Create the authenticated RPC as a stable SQL function that calls `private.effect
 
 Change the profile upsert payload from `{ id: user.id, plan_code: 'free' }` to `{ id: user.id }`, leaving the `plan_code` default responsible for new profiles and ensuring the callback does not require client-level access to that column.
 
-- [ ] **Step 4: Run the database contract checks to verify GREEN**
+- [x] **Step 4: Run the database contract checks to verify GREEN**
 
 ```bash
 pnpm exec supabase db reset
@@ -139,12 +139,14 @@ pnpm exec supabase test db
 
 Expected: the migration applies, the verified-tier and profile-privilege assertions pass, and the existing SQL suite remains green.
 
+Verification: GitHub's Supabase database job applied the migration, passed `00055_verified_plan_tier_access.test.sql`, and reported all database tests successful.
+
 ### Task 4: Run the full quality gate, review, and commit
 
 **Files:**
 - Modify: `docs/superpowers/plans/2026-09-05-account-tier-entitlements.md`
 
-- [ ] **Step 1: Run the complete verification**
+- [x] **Step 1: Run the complete verification**
 
 ```bash
 pnpm verify
@@ -155,7 +157,9 @@ git diff --check
 
 Expected: the full Vitest suite, repository checks, production build, database reset, pgTAP suite, and whitespace check pass with zero failures.
 
-- [ ] **Step 2: Review the staged diff and commit**
+Verification: local `pnpm verify` passed with 89 test files and 355 tests; local database commands were attempted but could not start without Docker/Postgres. GitHub Application quality, Browser smoke tests, Supabase database, Vercel, and Vercel Preview Comments all passed in run `33967025931`; `git diff --check` passed.
+
+- [x] **Step 2: Review the staged diff and commit**
 
 Review `git status --short`, `git diff --stat`, and the staged diff to confirm only Task 12 files changed. Mark plan checkboxes complete after the fresh verification succeeds, then commit:
 
@@ -164,3 +168,5 @@ git add docs/superpowers/specs/2026-09-05-account-tier-entitlements-design.md do
 git diff --cached --check
 git commit -m "fix: derive account tier from verified entitlements"
 ```
+
+Verification: the reviewed Task 12 implementation is on PR #14 in commits `b52759c` and `d845fae`; this documentation update records the final CI evidence.
