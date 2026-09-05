@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { getLocalDateForTimezone } from '@/lib/dates/local-week';
 import type { ProductOwner } from '@/lib/repositories/product-repository';
 import { createSupabaseProductRepository } from '@/lib/repositories/signed-in/supabase-product-repository';
 
@@ -9,6 +10,12 @@ const owner: ProductOwner = {
   planTier: 'free',
   timezone: 'Asia/Jakarta',
 };
+
+function shiftLocalDate(localDate: string, days: number): string {
+  const date = new Date(`${localDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
 function createFakeClient({
   tableRows = {},
@@ -487,6 +494,63 @@ describe('SupabaseProductRepository', () => {
       completedCount: 1,
       totalCount: 1,
     });
+  });
+
+  it('catches up from the latest persisted session date', async () => {
+    const today = getLocalDateForTimezone(owner.timezone);
+    const latestPersistedDate = shiftLocalDate(today, -2);
+    const throughDate = shiftLocalDate(today, 1);
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000010',
+            user_id: owner.ownerId,
+            current_version_id: '35000000-0000-0000-0000-000000000010',
+            lifecycle_state: 'active',
+            deleted_at: null,
+          },
+        ],
+        habit_versions: [
+          {
+            id: '35000000-0000-0000-0000-000000000010',
+            habit_id: '25000000-0000-0000-0000-000000000010',
+            version_number: 1,
+            metadata: {
+              description: 'Catch-up fixture',
+              icon: 'book',
+              fromTime: '08:00',
+              untilTime: '09:00',
+              timingContext: '08:00 AM - 09:00 AM',
+              startLocalDate: shiftLocalDate(today, -10),
+              recurrence: { kind: 'daily' },
+              cue: { type: 'time', value: '08:00' },
+            },
+            normal_target: { action: 'read', quantity: 20, unit: 'minutes' },
+            minimum_target: { action: 'read', quantity: 1, unit: 'page' },
+            schedule_rule: { kind: 'daily' },
+            source: 'creation',
+            created_at: '2026-08-01T00:00:00.000Z',
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-0000-0000-000000000010',
+            habit_version_id: '35000000-0000-0000-0000-000000000010',
+            user_id: owner.ownerId,
+            scheduled_local_date: latestPersistedDate,
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    await repository.ensureSessionHorizon(owner, throughDate);
+
+    const generatedDates = calls
+      .filter((call) => call.kind === 'rpc' && call.name === 'ensure_session')
+      .map((call) => (call.args as { p_scheduled_local_date: string }).p_scheduled_local_date);
+    expect(generatedDates).toEqual([shiftLocalDate(today, -1), today, throughDate]);
   });
 
   it('resolves expired unrecorded sessions through the owner-scoped RPC', async () => {

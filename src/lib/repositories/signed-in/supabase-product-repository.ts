@@ -17,7 +17,7 @@ import type {
   UpdateHabitVersionCommand,
   WeeklyOverviewRead,
 } from '@/lib/repositories/product-repository';
-import { getLocalDateForTimezone, getLocalWeekRange } from '@/lib/dates/local-week';
+import { getLocalWeekRange } from '@/lib/dates/local-week';
 import { ProductRepositoryError } from '@/lib/repositories/repository-errors';
 import {
   decodeHabitVersionPayload,
@@ -153,6 +153,12 @@ function daysBetween(start: string, end: string): string[] {
     current.setUTCDate(current.getUTCDate() + 1);
   }
   return result;
+}
+
+function shiftIsoDate(localDate: string, days: number): string {
+  const date = new Date(`${localDate}T12:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 function isScheduledOnDate(
@@ -445,15 +451,35 @@ export function createSupabaseProductRepository({
       const activeRows = habits ?? [];
       const versions = await loadVersions(activeRows.map((row) => row.id));
       const versionById = new Map(versions.map((version) => [version.id, version]));
-      const today = getLocalDateForTimezone(owner.timezone);
       let ensured = 0;
 
       for (const habit of activeRows) {
         const version = versionById.get(habit.current_version_id ?? '');
         if (!version) continue;
         const payload = decodeHabitVersionPayload(version.metadata);
-        const firstDate = payload.startLocalDate > today ? payload.startLocalDate : today;
-        for (const date of daysBetween(firstDate, throughLocalDate)) {
+        const { data: existingSessions, error: sessionsError } = await client
+          .from('sessions')
+          .select('scheduled_local_date')
+          .eq('user_id', owner.ownerId)
+          .eq('habit_id', habit.id)
+          .eq('habit_version_id', version.id)
+          .lte('scheduled_local_date', throughLocalDate);
+        if (sessionsError) throw mapError(sessionsError);
+
+        const latestSessionDate = (existingSessions ?? []).reduce<string | null>(
+          (latest, session) =>
+            latest === null || session.scheduled_local_date > latest
+              ? session.scheduled_local_date
+              : latest,
+          null,
+        );
+        const firstDate = latestSessionDate
+          ? shiftIsoDate(latestSessionDate, 1)
+          : payload.startLocalDate;
+        const generationStart =
+          firstDate < payload.startLocalDate ? payload.startLocalDate : firstDate;
+
+        for (const date of daysBetween(generationStart, throughLocalDate)) {
           if (!isScheduledOnDate(payload.recurrence, date)) continue;
           const localTime = payload.fromTime || '08:00';
           const eligibleAt = new Date(`${date}T00:00:00.000Z`);
