@@ -16,7 +16,7 @@
 - Create: `src/server/account/account-surface-mappers.ts`
 - Test: `tests/unit/account/account-surface-mappers.test.ts`
 
-- [ ] **Step 1: Write the failing mapper tests**
+- [x] **Step 1: Write the failing mapper tests**
 
 Create tests for these exact behaviors:
 
@@ -68,7 +68,7 @@ it('maps Web Push registration independently from reminder enablement', () => {
 
 The test fixture should use the session status union from `src/lib/supabase/database.types.ts` and should not import a page or Supabase client.
 
-- [ ] **Step 2: Run the mapper tests to verify RED**
+- [x] **Step 2: Run the mapper tests to verify RED**
 
 Run:
 
@@ -78,7 +78,9 @@ pnpm exec vitest run tests/unit/account/account-surface-mappers.test.ts
 
 Expected: the run fails because `src/server/account/account-surface-mappers.ts` and its exported functions do not exist.
 
-- [ ] **Step 3: Implement the pure mapper functions**
+Verification: the focused run failed during import resolution because the mapper module did not exist.
+
+- [x] **Step 3: Implement the pure mapper functions**
 
 Create the module with these exports:
 
@@ -117,7 +119,7 @@ export function mapReminderRegistration(
 
 Count `full`, `minimum`, `manual_skipped`, and `automatic_skipped` as resolved; count `full` and `minimum` as successful; count only `minimum` as minimum-baseline sessions. Round non-null percentages to two decimal places. `normalizeRecommendation` may return a string only when `evidence.summary` or `evidence.message` is a non-empty string; unknown payloads return `null`. Treat only `web_push` as requiring a granted push subscription.
 
-- [ ] **Step 4: Run the mapper tests to verify GREEN**
+- [x] **Step 4: Run the mapper tests to verify GREEN**
 
 Run:
 
@@ -127,7 +129,9 @@ pnpm exec vitest run tests/unit/account/account-surface-mappers.test.ts
 
 Expected: all mapper tests pass with no warnings.
 
-- [ ] **Step 5: Commit the tested mapper contract**
+Verification: the mapper suite passed 1 file and 4 tests; Prettier passed after formatting the new module and tests.
+
+- [x] **Step 5: Commit the tested mapper contract**
 
 ```bash
 git add src/server/account/account-surface-mappers.ts tests/unit/account/account-surface-mappers.test.ts
@@ -141,7 +145,7 @@ git commit -m "feat: add account surface aggregation contracts"
 - Create: `src/server/account/account-surfaces.ts`
 - Test: `tests/unit/account/account-surfaces.test.ts`
 
-- [ ] **Step 1: Write the failing reader tests**
+- [x] **Step 1: Write the failing reader tests**
 
 Create tests against an injected typed Supabase client double for these cases:
 
@@ -237,7 +241,7 @@ it('returns unavailable instead of mixing partial data after a query error', asy
 The fake client must record the `user_id` filters and date range so the test also asserts that sessions, recommendations, reminders, habits, email preferences, push subscriptions, and review summary queries are scoped to `user-1`.
 Implement `clientWithRows` and `clientWithError` as test-local Supabase doubles with chainable `select`, `eq`, `in`, `is`, `gte`, `lte`, `order`, `limit`, and `maybeSingle` methods; each double should record table, column, and value arguments before returning the fixture row or error.
 
-- [ ] **Step 2: Run the reader tests to verify RED**
+- [x] **Step 2: Run the reader tests to verify RED**
 
 Run:
 
@@ -247,7 +251,9 @@ pnpm exec vitest run tests/unit/account/account-surfaces.test.ts
 
 Expected: the run fails because the reader module and `AccountSurfacesRead` result type do not exist.
 
-- [ ] **Step 3: Implement the server-only reader**
+Verification: the focused run failed during import resolution because the reader module did not exist.
+
+- [x] **Step 3: Implement the server-only reader**
 
 Create `src/server/account/account-surfaces.ts` with `import 'server-only'`, the exported `AccountSurfacesRead` type, and:
 
@@ -291,7 +297,7 @@ export async function readAccountSurfaces(input: {
 
 Use `getLocalDateForTimezone` and `getLocalWeekRange` for the date window. Query all independent account-scoped datasets with the authenticated client, selecting only the columns required by the design. Choose the newest pending recommendation and newest review summary row. Join reminder configuration rows to non-deleted account-owned habit titles in memory. Mark Web Push registration as `registered` only when a non-revoked subscription has `capability_status = 'granted'`; email rows use `not_applicable`. Convert missing email preferences to `emailOptIn: false`. On any query error, return the week dates plus conservative empty fields and `status: 'unavailable'`; do not return successful partial data.
 
-- [ ] **Step 4: Run the reader tests to verify GREEN**
+- [x] **Step 4: Run the reader tests to verify GREEN**
 
 Run:
 
@@ -301,7 +307,9 @@ pnpm exec vitest run tests/unit/account/account-surfaces.test.ts
 
 Expected: all reader tests pass, including account and date-range filter assertions.
 
-- [ ] **Step 5: Commit the reader**
+Verification: the reader suite passed 1 file and 3 tests, including account filters and the Asia/Jakarta local-week range.
+
+- [x] **Step 5: Commit the reader**
 
 ```bash
 git add src/server/account/account-surfaces.ts tests/unit/account/account-surfaces.test.ts
@@ -317,11 +325,11 @@ git commit -m "feat: read account data surfaces from Supabase"
 - Modify: `src/app/(app)/app/insights/page.tsx`
 - Test: `tests/component/account-data-panels.test.tsx`
 
-- [ ] **Step 1: Write the failing panel tests**
+- [x] **Step 1: Write the failing panel tests**
 
 Render focused panel components with ready, empty, and unavailable read models. Assert that persisted rates and recommendation text render, fixed values `85%`, `92%`, `98%`, `14`, and `2` never render, and empty/unavailable messages are explicit. Assert that a ready reminder-free Review/Insights state does not invent a recommendation.
 
-- [ ] **Step 2: Run the panel tests to verify RED**
+- [x] **Step 2: Run the panel tests to verify RED**
 
 ```bash
 pnpm exec vitest run tests/component/account-data-panels.test.tsx
@@ -329,13 +337,15 @@ pnpm exec vitest run tests/component/account-data-panels.test.tsx
 
 Expected: the run fails because the presentational components do not exist.
 
-- [ ] **Step 3: Implement the Review and Insights panels and page readers**
+Verification: the focused run failed during import resolution because the panel module did not exist.
+
+- [x] **Step 3: Implement the Review and Insights panels and page readers**
 
 Create serializable `ReviewPanel` and `InsightsPanel` components that accept `AccountSurfacesRead`. Format non-null rates as percentages and render an em dash for null metrics. Review should label the minimum count as `Minimum baseline sessions`, show pending review items only from `pendingItems`, and display `No sessions recorded for this week yet.` when the ready result has no resolved sessions. Insights should display `No recommendation available yet.` when `recommendation` is null. Unavailable reads must display `Account data is temporarily unavailable. Please try again shortly.` without sample numbers.
 
 Convert both pages to async Server Components with `dynamic = 'force-dynamic'`. Each page must call `requireAccount` with its route, create the authenticated Supabase server client, call `readAccountSurfaces` with the account ID and account timezone, and render the panel inside the existing `AppShell`. Remove `'use client'` from the pages; the panel module must remain server-compatible.
 
-- [ ] **Step 4: Run the panel tests to verify GREEN**
+- [x] **Step 4: Run the panel tests to verify GREEN**
 
 ```bash
 pnpm exec vitest run tests/component/account-data-panels.test.tsx
@@ -343,7 +353,9 @@ pnpm exec vitest run tests/component/account-data-panels.test.tsx
 
 Expected: all Review and Insights populated, empty, unavailable, and anti-fabrication assertions pass.
 
-- [ ] **Step 5: Commit the Review and Insights surfaces**
+Verification: the panel suite passed 1 file and 4 Review/Insights tests; typecheck passed after the page readers were wired.
+
+- [x] **Step 5: Commit the Review and Insights surfaces**
 
 ```bash
 git add src/components/account/account-data-panels.tsx 'src/app/(app)/app/review/page.tsx' 'src/app/(app)/app/insights/page.tsx' tests/component/account-data-panels.test.tsx
@@ -358,15 +370,15 @@ git commit -m "fix: render persisted review and insight data"
 - Modify: `src/app/(app)/app/reminders/page.tsx`
 - Modify: `tests/component/account-data-panels.test.tsx`
 
-- [ ] **Step 1: Extend the failing panel tests for reminders**
+- [x] **Step 1: Extend the failing panel tests for reminders**
 
 Add assertions that a persisted reminder renders its actual habit title, local time, timezone, channel, and status; a disabled config renders `Disabled`; an enabled Web Push config without a granted subscription renders `Needs browser permission`; email opt-in is reported as persisted preference text; and an empty result renders `No reminder schedules configured yet.` without `Morning Meditation` or `Hydration & Water`.
 
-- [ ] **Step 2: Implement the Reminders panel and page reader**
+- [x] **Step 2: Implement the Reminders panel and page reader**
 
 Add a `RemindersPanel` that maps each persisted config to a row. Use `Disabled` whenever `enabled` is false, `Needs browser permission` for enabled Web Push without `registered`, and `Enabled` for enabled email or registered Web Push. Show the email opt-in state without claiming that email was delivered. On an unavailable read, show the shared unavailable message and no rows. Convert the page to an async Server Component using the same authenticated reader and `AppShell showCreateHabitActions={false}`.
 
-- [ ] **Step 3: Run the reminder and affected panel tests**
+- [x] **Step 3: Run the reminder and affected panel tests**
 
 ```bash
 pnpm exec vitest run tests/component/account-data-panels.test.tsx tests/unit/account/account-surface-mappers.test.ts tests/unit/account/account-surfaces.test.ts
@@ -374,7 +386,9 @@ pnpm exec vitest run tests/component/account-data-panels.test.tsx tests/unit/acc
 
 Expected: all reminder, panel, mapper, and reader tests pass.
 
-- [ ] **Step 4: Commit the Reminders surface**
+Verification: the affected run passed 3 files and 13 tests; typecheck passed.
+
+- [x] **Step 4: Commit the Reminders surface**
 
 ```bash
 git add src/components/account/account-data-panels.tsx 'src/app/(app)/app/reminders/page.tsx' tests/component/account-data-panels.test.tsx
@@ -387,7 +401,7 @@ git commit -m "fix: show persisted reminder registration state"
 **Files:**
 - Modify: `docs/superpowers/plans/2026-09-05-account-data-surfaces.md`
 
-- [ ] **Step 1: Run focused and full verification**
+- [x] **Step 1: Run focused and full verification**
 
 ```bash
 pnpm exec vitest run tests/unit/account/account-surface-mappers.test.ts tests/unit/account/account-surfaces.test.ts tests/component/account-data-panels.test.tsx
@@ -399,7 +413,9 @@ git diff --check
 
 Expected: focused tests and the full application, database, and whitespace checks pass. If local Docker/Postgres is unavailable, record that limitation and rely on the hosted Supabase CI job for database verification; do not mark the database step complete until that hosted job passes.
 
-- [ ] **Step 2: Review the diff and mark the plan complete**
+Verification: the focused run passed 3 files and 13 tests. `pnpm verify` passed formatting, lint, typecheck, all 90 test files and 363 tests, environment/repository checks, and the Next production build. `git diff --check` passed. Local `supabase db reset` returned `LegacyDbBootstrapError: failed to inspect service`, and `supabase test db` returned `LegacyDbConnectError: failed to connect to postgres`; hosted Supabase CI remains the database verification gate.
+
+- [x] **Step 2: Review the diff and mark the plan complete**
 
 Review:
 
@@ -410,6 +426,8 @@ git diff --check
 ```
 
 Confirm that only the account-surfaces design/plan, reader, mappers, panels, three pages, and their tests changed. After fresh verification succeeds, mark every checkbox complete and record the exact local and hosted results in this plan.
+
+Verification: the diff contains only the account-surfaces design/plan, reader, mappers, panels, the Review/Insights/Reminders pages, and their tests; the worktree has no generated `next-env.d.ts` change and no whitespace errors.
 
 - [ ] **Step 3: Commit, push, and verify the pull request**
 
