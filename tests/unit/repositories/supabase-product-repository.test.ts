@@ -492,6 +492,43 @@ describe('SupabaseProductRepository', () => {
     expect(calls).toContainEqual({ kind: 'from', name: 'sessions' });
   });
 
+  it('aggregates a Sunday-first overview when the account preference is Sunday', async () => {
+    const { client } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000001',
+            lifecycle_state: 'active',
+            deleted_at: null,
+            user_id: owner.ownerId,
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-0000-0000-000000000001',
+            scheduled_local_date: '2026-08-02',
+            status: 'full',
+            user_id: owner.ownerId,
+          },
+          {
+            habit_id: '25000000-0000-0000-0000-000000000001',
+            scheduled_local_date: '2026-08-08',
+            status: 'minimum',
+            user_id: owner.ownerId,
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    const overview = await repository.getWeeklyOverview(owner, '2026-08-06', 7);
+
+    expect(overview.startDate).toBe('2026-08-02');
+    expect(overview.endDate).toBe('2026-08-08');
+    expect(overview.days[0]).toMatchObject({ localDate: '2026-08-02', completedCount: 1 });
+    expect(overview.days[6]).toMatchObject({ localDate: '2026-08-08', completedCount: 1 });
+  });
+
   it('counts sessions only for active, non-deleted habits', async () => {
     const { client } = createFakeClient({
       tableRows: {

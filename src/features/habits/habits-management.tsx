@@ -298,6 +298,7 @@ function createCommandId(): string {
 
 export function HabitsManagement(): React.JSX.Element {
   const account = useAccountState();
+  const weekStart = account.weekStart ?? 1;
   const owner = React.useMemo(() => getBrowserProductOwner(account), [account]);
   const repository = React.useMemo(() => createBrowserProductRepository(account), [account]);
 
@@ -323,12 +324,12 @@ export function HabitsManagement(): React.JSX.Element {
       setRemoteDataReady(false);
       setRemoteError(null);
       const localDate = getLocalDateForTimezone(owner.timezone);
-      const weekRange = getLocalWeekRange(localDate);
+      const weekRange = getLocalWeekRange(localDate, weekStart);
       await repository.resolveExpiredUnrecorded(owner, new Date().toISOString());
       await repository.ensureSessionHorizon(owner, weekRange.endDate);
       const [remoteHabits, overview] = await Promise.all([
         repository.listHabits(owner),
-        repository.getWeeklyOverview(owner, localDate),
+        repository.getWeeklyOverview(owner, localDate, weekStart),
       ]);
       setHabitsList(remoteHabits.map(mapRepositoryHabit));
       setWeeklyOverview(overview);
@@ -340,7 +341,7 @@ export function HabitsManagement(): React.JSX.Element {
         error instanceof Error ? error.message : 'Unable to load habits from Supabase.',
       );
     }
-  }, [owner, repository]);
+  }, [owner, repository, weekStart]);
   const shouldPersistHabitsRef = useRef(false);
 
   // Hydrate browser-local habits after mount to keep server and client markup deterministic.

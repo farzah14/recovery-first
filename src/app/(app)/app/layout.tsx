@@ -11,7 +11,7 @@ export default async function ApplicationLayout({ children }: { children: ReactN
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name,plan_code,timezone,terms_accepted_at,onboarding_completed_at')
+    .select('display_name,plan_code,timezone,week_start,terms_accepted_at,onboarding_completed_at')
     .eq('id', account.id)
     .maybeSingle();
   if (!profile?.onboarding_completed_at) {

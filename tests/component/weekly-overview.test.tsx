@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AppShell } from '@/components/layout/app-shell';
+import { AccountStateProvider } from '@/components/account/account-state';
 
 describe('AppShell Weekly Overview', () => {
   beforeEach(() => {
@@ -111,6 +112,36 @@ describe('AppShell Weekly Overview', () => {
     expect(screen.getByText('Sunday (Today)')).toBeInTheDocument();
     expect(screen.getByText('Aug 2')).toBeInTheDocument();
     expect(screen.queryByText('Thursday (Today)')).toBeNull();
+  });
+
+  it('orders the Weekly Overview from Sunday through Saturday for a Sunday-first account', () => {
+    const ThursdayDate = new Date(2026, 7, 6);
+
+    render(
+      <AccountStateProvider
+        account={{
+          displayName: 'Alex',
+          planTier: 'free',
+          timezone: 'UTC',
+          weekStart: 7,
+        }}
+      >
+        <AppShell currentDate={ThursdayDate}>
+          <div>Content</div>
+        </AppShell>
+      </AccountStateProvider>,
+    );
+
+    const rows = within(screen.getByRole('table')).getAllByRole('row').slice(1);
+    expect(rows.map((row) => within(row).getAllByRole('cell')[1]?.textContent?.trim())).toEqual([
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday (Today)',
+      'Friday',
+      'Saturday',
+    ]);
   });
 
   it('uses each habit start date when calculating the total for each overview day', async () => {

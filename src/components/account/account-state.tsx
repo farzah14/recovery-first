@@ -3,12 +3,14 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import type { PlanTier } from '@/domain/shared/plan-tier';
+import type { WeekStartDay } from '@/lib/dates/local-week';
 
 export type AccountState = {
   accountId?: string;
   displayName: string;
   planTier: PlanTier;
   timezone?: string;
+  weekStart?: WeekStartDay;
   entitlementStatus?:
     'resolved' | 'loading' | 'unavailable' | 'downgrade_required' | 'legacy_recovery';
 };
@@ -17,6 +19,7 @@ const defaultAccountState: AccountState = {
   displayName: 'Account',
   planTier: 'free',
   timezone: 'UTC',
+  weekStart: 1,
   entitlementStatus: 'resolved',
 };
 

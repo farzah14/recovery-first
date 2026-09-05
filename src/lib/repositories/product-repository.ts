@@ -3,6 +3,7 @@ import type { HabitLifecycleState } from '@/domain/habits/habit-lifecycle';
 import type { RecurrenceRule } from '@/domain/habits/recurrence';
 import type { IdentityMode } from '@/domain/shared/identity-mode';
 import type { PlanTier } from '@/domain/shared/plan-tier';
+import type { WeekStartDay } from '@/lib/dates/local-week';
 
 export type ProductOwner = {
   ownerId: string;
@@ -218,7 +219,11 @@ export interface ProductRepository {
   ensureSessionHorizon(owner: ProductOwner, throughLocalDate: string): Promise<number>;
   resolveExpiredUnrecorded(owner: ProductOwner, now: string): Promise<number>;
   getToday(owner: ProductOwner, localDate: string): Promise<TodayRepositoryRead>;
-  getWeeklyOverview(owner: ProductOwner, localDate: string): Promise<WeeklyOverviewRead>;
+  getWeeklyOverview(
+    owner: ProductOwner,
+    localDate: string,
+    weekStart?: WeekStartDay,
+  ): Promise<WeeklyOverviewRead>;
   getReflectionNote(owner: ProductOwner, localDate: string): Promise<ReflectionNoteRead | null>;
   saveReflectionNote(owner: ProductOwner, localDate: string, note: string): Promise<void>;
   recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult>;

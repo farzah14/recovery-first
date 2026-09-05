@@ -10,7 +10,7 @@ export default async function OnboardingLayout({ children }: { children: ReactNo
   const supabase = await createSupabaseServerClient();
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name,plan_code,timezone')
+    .select('display_name,plan_code,timezone,week_start')
     .eq('id', account.id)
     .maybeSingle();
   const accountContext = buildAccountContext(account, profile);

@@ -38,6 +38,7 @@ import {
   type StoredHabit,
 } from '@/lib/storage/habits-sync';
 import type { WeeklyOverviewRead } from '@/lib/repositories/product-repository';
+import { getLocalWeekRange, type WeekStartDay } from '@/lib/dates/local-week';
 
 const sidebarCollapsedStorageKey = 'recovery-first.sidebar-collapsed';
 const DESIGN_REFERENCE_DATE = new Date('2026-01-15T10:00:00.000Z');
@@ -62,6 +63,7 @@ interface AppShellProps {
   habitCountForDate?: (date: Date) => number;
   currentDate?: Date;
   reflectionNote?: string;
+  weekStart?: WeekStartDay;
 }
 
 export function AppShell({
@@ -75,9 +77,11 @@ export function AppShell({
   habitCountForDate,
   currentDate,
   reflectionNote,
+  weekStart,
 }: AppShellProps): React.JSX.Element {
   const pathname = usePathname();
   const account = useAccountState();
+  const resolvedWeekStart = weekStart ?? account.weekStart ?? 1;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [storedHabits, setStoredHabits] = useState<StoredHabit[]>([]);
@@ -162,19 +166,6 @@ export function AppShell({
   // Build the seven displayed days from persisted counts when available.
   // Without remote data, show zeroes rather than fabricated sample activity.
   const refDate = currentDate ?? resolvedCurrentDate;
-  const jsDay = refDate.getDay();
-  const currentDayIndex = jsDay === 0 ? 6 : jsDay - 1; // 0-indexed starting Monday
-
-  const baseDaysConfig = [
-    { day: 'M', fullDay: 'Monday' },
-    { day: 'T', fullDay: 'Tuesday' },
-    { day: 'W', fullDay: 'Wednesday' },
-    { day: 'T', fullDay: 'Thursday' },
-    { day: 'F', fullDay: 'Friday' },
-    { day: 'S', fullDay: 'Saturday' },
-    { day: 'S', fullDay: 'Sunday' },
-  ];
-
   const formatDateKey = (date: Date): string => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
@@ -209,48 +200,52 @@ export function AppShell({
     return Math.max(0, todayTotalCount + dateAdjustment);
   };
 
-  const weeklyData: DayOverview[] = baseDaysConfig.map((config, idx) => {
-    const fallbackTargetDate = new Date(refDate);
-    fallbackTargetDate.setDate(refDate.getDate() + idx - currentDayIndex);
-    const fallbackLocalDate = `${fallbackTargetDate.getFullYear()}-${String(
-      fallbackTargetDate.getMonth() + 1,
-    ).padStart(2, '0')}-${String(fallbackTargetDate.getDate()).padStart(2, '0')}`;
-    const persistedDay = weeklyOverview?.days[idx];
-    const localDate = persistedDay?.localDate ?? fallbackLocalDate;
-    const isToday = weeklyOverview
-      ? localDate === weeklyOverview.todayDate
-      : idx === currentDayIndex;
+  const fallbackRange = getLocalWeekRange(formatDateKey(refDate), resolvedWeekStart);
 
-    let fullDay = config.fullDay;
-    if (isToday) {
-      fullDay = `${config.fullDay} (Today)`;
-    }
+  const weeklyData: DayOverview[] = (weeklyOverview?.days ?? fallbackRange.dates).map(
+    (entry, idx) => {
+      const fallbackLocalDate = typeof entry === 'string' ? entry : entry.localDate;
+      const fallbackTargetDate = new Date(`${fallbackLocalDate}T12:00:00`);
+      const persistedDay = weeklyOverview?.days[idx];
+      const localDate = persistedDay?.localDate ?? fallbackLocalDate;
+      const isToday = weeklyOverview
+        ? localDate === weeklyOverview.todayDate
+        : localDate === formatDateKey(refDate);
+      const displayDate = new Date(`${localDate}T00:00:00.000Z`);
+      const fullDayName = displayDate.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
+        weekday: 'long',
+      });
+      const shortDayName = displayDate
+        .toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' })
+        .slice(0, 1);
+      const fullDay = isToday ? `${fullDayName} (Today)` : fullDayName;
 
-    const [year, month, day] = localDate.split('-').map(Number);
-    const displayDate = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
-    const dateStr = displayDate.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-    const fallbackTotal = Math.max(
-      0,
-      habitCountForDate
-        ? habitCountForDate(fallbackTargetDate)
-        : getDateSpecificTotal(fallbackTargetDate),
-    );
-    const total = persistedDay?.totalCount ?? fallbackTotal;
-    const completed =
-      persistedDay?.completedCount ?? (isToday ? Math.min(todayCompletedCount, total) : 0);
+      const [year, month, day] = localDate.split('-').map(Number);
+      const dateStr = new Date(year ?? 0, (month ?? 1) - 1, day ?? 1).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+      const fallbackTotal = Math.max(
+        0,
+        habitCountForDate
+          ? habitCountForDate(fallbackTargetDate)
+          : getDateSpecificTotal(fallbackTargetDate),
+      );
+      const total = persistedDay?.totalCount ?? fallbackTotal;
+      const completed =
+        persistedDay?.completedCount ?? (isToday ? Math.min(todayCompletedCount, total) : 0);
 
-    return {
-      day: config.day,
-      fullDay,
-      dateStr,
-      completed,
-      total,
-      isToday,
-    };
-  });
+      return {
+        day: shortDayName,
+        fullDay,
+        dateStr,
+        completed,
+        total,
+        isToday,
+      };
+    },
+  );
 
   // Calculate total weekly completed sessions and total weekly goal
   const totalWeeklyCompleted = weeklyData.reduce((acc, curr) => acc + curr.completed, 0);
