@@ -13,7 +13,7 @@ type QueryCall = {
 
 type Fixture = Record<string, ReadonlyArray<Record<string, unknown>>>;
 
-function clientWithRows(fixture: Fixture = {}) {
+function clientWithRows(fixture: Fixture = {}, failingTable?: string) {
   const calls: QueryCall[] = [];
   const client = {
     from(table: string) {
@@ -59,41 +59,30 @@ function clientWithRows(fixture: Fixture = {}) {
       };
       builder.maybeSingle = () =>
         Promise.resolve({
-          data: rows.filter((row) => filters.every((filter) => filter(row)))[0] ?? null,
-          error: null,
+          data:
+            failingTable === table
+              ? null
+              : (rows.filter((row) => filters.every((filter) => filter(row)))[0] ?? null),
+          error: failingTable === table ? { code: 'XX000', message: 'query failed' } : null,
         });
       builder.then = (
-        resolve: (value: { data: ReadonlyArray<Record<string, unknown>>; error: null }) => unknown,
+        resolve: (value: {
+          data: ReadonlyArray<Record<string, unknown>> | null;
+          error: { code: string; message: string } | null;
+        }) => unknown,
       ) =>
         Promise.resolve({
-          data: rows.filter((row) => filters.every((filter) => filter(row))),
-          error: null,
+          data:
+            failingTable === table
+              ? null
+              : rows.filter((row) => filters.every((filter) => filter(row))),
+          error: failingTable === table ? { code: 'XX000', message: 'query failed' } : null,
         }).then(resolve);
       return builder;
     },
   } as unknown as Parameters<typeof readAccountSurfaces>[0]['client'];
 
   return { client, calls };
-}
-
-function clientWithError(tableWithError: string) {
-  const { client, calls } = clientWithRows();
-  const originalFrom = client.from.bind(client);
-  client.from = ((table: string) => {
-    if (table !== tableWithError) return originalFrom(table);
-    calls.push({ table, method: 'from' });
-    return {
-      select: () => ({
-        eq: () => ({
-          gte: () => ({
-            lte: () =>
-              Promise.resolve({ data: null, error: { code: 'XX000', message: 'query failed' } }),
-          }),
-        }),
-      }),
-    };
-  }) as typeof client.from;
-  return client;
 }
 
 const readAt = new Date('2026-09-05T04:00:00.000Z');
@@ -222,7 +211,7 @@ describe('account surfaces reader', () => {
   it('returns unavailable instead of mixing partial data after a query error', async () => {
     await expect(
       readAccountSurfaces({
-        client: clientWithError('sessions'),
+        client: clientWithRows({}, 'sessions').client,
         userId: 'user-1',
         timezone: 'UTC',
         now: readAt,
