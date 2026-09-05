@@ -413,7 +413,7 @@ git diff --check
 
 Expected: focused tests and the full application, database, and whitespace checks pass. If local Docker/Postgres is unavailable, record that limitation and rely on the hosted Supabase CI job for database verification; do not mark the database step complete until that hosted job passes.
 
-Verification: the focused run passed 3 files and 13 tests. `pnpm verify` passed formatting, lint, typecheck, all 90 test files and 363 tests, environment/repository checks, and the Next production build. `git diff --check` passed. Local `supabase db reset` returned `LegacyDbBootstrapError: failed to inspect service`, and `supabase test db` returned `LegacyDbConnectError: failed to connect to postgres`; hosted Supabase CI remains the database verification gate.
+Verification: the focused run passed 3 files and 13 tests. `pnpm verify` passed formatting, lint, typecheck, all 90 test files and 363 tests, environment/repository checks, and the Next production build. `git diff --check` passed. Local `supabase db reset` returned `LegacyDbBootstrapError: failed to inspect service`, and `supabase test db` returned `LegacyDbConnectError: failed to connect to postgres`; the hosted Supabase database job passed in [workflow run 33975408095](https://github.com/farzah14/recovery-first/actions/runs/33975408095).
 
 - [x] **Step 2: Review the diff and mark the plan complete**
 
@@ -429,7 +429,7 @@ Confirm that only the account-surfaces design/plan, reader, mappers, panels, thr
 
 Verification: the diff contains only the account-surfaces design/plan, reader, mappers, panels, the Review/Insights/Reminders pages, and their tests; the worktree has no generated `next-env.d.ts` change and no whitespace errors.
 
-- [ ] **Step 3: Commit, push, and verify the pull request**
+- [x] **Step 3: Commit, push, and verify the pull request**
 
 ```bash
 git add docs/superpowers/plans/2026-09-05-account-data-surfaces.md
@@ -441,3 +441,5 @@ gh pr checks --watch --interval 10
 ```
 
 The pull request body must state that Review, Insights, and Reminders no longer display fabricated personal data, name the account-scoped Supabase reader, list the local test count, and link the hosted database and browser checks. Do not claim the work is merged; leave the PR open for review.
+
+Verification: branch `fix/account-data-surfaces` was pushed and [PR #15](https://github.com/farzah14/recovery-first/pull/15) was opened. The [Application quality](https://github.com/farzah14/recovery-first/actions/runs/33975408095/job/101331112769), [Supabase database](https://github.com/farzah14/recovery-first/actions/runs/33975408095/job/101331113243), [Browser smoke tests](https://github.com/farzah14/recovery-first/actions/runs/33975408095/job/101331112977), Vercel, and Vercel Preview Comments checks all passed.
