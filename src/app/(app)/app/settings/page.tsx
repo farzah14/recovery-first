@@ -67,8 +67,8 @@ export default function SettingsPage(): React.JSX.Element {
                   Privacy & Data Security
                 </h2>
                 <p className="text-xs text-[var(--color-text-muted)]">
-                  All habit details are stored locally on your device with Recovery First
-                  encryption.
+                  Signed-in habit details sync to Supabase. Browser-local records remain on this
+                  device and are not encrypted by the application.
                 </p>
               </div>
             </div>
