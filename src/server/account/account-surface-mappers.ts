@@ -1,10 +1,5 @@
 export type AccountSessionOutcome =
-  | 'unrecorded'
-  | 'full'
-  | 'minimum'
-  | 'manual_skipped'
-  | 'automatic_skipped'
-  | 'excused';
+  'unrecorded' | 'full' | 'minimum' | 'manual_skipped' | 'automatic_skipped' | 'excused';
 
 export type SessionSurfaceMetrics = {
   resolvedSessions: number;
