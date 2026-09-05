@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { Database, Json } from '@/lib/supabase/database.types';
+import { zonedLocalDateTimeToUtc } from '@/lib/dates/zoned-time';
 import type {
   CreateHabitCommand,
   CreateHabitResult,
@@ -482,9 +483,13 @@ export function createSupabaseProductRepository({
         for (const date of daysBetween(generationStart, throughLocalDate)) {
           if (!isScheduledOnDate(payload.recurrence, date)) continue;
           const localTime = payload.fromTime || '08:00';
-          const eligibleAt = new Date(`${date}T00:00:00.000Z`);
-          const resolutionDueAt = new Date(eligibleAt);
-          resolutionDueAt.setUTCDate(resolutionDueAt.getUTCDate() + 3);
+          const localTimeWithSeconds = localTime.length === 5 ? `${localTime}:00` : localTime;
+          const eligibleAt = zonedLocalDateTimeToUtc(date, localTimeWithSeconds, owner.timezone);
+          const resolutionDueAt = zonedLocalDateTimeToUtc(
+            shiftIsoDate(date, 3),
+            '23:59:59',
+            owner.timezone,
+          );
           const { error } = await client.rpc('ensure_session', {
             p_session_id: createId(),
             p_habit_id: habit.id,
@@ -492,8 +497,8 @@ export function createSupabaseProductRepository({
             p_scheduled_local_date: date,
             p_scheduled_local_time: localTime,
             p_timezone_snapshot: owner.timezone,
-            p_eligible_at: eligibleAt.toISOString(),
-            p_resolution_due_at: resolutionDueAt.toISOString(),
+            p_eligible_at: eligibleAt,
+            p_resolution_due_at: resolutionDueAt,
             p_command_id: createId(),
           });
           if (error) throw mapError(error);

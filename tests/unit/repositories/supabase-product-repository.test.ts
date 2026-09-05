@@ -553,6 +553,62 @@ describe('SupabaseProductRepository', () => {
     expect(generatedDates).toEqual([shiftLocalDate(today, -1), today, throughDate]);
   });
 
+  it('derives session timestamps from the scheduled local time and timezone', async () => {
+    const { client, calls } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000011',
+            user_id: owner.ownerId,
+            current_version_id: '35000000-0000-0000-0000-000000000011',
+            lifecycle_state: 'active',
+            deleted_at: null,
+          },
+        ],
+        habit_versions: [
+          {
+            id: '35000000-0000-0000-0000-000000000011',
+            habit_id: '25000000-0000-0000-0000-000000000011',
+            version_number: 1,
+            metadata: {
+              description: 'Timezone fixture',
+              icon: 'book',
+              fromTime: '08:00',
+              untilTime: '09:00',
+              timingContext: '08:00 AM - 09:00 AM',
+              startLocalDate: '2026-09-01',
+              recurrence: { kind: 'daily' },
+              cue: { type: 'time', value: '08:00' },
+            },
+            normal_target: { action: 'read', quantity: 20, unit: 'minutes' },
+            minimum_target: { action: 'read', quantity: 1, unit: 'page' },
+            schedule_rule: { kind: 'daily' },
+            source: 'creation',
+            created_at: '2026-09-01T00:00:00.000Z',
+          },
+        ],
+        sessions: [
+          {
+            habit_id: '25000000-0000-0000-0000-000000000011',
+            habit_version_id: '35000000-0000-0000-0000-000000000011',
+            user_id: owner.ownerId,
+            scheduled_local_date: '2026-09-03',
+          },
+        ],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner });
+
+    await repository.ensureSessionHorizon(owner, '2026-09-04');
+
+    const sessionCall = calls.find((call) => call.kind === 'rpc' && call.name === 'ensure_session');
+    expect(sessionCall?.args).toMatchObject({
+      p_scheduled_local_date: '2026-09-04',
+      p_eligible_at: '2026-09-04T01:00:00.000Z',
+      p_resolution_due_at: '2026-09-07T16:59:59.000Z',
+    });
+  });
+
   it('resolves expired unrecorded sessions through the owner-scoped RPC', async () => {
     const { client, calls } = createFakeClient({
       rpcRows: { resolve_expired_unrecorded: 3 },
