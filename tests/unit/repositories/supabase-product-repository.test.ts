@@ -418,6 +418,60 @@ describe('SupabaseProductRepository', () => {
       habitRevision: 3,
       status: 'unrecorded',
     });
+    expect(today.activeHabitCount).toBe(1);
+    expect(today.activeHabitLimit).toBe(5);
+  });
+
+  it('uses the owner tier when exposing the Lite active-habit limit', async () => {
+    const liteOwner: ProductOwner = { ...owner, planTier: 'lite' };
+    const { client } = createFakeClient({
+      tableRows: {
+        habits: [
+          {
+            id: '25000000-0000-0000-0000-000000000020',
+            user_id: liteOwner.ownerId,
+            title: 'Lite fixture habit',
+            category: 'Mindfulness',
+            lifecycle_state: 'active',
+            current_version_id: '35000000-0000-0000-0000-000000000020',
+            revision: 1,
+            created_at: '2026-08-06T00:00:00.000Z',
+            updated_at: '2026-08-06T00:00:00.000Z',
+            deleted_at: null,
+          },
+        ],
+        habit_versions: [
+          {
+            id: '35000000-0000-0000-0000-000000000020',
+            habit_id: '25000000-0000-0000-0000-000000000020',
+            version_number: 1,
+            normal_target: { action: 'read', label: '20 minutes' },
+            minimum_target: { action: 'read', label: '1 page' },
+            schedule_rule: { kind: 'daily' },
+            cue: { type: 'time', value: '08:00' },
+            metadata: {
+              description: 'Lite fixture',
+              icon: 'book',
+              fromTime: '08:00',
+              untilTime: '09:00',
+              timingContext: '08:00 AM - 09:00 AM',
+              startLocalDate: '2026-08-06',
+              recurrence: { kind: 'daily' },
+              cue: { type: 'time', value: '08:00' },
+            },
+            created_at: '2026-08-06T00:00:00.000Z',
+            source: 'creation',
+          },
+        ],
+        today_session_view: [],
+      },
+    });
+    const repository = createSupabaseProductRepository({ client, owner: liteOwner });
+
+    const today = await repository.getToday(liteOwner, '2026-08-06');
+
+    expect(today.activeHabitCount).toBe(1);
+    expect(today.activeHabitLimit).toBe(10);
   });
 
   it('aggregates the authenticated owner sessions into a Monday-to-Sunday overview', async () => {

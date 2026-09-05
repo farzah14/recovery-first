@@ -39,7 +39,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const { error: profileError } = await supabase
     .from('profiles')
-    .upsert({ id: user.id, plan_code: 'free' }, { onConflict: 'id', ignoreDuplicates: true });
+    .upsert({ id: user.id }, { onConflict: 'id', ignoreDuplicates: true });
   if (profileError) {
     return NextResponse.redirect(
       new URL(`${buildSignInPath(returnTo)}&error=profile_failed`, requestUrl.origin),

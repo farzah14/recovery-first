@@ -3,31 +3,34 @@ import { describe, expect, it } from 'vitest';
 import { buildAccountContext } from '@/lib/auth/account-context';
 
 describe('buildAccountContext', () => {
-  it('prefers the persisted profile name and plan', () => {
+  it('uses the supplied verified tier', () => {
     expect(
       buildAccountContext(
         { id: 'user-1', email: 'alex@example.com' },
-        { display_name: 'Zah Febri', plan_code: 'lite', timezone: 'Asia/Jakarta' },
+        { display_name: 'Zah Febri', timezone: 'Asia/Jakarta' },
+        { planTier: 'lite', entitlementStatus: 'resolved' },
       ),
     ).toEqual({
       accountId: 'user-1',
       displayName: 'Zah Febri',
       planTier: 'lite',
       timezone: 'Asia/Jakarta',
+      entitlementStatus: 'resolved',
     });
   });
 
-  it('falls back to the email local part when the profile is incomplete', () => {
+  it('falls back to Free when no verified tier is available', () => {
     expect(
       buildAccountContext(
         { id: 'user-2', email: 'alex@example.com' },
-        { display_name: null, plan_code: 'free', timezone: 'UTC' },
+        { display_name: null, timezone: 'UTC' },
       ),
     ).toMatchObject({
       accountId: 'user-2',
       displayName: 'alex',
       planTier: 'free',
       timezone: 'UTC',
+      entitlementStatus: 'resolved',
     });
   });
 });
