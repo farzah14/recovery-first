@@ -169,6 +169,26 @@ describe('SupabaseProductRepository', () => {
     });
   });
 
+  it('reuses the complete database request when a check-in command is retried', async () => {
+    const { client, calls } = createFakeClient();
+    const repository = createSupabaseProductRepository({ client, owner });
+    const command = {
+      commandId: '45000000-0000-4000-8000-000000000003',
+      owner,
+      sessionId: '55000000-0000-4000-8000-000000000001',
+      outcome: 'full' as const,
+      frictionCode: null,
+      frictionNote: null,
+      expectedSessionRevision: 1,
+      clientRecordedAt: '2026-08-06T01:00:00.000Z',
+    };
+
+    await repository.recordCheckIn(command);
+    await repository.recordCheckIn(command);
+
+    expect(calls[1]?.args).toEqual(calls[0]?.args);
+  });
+
   it('redesigns a habit with a new immutable version and presentation metadata', async () => {
     const { client, calls } = createFakeClient({
       rpcRows: {

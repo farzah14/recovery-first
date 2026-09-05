@@ -547,7 +547,7 @@ export function createSupabaseProductRepository({
     async recordCheckIn(command: RecordCheckInRepositoryCommand): Promise<RecordCheckInResult> {
       assertOwner(command.owner);
       const { data, error } = await client.rpc('record_check_in', {
-        p_check_in_id: createId(),
+        p_check_in_id: command.commandId,
         p_session_id: command.sessionId,
         p_outcome: command.outcome,
         p_friction_code: command.frictionCode as string,
